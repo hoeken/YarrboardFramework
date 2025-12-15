@@ -13,15 +13,25 @@
 #ifndef YarrboardApp_h
 #define YarrboardApp_h
 
-#include <PsychicHttp.h>
+#include "ConfigManager.h"
+#include "YarrboardNetworkManager.h"
 
 class YarrboardApp
 {
   public:
+    ConfigManager config;
+    YarrboardNetworkManager network;
+
     YarrboardApp();
 
     void setup();
     void loop();
+
+    void full_setup();
+    void full_loop();
+
+  private:
+    unsigned int framerate;
 };
 
 #endif /* YarrboardApp_h */

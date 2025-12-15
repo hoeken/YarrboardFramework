@@ -12,8 +12,8 @@
 #include "YarrboardConfig.h"
 // #include "adchelper.h"
 #include "ConfigManager.h"
+#include "YarrboardNetworkManager.h"
 #include "mqtt.h"
-#include "networking.h"
 #include "ota.h"
 #include "utility.h"
 #include <Arduino.h>

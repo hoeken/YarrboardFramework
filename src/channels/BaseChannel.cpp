@@ -6,7 +6,7 @@
   License: GPLv3
 */
 
-#include "base_channel.h"
+#include "channels/BaseChannel.h"
 #include "YarrboardDebug.h"
 
 void BaseChannel::init(uint8_t id)
@@ -114,9 +114,9 @@ void BaseChannel::mqttUpdate()
 void BaseChannel::haGenerateDiscovery(JsonVariant doc)
 {
   if (app_use_hostname_as_mqtt_uuid)
-    strncpy(ha_key, local_hostname, sizeof(key));
+    strncpy(ha_key, config.local_hostname, sizeof(key));
   else
-    strncpy(ha_key, uuid, sizeof(key));
+    strncpy(ha_key, config.uuid, sizeof(key));
 
   // generate our id / topics
   sprintf(ha_uuid, "%s_%s_%s", ha_key, channel_type, this->key);

@@ -156,7 +156,7 @@ void mqtt_publish(const char* topic, const char* payload, bool use_prefix)
   // prefix it with yarrboard or nah?
   if (use_prefix) {
     char mqtt_path[256];
-    sprintf(mqtt_path, "yarrboard/%s/%s", local_hostname, topic);
+    sprintf(mqtt_path, "yarrboard/%s/%s", config.local_hostname, topic);
     ret = mqttClient.publish(mqtt_path, 0, 0, payload, strlen(payload), false);
     if (ret == -1)
       YBP.printf("[mqtt] Error publishing prefix path %s\n", mqtt_path);
@@ -182,7 +182,7 @@ void onMqttConnect(bool sessionPresent)
 
   // look for json messages on this path...
   char mqtt_path[128];
-  sprintf(mqtt_path, "yarrboard/%s/command", local_hostname);
+  sprintf(mqtt_path, "yarrboard/%s/command", config.local_hostname);
   mqttClient.onTopic(mqtt_path, 0, mqtt_receive_message);
 }
 
@@ -194,9 +194,9 @@ void mqtt_ha_discovery()
   // how to structure our id?
   char ha_dev_uuid[128];
   if (app_use_hostname_as_mqtt_uuid)
-    sprintf(ha_dev_uuid, "yarrboard_%s", local_hostname);
+    sprintf(ha_dev_uuid, "yarrboard_%s", config.local_hostname);
   else
-    sprintf(ha_dev_uuid, "yarrboard_%s", uuid);
+    sprintf(ha_dev_uuid, "yarrboard_%s", config.uuid);
 
   char topic[128];
   sprintf(topic, "homeassistant/device/%s/config", ha_dev_uuid);
@@ -209,9 +209,9 @@ void mqtt_ha_discovery()
   device["mf"] = YB_MANUFACTURER;
   device["mdl"] = YB_HARDWARE_VERSION;
   device["sw"] = YB_FIRMWARE_VERSION;
-  device["sn"] = uuid;
+  device["sn"] = config.uuid;
   char config_url[128];
-  sprintf(config_url, "http://%s.local", local_hostname);
+  sprintf(config_url, "http://%s.local", config.local_hostname);
   device["configuration_url"] = config_url;
 
   // our origin to let HA know where it came from.

@@ -367,23 +367,23 @@ void handleSetNetworkConfig(JsonVariantConst input, JsonVariant output)
   strlcpy(new_wifi_mode, input["wifi_mode"] | YB_DEFAULT_AP_MODE, sizeof(new_wifi_mode));
   strlcpy(new_wifi_ssid, input["wifi_ssid"] | YB_DEFAULT_AP_SSID, sizeof(new_wifi_ssid));
   strlcpy(new_wifi_pass, input["wifi_pass"] | YB_DEFAULT_AP_PASS, sizeof(new_wifi_pass));
-  strlcpy(local_hostname, input["local_hostname"] | YB_DEFAULT_HOSTNAME, sizeof(local_hostname));
+  strlcpy(config.local_hostname, input["local_hostname"] | YB_DEFAULT_HOSTNAME, sizeof(config.local_hostname));
 
   // make sure we can connect before we save
   if (!strcmp(new_wifi_mode, "client")) {
     // did we change username/password?
-    if (strcmp(new_wifi_ssid, wifi_ssid) || strcmp(new_wifi_pass, wifi_pass)) {
+    if (strcmp(new_wifi_ssid, config.wifi_ssid) || strcmp(new_wifi_pass, config.wifi_pass)) {
       // try connecting.
       YBP.printf("Trying new wifi %s / %s\n", new_wifi_ssid, new_wifi_pass);
       if (connectToWifi(new_wifi_ssid, new_wifi_pass)) {
         // changing modes?
-        if (!strcmp(wifi_mode, "ap"))
+        if (!strcmp(config.wifi_mode, "ap"))
           WiFi.softAPdisconnect();
 
         // save for local use
-        strlcpy(wifi_mode, new_wifi_mode, sizeof(wifi_mode));
-        strlcpy(wifi_ssid, new_wifi_ssid, sizeof(wifi_ssid));
-        strlcpy(wifi_pass, new_wifi_pass, sizeof(wifi_pass));
+        strlcpy(config.wifi_mode, new_wifi_mode, sizeof(config.wifi_mode));
+        strlcpy(config.wifi_ssid, new_wifi_ssid, sizeof(config.wifi_ssid));
+        strlcpy(config.wifi_pass, new_wifi_pass, sizeof(config.wifi_pass));
 
         // save it to file.
         if (!config.saveConfig(error, sizeof(error)))
@@ -391,8 +391,8 @@ void handleSetNetworkConfig(JsonVariantConst input, JsonVariant output)
       }
       // nope, setup our wifi back to default.
       else {
-        connectToWifi(wifi_ssid, wifi_pass); // go back to our old wifi.
-        start_network_services();
+        connectToWifi(config.wifi_ssid, config.wifi_pass); // go back to our old wifi.
+        startServices();
         return generateErrorJSON(output, "Can't connect to new WiFi.");
       }
     } else {
@@ -404,9 +404,9 @@ void handleSetNetworkConfig(JsonVariantConst input, JsonVariant output)
   // okay, AP mode is easier
   else {
     // save for local use.
-    strlcpy(wifi_mode, new_wifi_mode, sizeof(wifi_mode));
-    strlcpy(wifi_ssid, new_wifi_ssid, sizeof(wifi_ssid));
-    strlcpy(wifi_pass, new_wifi_pass, sizeof(wifi_pass));
+    strlcpy(config.wifi_mode, new_wifi_mode, sizeof(config.wifi_mode));
+    strlcpy(config.wifi_ssid, new_wifi_ssid, sizeof(config.wifi_ssid));
+    strlcpy(config.wifi_pass, new_wifi_pass, sizeof(config.wifi_pass));
 
     // switch us into AP mode
     setupWifi();
@@ -658,8 +658,8 @@ void handleCrashMe(JsonVariantConst input, JsonVariant output)
 void handleFactoryReset(JsonVariantConst input, JsonVariant output)
 {
   // delete all our prefs
-  preferences.clear();
-  preferences.end();
+  config.preferences.clear();
+  config.preferences.end();
 
   // clean up littlefs
   LittleFS.format();
@@ -1514,7 +1514,7 @@ void generateConfigJSON(JsonVariant output)
 {
   // extra info
   output["msg"] = "config";
-  output["hostname"] = local_hostname;
+  output["hostname"] = config.local_hostname;
   output["use_ssl"] = app_enable_ssl;
   output["enable_ota"] = app_enable_ota;
   output["enable_mqtt"] = app_enable_mqtt;
@@ -1647,7 +1647,7 @@ void generateStatsJSON(JsonVariant output)
 {
   // some basic statistics and info
   output["msg"] = "stats";
-  output["uuid"] = uuid;
+  output["uuid"] = config.uuid;
   output["received_message_total"] = totalReceivedMessages;
   output["received_message_mps"] = receivedMessagesPerSecond;
   output["sent_message_total"] = totalSentMessages;
@@ -1665,7 +1665,7 @@ void generateStatsJSON(JsonVariant output)
     output["mqtt_connected"] = mqtt_is_connected();
 
   // what is our IP address?
-  if (!strcmp(wifi_mode, "ap"))
+  if (!strcmp(config.wifi_mode, "ap"))
     output["ip_address"] = apIP;
   else
     output["ip_address"] = WiFi.localIP();

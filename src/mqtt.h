@@ -10,7 +10,6 @@
 #define YARR_MQTT_H
 
 #include "YarrboardConfig.h"
-#include "networking.h"
 #include "protocol.h"
 #include <ArduinoJson.h>
 #include <PsychicMqttClient.h>

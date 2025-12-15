@@ -23,7 +23,14 @@
 class ConfigManager
 {
   public:
+    Preferences preferences;
     bool is_first_boot;
+
+    char wifi_ssid[YB_WIFI_SSID_LENGTH] = YB_DEFAULT_AP_SSID;
+    char wifi_pass[YB_WIFI_PASSWORD_LENGTH] = YB_DEFAULT_AP_PASS;
+    char wifi_mode[YB_WIFI_MODE_LENGTH] = YB_DEFAULT_AP_MODE;
+    char local_hostname[YB_HOSTNAME_LENGTH] = YB_DEFAULT_HOSTNAME;
+    char uuid[YB_UUID_LENGTH];
 
     ConfigManager();
 
@@ -110,6 +117,5 @@ class ConfigManager
 };
 
 extern ConfigManager config;
-extern Preferences preferences;
 
 #endif

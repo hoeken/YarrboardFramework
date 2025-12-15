@@ -1,6 +1,5 @@
 #include "ConfigManager.h"
 #include "YarrboardDebug.h"
-#include "networking.h"
 #include "protocol.h"
 #include "yb_server.h"
 
@@ -529,4 +528,3 @@ bool ConfigManager::loadBoardConfigFromJSON(JsonVariant config, char* error, siz
 }
 
 ConfigManager config;
-Preferences preferences;
