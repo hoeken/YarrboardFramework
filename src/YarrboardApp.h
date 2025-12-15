@@ -14,6 +14,7 @@
 #define YarrboardApp_h
 
 #include "ConfigManager.h"
+#include "NavicoController.h"
 #include "NetworkController.h"
 #include "ProtocolController.h"
 #include "YarrboardDebug.h"
@@ -24,6 +25,7 @@ class YarrboardApp
     ConfigManager config;
     NetworkController network;
     ProtocolController protocol;
+    NavicoController navico;
 
     YarrboardApp();
 

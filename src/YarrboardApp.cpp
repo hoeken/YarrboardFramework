@@ -15,7 +15,6 @@
 #include "RollingAverage.h"
 #include "YarrboardDebug.h"
 
-#include "navico.h"
 #include "ntp.h"
 
 #ifdef YB_HAS_STATUS_RGB
@@ -29,7 +28,9 @@
 YarrboardApp::YarrboardApp() : config(*this),
                                network(*this, config),
                                protocol(*this, config),
-                               networkLogger(protocol)
+                               networkLogger(protocol),
+                               navico(*this, config)
+
 {
 }
 
@@ -201,7 +202,7 @@ void YarrboardApp::full_loop()
   it.time("ota_loop");
 
   if (config.app_enable_mfd) {
-    navico_loop();
+    navico.loop();
     it.time("navico_loop");
   }
 
