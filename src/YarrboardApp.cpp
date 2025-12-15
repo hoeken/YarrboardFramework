@@ -26,7 +26,7 @@
   #include "piezo.h"
 #endif
 
-YarrboardApp::YarrboardApp() : network(config)
+YarrboardApp::YarrboardApp() : network(*this, config)
 {
 }
 

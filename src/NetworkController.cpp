@@ -7,14 +7,17 @@
 */
 
 #include "NetworkController.h"
+#include "ConfigManager.h"
+#include "YarrboardApp.h"
 #include "YarrboardDebug.h"
 #include "rgb.h"
 
 NetworkController* NetworkController::_instance = nullptr;
 
-NetworkController::NetworkController(ConfigManager& config) : _config(config),
-                                                              improvSerial(&Serial),
-                                                              apIP(8, 8, 4, 4)
+NetworkController::NetworkController(YarrboardApp& app, ConfigManager& config) : _app(app),
+                                                                                 _config(config),
+                                                                                 improvSerial(&Serial),
+                                                                                 apIP(8, 8, 4, 4)
 {
 }
 

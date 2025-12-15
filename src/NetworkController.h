@@ -9,7 +9,6 @@
 #ifndef YARR_NETWORK_H
 #define YARR_NETWORK_H
 
-#include "ConfigManager.h"
 #include "YarrboardConfig.h"
 #include <DNSServer.h>
 #include <ESPmDNS.h>
@@ -17,23 +16,13 @@
 #include <ImprovWiFiLibrary.h>
 #include <WiFi.h>
 
-// void network_setup();
-// void network_loop();
-
-// void start_network_services();
-
-// void setupWifi();
-// bool connectToWifi(const char* ssid, const char* pass);
-
-// void improv_setup();
-// void improv_loop();
-// void onImprovWiFiErrorCb(ImprovTypes::Error err);
-// void onImprovWiFiConnectedCb(const char* ssid, const char* password);
+class YarrboardApp;
+class ConfigManager;
 
 class NetworkController
 {
   public:
-    NetworkController(ConfigManager& config);
+    NetworkController(YarrboardApp& app, ConfigManager& config);
 
     void setup();
     void loop();
@@ -46,6 +35,7 @@ class NetworkController
     void startServices();
 
   private:
+    YarrboardApp& _app;
     ConfigManager& _config;
     ImprovWiFi improvSerial;
     ImprovWiFiBLE improvBLE;
