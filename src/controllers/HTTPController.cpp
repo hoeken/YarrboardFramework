@@ -1,29 +1,32 @@
-#include "HTTPController.h"
+#include "controllers/HTTPController.h"
 #include "ConfigManager.h"
 #include "ProtocolController.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
 
-HTTPController::HTTPController(YarrboardApp& app, ConfigManager& config) : _app(app),
-                                                                           _config(config)
+HTTPController::HTTPController(YarrboardApp& app) : BaseController(app, "http")
 {
 }
 
-void HTTPController::setup()
+bool HTTPController::setup()
 {
   sendMutex = xSemaphoreCreateMutex();
-  if (sendMutex == NULL)
+  if (sendMutex == NULL) {
     YBP.println("Failed to create send mutex");
+    return false;
+  }
 
   // prepare our message queue
   wsRequests = xQueueCreate(YB_RECEIVE_BUFFER_COUNT, sizeof(WebsocketRequest));
-  if (wsRequests == 0)
+  if (wsRequests == 0) {
     YBP.printf("Failed to create queue= %p\n", wsRequests);
+    return false;
+  }
 
   // do we want secure or not?
-  if (_config.app_enable_ssl && _config.server_cert.length() && _config.server_key.length()) {
+  if (_cfg.app_enable_ssl && _cfg.server_cert.length() && _cfg.server_key.length()) {
     server = new PsychicHttpsServer(443);
-    server->setCertificate(_config.server_cert.c_str(), _config.server_key.c_str());
+    server->setCertificate(_cfg.server_cert.c_str(), _cfg.server_key.c_str());
     YBP.println("SSL enabled");
   } else {
     server = new PsychicHttpServer(80);
@@ -79,8 +82,8 @@ void HTTPController::setup()
     JsonDocument doc;
 
     // Root values
-    doc["short_name"] = _config.board_name;
-    doc["name"] = _config.board_name;
+    doc["short_name"] = _cfg.board_name;
+    doc["name"] = _cfg.board_name;
 
     // icons array
     JsonArray icons = doc["icons"].to<JsonArray>();
@@ -202,6 +205,8 @@ void HTTPController::setup()
   });
 
   server->start();
+
+  return true;
 }
 
 void HTTPController::loop()
@@ -219,7 +224,7 @@ void HTTPController::loop()
 void HTTPController::sendToAllWebsockets(const char* jsonString, UserRole auth_level)
 {
   // make sure we're allowed to see the message
-  if (auth_level > _config.app_default_role) {
+  if (auth_level > _cfg.app_default_role) {
     for (byte i = 0; i < YB_CLIENT_LIMIT; i++) {
       if (_app.auth.authenticatedClients[i].socket) {
         // make sure its a valid client
@@ -262,7 +267,7 @@ esp_err_t HTTPController::handleWebServerRequest(JsonVariant input, PsychicReque
   if (request->hasParam("pass"))
     input["pass"] = request->getParam("pass")->value();
 
-  if (_config.app_enable_api) {
+  if (_cfg.app_enable_api) {
     _app.auth.isApiClientLoggedIn(input);
     _app.protocol.handleReceivedJSON(input, output, YBP_MODE_HTTP);
   } else

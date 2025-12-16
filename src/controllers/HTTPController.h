@@ -12,6 +12,7 @@
 #include "YarrboardConfig.h"
 
 #include "controllers/AuthController.h"
+#include "controllers/BaseController.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <PsychicHttp.h>
@@ -35,13 +36,13 @@ typedef struct {
 class YarrboardApp;
 class ConfigManager;
 
-class HTTPController
+class HTTPController : public BaseController
 {
   public:
-    HTTPController(YarrboardApp& app, ConfigManager& config);
+    HTTPController(YarrboardApp& app);
 
-    void setup();
-    void loop();
+    bool setup() override;
+    void loop() override;
 
     void sendToAllWebsockets(const char* jsonString, UserRole auth_level);
 
@@ -49,9 +50,6 @@ class HTTPController
     unsigned int httpClientCount = 0;
 
   private:
-    YarrboardApp& _app;
-    ConfigManager& _config;
-
     PsychicHttpServer* server;
     PsychicWebSocketHandler websocketHandler;
     char last_modified[50];

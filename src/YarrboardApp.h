@@ -14,7 +14,6 @@
 #define YarrboardApp_h
 
 #include "ConfigManager.h"
-#include "HTTPController.h"
 #include "IntervalTimer.h"
 #include "MQTTController.h"
 #include "NTPController.h"
@@ -27,6 +26,7 @@
 #include "controllers/AuthController.h"
 #include "controllers/BaseController.h"
 #include "controllers/BuzzerController.h"
+#include "controllers/HTTPController.h"
 
 #include <cstring>         // For strcmp
 #include <etl/algorithm.h> // For finding/removing
