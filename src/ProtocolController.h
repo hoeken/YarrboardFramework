@@ -41,6 +41,7 @@ class ProtocolController
     void loop();
 
     const char* getRoleText(UserRole role);
+    bool isSerialAuthenticated();
 
     void sendBrightnessUpdate();
     void sendThemeUpdate();
@@ -49,6 +50,12 @@ class ProtocolController
     void sendOTAProgressFinished();
     void sendDebug(const char* message);
     void sendToAll(const char* jsonString, UserRole auth_level);
+
+    void handleReceivedJSON(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection = NULL);
+    static void generateErrorJSON(JsonVariant output, const char* error);
+    static void generateSuccessJSON(JsonVariant output, const char* success);
+
+    void incrementSentMessages();
 
   private:
     YarrboardApp& _app;
@@ -62,12 +69,9 @@ class ProtocolController
     unsigned int sentMessages = 0;
     unsigned int sentMessagesPerSecond = 0;
     unsigned long totalSentMessages = 0;
-    unsigned int websocketClientCount = 0;
-    unsigned int httpClientCount = 0;
 
     void handleSerialJson();
 
-    void handleReceivedJSON(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection = NULL);
     void handleSetGeneralConfig(JsonVariantConst input, JsonVariant output);
     void handleSetNetworkConfig(JsonVariantConst input, JsonVariant output);
     void handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output);
@@ -124,8 +128,6 @@ class ProtocolController
     void generateAppConfigMessage(JsonVariant output);
     void generateOTAProgressUpdateJSON(JsonVariant output, float progress);
     void generateOTAProgressFinishedJSON(JsonVariant output);
-    static void generateErrorJSON(JsonVariant output, const char* error);
-    static void generateSuccessJSON(JsonVariant output, const char* success);
     void generateLoginRequiredJSON(JsonVariant output);
     void generateInvalidChannelJSON(JsonVariant output, byte cid);
     void generatePongJSON(JsonVariant output);

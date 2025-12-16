@@ -1,7 +1,6 @@
 #include "ConfigManager.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
-#include "yb_server.h"
 
 ConfigManager::ConfigManager(YarrboardApp& app) : _app(app), is_first_boot(true)
 {

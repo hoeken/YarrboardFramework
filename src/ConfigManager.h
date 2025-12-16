@@ -59,6 +59,9 @@ class ConfigManager
     String app_theme = "light";
     float globalBrightness = 1.0;
 
+    String server_cert;
+    String server_key;
+
     ConfigManager(YarrboardApp& app);
 
     // Lifecycle

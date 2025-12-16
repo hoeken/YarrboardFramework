@@ -9,7 +9,6 @@
 #ifndef YARR_NAVICO_H
 #define YARR_NAVICO_H
 
-#include "yb_server.h"
 #include <Arduino.h>
 #include <WiFi.h>
 

@@ -1,22 +1,17 @@
-#include "yb_server.h"
+#include "HTTPController.h"
+#include "ConfigManager.h"
+#include "ProtocolController.h"
+#include "YarrboardApp.h"
 #include "YarrboardDebug.h"
 
-PsychicHttpServer* server;
-PsychicWebSocketHandler websocketHandler;
+HTTPController* HTTPController::_instance = nullptr;
 
-// Variable to hold the last modification datetime
-char last_modified[50];
+HTTPController::HTTPController(YarrboardApp& app, ConfigManager& config) : _app(app),
+                                                                           _config(config)
+{
+}
 
-QueueHandle_t wsRequests;
-
-SemaphoreHandle_t sendMutex;
-
-AuthenticatedClient authenticatedClients[YB_CLIENT_LIMIT];
-
-String server_cert;
-String server_key;
-
-void server_setup()
+void HTTPController::setup()
 {
   sendMutex = xSemaphoreCreateMutex();
   if (sendMutex == NULL)
@@ -25,7 +20,7 @@ void server_setup()
   // init our authentication stuff
   for (byte i = 0; i < YB_CLIENT_LIMIT; i++) {
     authenticatedClients[i].socket = 0;
-    authenticatedClients[i].role = config.app_default_role;
+    authenticatedClients[i].role = _config.app_default_role;
   }
 
   // prepare our message queue
@@ -34,9 +29,9 @@ void server_setup()
     YBP.printf("Failed to create queue= %p\n", wsRequests);
 
   // do we want secure or not?
-  if (config.app_enable_ssl && server_cert.length() && server_key.length()) {
+  if (_config.app_enable_ssl && _config.server_cert.length() && _config.server_key.length()) {
     server = new PsychicHttpsServer(443);
-    server->setCertificate(server_cert.c_str(), server_key.c_str());
+    server->setCertificate(_config.server_cert.c_str(), _config.server_key.c_str());
     YBP.println("SSL enabled");
   } else {
     server = new PsychicHttpServer(80);
@@ -50,7 +45,7 @@ void server_setup()
   // Populate the last modification date based on build datetime
   sprintf(last_modified, "%s %s GMT", __DATE__, __TIME__);
 
-  server->on("/", HTTP_GET, [](PsychicRequest* request, PsychicResponse* response) {
+  server->on("/", HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
     // Check if the client already has the same version and respond with a 304
     // (Not modified)
     if (request->header("If-Modified-Since").indexOf(last_modified) > 0)
@@ -77,7 +72,7 @@ void server_setup()
     }
   });
 
-  server->on("/logo.png", HTTP_GET, [](PsychicRequest* request, PsychicResponse* response) {
+  server->on("/logo.png", HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
     response->setCode(200);
     response->setContentType("image/png");
     response->addHeader("Content-Encoding", "gzip");
@@ -97,13 +92,13 @@ void server_setup()
     return response->send();
   });
 
-  server->on("/site.webmanifest", HTTP_GET, [](PsychicRequest* request, PsychicResponse* response) {
+  server->on("/site.webmanifest", HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
     esp_err_t err = ESP_OK;
     JsonDocument doc;
 
     // Root values
-    doc["short_name"] = config.board_name;
-    doc["name"] = config.board_name;
+    doc["short_name"] = _config.board_name;
+    doc["name"] = _config.board_name;
 
     // icons array
     JsonArray icons = doc["icons"].to<JsonArray>();
@@ -145,16 +140,16 @@ void server_setup()
   });
 
   // Our websocket handler
-  websocketHandler.onFrame([](PsychicWebSocketRequest* request, httpd_ws_frame* frame) {
+  websocketHandler.onFrame([this](PsychicWebSocketRequest* request, httpd_ws_frame* frame) {
     handleWebSocketMessage(request, frame->payload, frame->len);
     return ESP_OK;
   });
-  websocketHandler.onOpen([](PsychicWebSocketClient* client) {
+  websocketHandler.onOpen([this](PsychicWebSocketClient* client) {
     // YBP.printf("[socket] connection #%u connected from %s\n",
     //               client->socket(), client->remoteIP().toString());
     websocketClientCount++;
   });
-  websocketHandler.onClose([](PsychicWebSocketClient* client) {
+  websocketHandler.onClose([this](PsychicWebSocketClient* client) {
     // YBP.printf("[socket] connection #%u closed from %s\n", client->socket(),
     //               client->remoteIP().toString());
     removeClientFromAuthList(client);
@@ -162,12 +157,12 @@ void server_setup()
   });
   server->on("/ws", &websocketHandler);
 
-  server->onOpen([](PsychicClient* client) { httpClientCount++; });
+  server->onOpen([this](PsychicClient* client) { httpClientCount++; });
 
-  server->onClose([](PsychicClient* client) { httpClientCount--; });
+  server->onClose([this](PsychicClient* client) { httpClientCount--; });
 
   // our main api connection
-  server->on("/api/endpoint", HTTP_ANY, [](PsychicRequest* request, PsychicResponse* response) {
+  server->on("/api/endpoint", HTTP_ANY, [this](PsychicRequest* request, PsychicResponse* response) {
     JsonDocument json;
 
     String body = request->body();
@@ -179,7 +174,7 @@ void server_setup()
   });
 
   // send config json
-  server->on("/api/config", HTTP_ANY, [](PsychicRequest* request, PsychicResponse* response) {
+  server->on("/api/config", HTTP_ANY, [this](PsychicRequest* request, PsychicResponse* response) {
     JsonDocument json;
     json["cmd"] = "get_config";
 
@@ -189,7 +184,7 @@ void server_setup()
   });
 
   // send stats json
-  server->on("/api/stats", HTTP_ANY, [](PsychicRequest* request, PsychicResponse* response) {
+  server->on("/api/stats", HTTP_ANY, [this](PsychicRequest* request, PsychicResponse* response) {
     JsonDocument json;
     json["cmd"] = "get_stats";
 
@@ -199,7 +194,7 @@ void server_setup()
   });
 
   // send update json
-  server->on("/api/update", HTTP_ANY, [](PsychicRequest* request, PsychicResponse* response) {
+  server->on("/api/update", HTTP_ANY, [this](PsychicRequest* request, PsychicResponse* response) {
     JsonDocument json;
     json["cmd"] = "get_update";
 
@@ -209,7 +204,7 @@ void server_setup()
   });
 
   // downloadable coredump file
-  server->on("/coredump.bin", HTTP_GET, [](PsychicRequest* request, PsychicResponse* response) {
+  server->on("/coredump.bin", HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
     deleteCoreDump(); // clear ESP flash dump
     has_coredump = false;
 
@@ -227,7 +222,7 @@ void server_setup()
   server->start();
 }
 
-void server_loop()
+void HTTPController::loop()
 {
   // process our websockets outside the callback.
   WebsocketRequest request;
@@ -239,10 +234,10 @@ void server_loop()
   }
 }
 
-void sendToAllWebsockets(const char* jsonString, UserRole auth_level)
+void HTTPController::sendToAllWebsockets(const char* jsonString, UserRole auth_level)
 {
   // make sure we're allowed to see the message
-  if (auth_level > config.app_default_role) {
+  if (auth_level > _config.app_default_role) {
     for (byte i = 0; i < YB_CLIENT_LIMIT; i++) {
       if (authenticatedClients[i].socket) {
         // make sure its a valid client
@@ -275,7 +270,7 @@ void sendToAllWebsockets(const char* jsonString, UserRole auth_level)
   }
 }
 
-bool logClientIn(PsychicWebSocketClient* client, UserRole role)
+bool HTTPController::logClientIn(PsychicWebSocketClient* client, UserRole role)
 {
   // did we not find a spot?
   if (!addClientToAuthList(client, role)) {
@@ -290,7 +285,7 @@ bool logClientIn(PsychicWebSocketClient* client, UserRole role)
   return true;
 }
 
-esp_err_t handleWebServerRequest(JsonVariant input, PsychicRequest* request, PsychicResponse* response)
+esp_err_t HTTPController::handleWebServerRequest(JsonVariant input, PsychicRequest* request, PsychicResponse* response)
 {
   esp_err_t err = ESP_OK;
   JsonDocument output;
@@ -300,11 +295,11 @@ esp_err_t handleWebServerRequest(JsonVariant input, PsychicRequest* request, Psy
   if (request->hasParam("pass"))
     input["pass"] = request->getParam("pass")->value();
 
-  if (config.app_enable_api) {
+  if (_config.app_enable_api) {
     isApiClientLoggedIn(input);
-    handleReceivedJSON(input, output, YBP_MODE_HTTP);
+    _app.protocol.handleReceivedJSON(input, output, YBP_MODE_HTTP);
   } else
-    generateErrorJSON(output, "Web API is disabled.");
+    _app.protocol.generateErrorJSON(output, "Web API is disabled.");
 
   // we can have empty messages
   if (output.size()) {
@@ -336,7 +331,7 @@ esp_err_t handleWebServerRequest(JsonVariant input, PsychicRequest* request, Psy
   return err;
 }
 
-void handleWebSocketMessage(PsychicWebSocketRequest* request, uint8_t* data,
+void HTTPController::handleWebSocketMessage(PsychicWebSocketRequest* request, uint8_t* data,
   size_t len)
 {
   // build our websocket request - copy the existing one
@@ -369,7 +364,7 @@ void handleWebSocketMessage(PsychicWebSocketRequest* request, uint8_t* data,
     request->reply("{\"error\":\"Queue Full\"}");
 }
 
-void handleWebsocketMessageLoop(WebsocketRequest* request)
+void HTTPController::handleWebsocketMessageLoop(WebsocketRequest* request)
 {
   // make sure our client is still good.
   PsychicWebSocketClient* client = websocketHandler.getClient(request->socket);
@@ -386,9 +381,9 @@ void handleWebsocketMessageLoop(WebsocketRequest* request)
   if (err) {
     char error[64];
     sprintf(error, "deserializeJson() failed with code %s", err.c_str());
-    generateErrorJSON(output, error);
+    _app.protocol.generateErrorJSON(output, error);
   } else
-    handleReceivedJSON(input, output, YBP_MODE_WEBSOCKET, client);
+    _app.protocol.handleReceivedJSON(input, output, YBP_MODE_WEBSOCKET, client);
 
   // empty messages are valid, so don't send a response
   if (output.size()) {
@@ -408,9 +403,7 @@ void handleWebsocketMessageLoop(WebsocketRequest* request)
         Serial.println("handleWebsocketMessageLoop send mutex fail");
       }
 
-      // keep track!
-      sentMessages++;
-      totalSentMessages++;
+      _app.protocol.incrementSentMessages();
 
       free(jsonBuffer);
     } else {
@@ -419,7 +412,7 @@ void handleWebsocketMessageLoop(WebsocketRequest* request)
   }
 }
 
-bool isLoggedIn(JsonVariantConst input, byte mode,
+bool HTTPController::isLoggedIn(JsonVariantConst input, byte mode,
   PsychicWebSocketClient* connection)
 {
   // login only required for websockets.
@@ -433,21 +426,21 @@ bool isLoggedIn(JsonVariantConst input, byte mode,
     return false;
 }
 
-UserRole getUserRole(JsonVariantConst input, byte mode,
+UserRole HTTPController::getUserRole(JsonVariantConst input, byte mode,
   PsychicWebSocketClient* connection)
 {
   // login only required for websockets.
   if (mode == YBP_MODE_WEBSOCKET)
     return getWebsocketRole(input, connection);
   else if (mode == YBP_MODE_HTTP)
-    return config.api_role;
+    return _config.api_role;
   else if (mode == YBP_MODE_SERIAL)
-    return config.serial_role;
+    return _config.serial_role;
   else
-    return config.app_default_role;
+    return _config.app_default_role;
 }
 
-bool isWebsocketClientLoggedIn(JsonVariantConst doc,
+bool HTTPController::isWebsocketClientLoggedIn(JsonVariantConst doc,
   PsychicWebSocketClient* client)
 {
   // are they in our auth array?
@@ -458,7 +451,7 @@ bool isWebsocketClientLoggedIn(JsonVariantConst doc,
   return false;
 }
 
-UserRole getWebsocketRole(JsonVariantConst doc,
+UserRole HTTPController::getWebsocketRole(JsonVariantConst doc,
   PsychicWebSocketClient* client)
 {
   // are they in our auth array?
@@ -466,10 +459,10 @@ UserRole getWebsocketRole(JsonVariantConst doc,
     if (authenticatedClients[i].socket == client->socket())
       return authenticatedClients[i].role;
 
-  return config.app_default_role;
+  return _config.app_default_role;
 }
 
-bool checkLoginCredentials(JsonVariantConst doc, UserRole& role)
+bool HTTPController::checkLoginCredentials(JsonVariantConst doc, UserRole& role)
 {
   if (!doc["user"].is<String>())
     return false;
@@ -483,35 +476,35 @@ bool checkLoginCredentials(JsonVariantConst doc, UserRole& role)
   strlcpy(mypass, doc["pass"] | "", sizeof(myuser));
 
   // morpheus... i'm in.
-  if (!strcmp(config.admin_user, myuser) && !strcmp(config.admin_pass, mypass)) {
+  if (!strcmp(_config.admin_user, myuser) && !strcmp(_config.admin_pass, mypass)) {
     role = ADMIN;
     return true;
   }
 
-  if (!strcmp(config.guest_user, myuser) && !strcmp(config.guest_pass, mypass)) {
+  if (!strcmp(_config.guest_user, myuser) && !strcmp(_config.guest_pass, mypass)) {
     role = GUEST;
     return true;
   }
 
   // default to fail then.
-  role = config.app_default_role;
+  role = _config.app_default_role;
   return false;
 }
 
-bool isSerialClientLoggedIn(JsonVariantConst doc)
+bool HTTPController::isSerialClientLoggedIn(JsonVariantConst doc)
 {
-  if (is_serial_authenticated)
+  if (_app.protocol.isSerialAuthenticated())
     return true;
   else
-    return checkLoginCredentials(doc, config.serial_role);
+    return checkLoginCredentials(doc, _config.serial_role);
 }
 
-bool isApiClientLoggedIn(JsonVariantConst doc)
+bool HTTPController::isApiClientLoggedIn(JsonVariantConst doc)
 {
-  return checkLoginCredentials(doc, config.api_role);
+  return checkLoginCredentials(doc, _config.api_role);
 }
 
-bool addClientToAuthList(PsychicWebSocketClient* client, UserRole role)
+bool HTTPController::addClientToAuthList(PsychicWebSocketClient* client, UserRole role)
 {
   byte i;
   for (i = 0; i < YB_CLIENT_LIMIT; i++) {
@@ -535,14 +528,14 @@ bool addClientToAuthList(PsychicWebSocketClient* client, UserRole role)
     return true;
 }
 
-void removeClientFromAuthList(PsychicWebSocketClient* client)
+void HTTPController::removeClientFromAuthList(PsychicWebSocketClient* client)
 {
   byte i;
   for (i = 0; i < YB_CLIENT_LIMIT; i++) {
     // did we find an empty slot?
     if (authenticatedClients[i].socket == client->socket()) {
       authenticatedClients[i].socket = 0;
-      authenticatedClients[i].role = config.app_default_role;
+      authenticatedClients[i].role = _config.app_default_role;
     }
   }
 }

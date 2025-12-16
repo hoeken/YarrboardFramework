@@ -14,11 +14,14 @@
 #define YarrboardApp_h
 
 #include "ConfigManager.h"
+#include "HTTPController.h"
+#include "IntervalTimer.h"
 #include "MQTTController.h"
 #include "NavicoController.h"
 #include "NetworkController.h"
 #include "OTAController.h"
 #include "ProtocolController.h"
+#include "RollingAverage.h"
 #include "YarrboardDebug.h"
 
 class YarrboardApp
@@ -26,6 +29,7 @@ class YarrboardApp
   public:
     ConfigManager config;
     NetworkController network;
+    HTTPController http;
     ProtocolController protocol;
     NavicoController navico;
     MQTTController mqtt;
@@ -39,9 +43,17 @@ class YarrboardApp
     void full_setup();
     void full_loop();
 
-  private:
     unsigned int framerate;
+
+  private:
     WebsocketPrint networkLogger;
+
+    // various timer things.
+    IntervalTimer it;
+    RollingAverage loopSpeed;
+    RollingAverage framerateAvg;
+    unsigned long lastLoopMicros = 0;
+    unsigned long lastLoopMillis = 0;
 };
 
 #endif /* YarrboardApp_h */

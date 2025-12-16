@@ -11,8 +11,6 @@
  */
 
 #include "YarrboardApp.h"
-#include "IntervalTimer.h"
-#include "RollingAverage.h"
 #include "YarrboardDebug.h"
 
 #include "ntp.h"
@@ -27,11 +25,14 @@
 
 YarrboardApp::YarrboardApp() : config(*this),
                                network(*this, config),
+                               http(*this, config),
                                protocol(*this, config),
-                               networkLogger(protocol),
                                navico(*this, config),
                                mqtt(*this, config),
-                               ota(*this, config)
+                               ota(*this, config),
+                               networkLogger(protocol),
+                               loopSpeed(100, 1000),
+                               framerateAvg(10, 10000)
 
 {
 }
@@ -58,17 +59,6 @@ void YarrboardApp::setup()
     full_setup();
 }
 
-void YarrboardApp::loop()
-{
-}
-
-// various timer things.
-IntervalTimer it;
-RollingAverage loopSpeed(100, 1000);
-RollingAverage framerateAvg(10, 10000);
-unsigned long lastLoopMicros = 0;
-unsigned long lastLoopMillis = 0;
-
 void YarrboardApp::full_setup()
 {
   network.setup();
@@ -77,7 +67,7 @@ void YarrboardApp::full_setup()
   ntp_setup();
   YBP.println("NTP ok");
 
-  server_setup();
+  http.setup();
   YBP.println("Server ok");
 
   protocol.setup();
@@ -138,6 +128,10 @@ void YarrboardApp::full_setup()
   lastLoopMicros = micros();
 }
 
+void YarrboardApp::loop()
+{
+}
+
 void YarrboardApp::full_loop()
 {
   // start our interval timer
@@ -191,8 +185,8 @@ void YarrboardApp::full_loop()
   network.loop();
   it.time("network_loop");
 
-  server_loop();
-  it.time("server_loop");
+  http.loop();
+  it.time("http_loop");
 
   protocol.loop();
   it.time("protocol_loop");

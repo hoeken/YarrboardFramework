@@ -90,6 +90,18 @@ void ProtocolController::loop()
   }
 }
 
+void ProtocolController::incrementSentMessages()
+{
+  // keep track!
+  sentMessages++;
+  totalSentMessages++;
+}
+
+bool ProtocolController::isSerialAuthenticated()
+{
+  return is_serial_authenticated;
+}
+
 void ProtocolController::handleSerialJson()
 {
   JsonDocument input;
@@ -139,7 +151,7 @@ void ProtocolController::handleReceivedJSON(JsonVariantConst input, JsonVariant 
   totalReceivedMessages++;
 
   // what would you say you do around here?
-  UserRole role = getUserRole(input, mode, connection);
+  UserRole role = _app.http.getUserRole(input, mode, connection);
 
   // only pages with no login requirements
   if (!strcmp(cmd, "login"))
@@ -461,8 +473,8 @@ void ProtocolController::handleSetWebServerConfig(JsonVariantConst input, JsonVa
   _config.app_enable_mfd = input["app_enable_mfd"] | YB_DEFAULT_APP_ENABLE_MFD;
   _config.app_enable_api = input["app_enable_api"] | YB_DEFAULT_APP_ENABLE_API;
   _config.app_enable_ssl = input["app_enable_ssl"] | _config.app_enable_ssl;
-  server_cert = input["server_cert"] | "";
-  server_key = input["server_key"] | "";
+  _config.server_cert = input["server_cert"] | "";
+  _config.server_key = input["server_key"] | "";
 
   // save it to file.
   char error[128] = "Unknown";
@@ -579,7 +591,7 @@ void ProtocolController::handleLogin(JsonVariantConst input, JsonVariant output,
   if (is_authenticated) {
     // check to see if there's room for us.
     if (mode == YBP_MODE_WEBSOCKET) {
-      if (!logClientIn(connection, role))
+      if (!_app.http.logClientIn(connection, role))
         return generateErrorJSON(output, "Too many connections.");
     } else if (mode == YBP_MODE_SERIAL) {
       is_serial_authenticated = true;
@@ -600,12 +612,12 @@ void ProtocolController::handleLogin(JsonVariantConst input, JsonVariant output,
 void ProtocolController::handleLogout(JsonVariantConst input, JsonVariant output, YBMode mode,
   PsychicWebSocketClient* connection)
 {
-  if (!isLoggedIn(input, mode, connection))
+  if (!_app.http.isLoggedIn(input, mode, connection))
     return generateErrorJSON(output, "You are not logged in.");
 
   // what type of client are you?
   if (mode == YBP_MODE_WEBSOCKET) {
-    removeClientFromAuthList(connection);
+    _app.http.removeClientFromAuthList(connection);
 
     // we don't actually want to close the connection, bad UI
     // connection->close();
@@ -1624,9 +1636,9 @@ void ProtocolController::generateStatsJSON(JsonVariant output)
   output["received_message_mps"] = receivedMessagesPerSecond;
   output["sent_message_total"] = totalSentMessages;
   output["sent_message_mps"] = sentMessagesPerSecond;
-  output["websocket_client_count"] = websocketClientCount;
-  output["http_client_count"] = httpClientCount - websocketClientCount;
-  // output["fps"] = (int)framerate;
+  output["websocket_client_count"] = _app.http.websocketClientCount;
+  output["http_client_count"] = _app.http.httpClientCount - _app.http.websocketClientCount;
+  output["fps"] = (int)_app.framerate;
   output["uptime"] = esp_timer_get_time();
   output["heap_size"] = ESP.getHeapSize();
   output["free_heap"] = ESP.getFreeHeap();
@@ -1846,7 +1858,7 @@ void ProtocolController::sendDebug(const char* message)
 
 void ProtocolController::sendToAll(const char* jsonString, UserRole auth_level)
 {
-  sendToAllWebsockets(jsonString, auth_level);
+  _app.http.sendToAllWebsockets(jsonString, auth_level);
 
   if (_config.app_enable_serial && _config.serial_role >= auth_level)
     Serial.println(jsonString);
