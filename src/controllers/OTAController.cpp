@@ -14,19 +14,18 @@
 
 OTAController* OTAController::_instance = nullptr;
 
-OTAController::OTAController(YarrboardApp& app, ConfigManager& config) : _app(app),
-                                                                         _config(config),
-                                                                         FOTA(YB_HARDWARE_VERSION, YB_FIRMWARE_VERSION, YB_VALIDATE_FIRMWARE_SIGNATURE)
+OTAController::OTAController(YarrboardApp& app) : BaseController(app, "ota"),
+                                                  FOTA(YB_HARDWARE_VERSION, YB_FIRMWARE_VERSION, YB_VALIDATE_FIRMWARE_SIGNATURE)
 {
   MyPubKey = new CryptoMemAsset("RSA Key", public_key, strlen(public_key) + 1);
 }
 
-void OTAController::setup()
+bool OTAController::setup()
 {
-  if (_config.app_enable_ota) {
-    ArduinoOTA.setHostname(_config.local_hostname);
+  if (_cfg.app_enable_ota) {
+    ArduinoOTA.setHostname(_cfg.local_hostname);
     ArduinoOTA.setPort(3232);
-    ArduinoOTA.setPassword(_config.admin_pass);
+    ArduinoOTA.setPassword(_cfg.admin_pass);
     ArduinoOTA.begin();
   }
 
@@ -40,6 +39,8 @@ void OTAController::setup()
   FOTA.setUpdateCheckFailCb(_updateCheckFailCallbackStatic);
 
   FOTA.printConfig();
+
+  return true;
 }
 
 void OTAController::loop()
@@ -49,14 +50,14 @@ void OTAController::loop()
     doOTAUpdate = false;
   }
 
-  if (_config.app_enable_ota) {
+  if (_cfg.app_enable_ota) {
     ArduinoOTA.handle();
   }
 }
 
 void OTAController::end()
 {
-  if (!_config.app_enable_ota)
+  if (!_cfg.app_enable_ota)
     ArduinoOTA.end();
 }
 

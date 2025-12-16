@@ -9,6 +9,7 @@
 #ifndef YARR_OTA_H
 #define YARR_OTA_H
 
+#include "controllers/BaseController.h"
 #include "utility.h"
 #include <ArduinoOTA.h>
 
@@ -18,22 +19,19 @@
 class YarrboardApp;
 class ConfigManager;
 
-class OTAController
+class OTAController : BaseController
 {
   public:
-    OTAController(YarrboardApp& app, ConfigManager& config);
+    OTAController(YarrboardApp& app);
 
-    void setup();
-    void loop();
+    bool setup() override;
+    void loop() override;
+
     void end();
-
     bool checkOTA();
     void startOTA();
 
   private:
-    YarrboardApp& _app;
-    ConfigManager& _config;
-
     esp32FOTA FOTA;
 
     // my key for future firmware signing
