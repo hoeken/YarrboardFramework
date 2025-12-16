@@ -1,3 +1,4 @@
+node_modules
 .clang_complete
 .gcc-flags.json
 .pio

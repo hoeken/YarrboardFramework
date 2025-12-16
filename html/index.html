@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Yarrboard</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="stylesheet" type="text/css" href="libs/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="libs/spectrum.min.css">
+    <link rel="stylesheet" type="text/css" href="libs/c3.min.css">
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <script src="libs/yarrboard-client.js"></script>
+    <script src="libs/jquery-3.7.0.min.js"></script>
+    <script src="libs/bootstrap.min.js"></script>
+    <script src="libs/jscookie.js"></script>
+    <script src="libs/spectrum.min.js"></script>
+    <script src="libs/marked.min.js"></script>
+    <script src="libs/d3.min.js"></script>
+    <script src="libs/c3.min.js"></script>
+    <script src="libs/validate.min.js"></script>
+
+    <script src="js/Log.js"></script>
+    <script src="js/Util.js"></script>
+    <script src="js/App.js"></script>
+    <script src="js/Brineomatic.js"></script>
+    <script src="js/ChannelRegistry.js"></script>
+    <script src="js/channels/BaseChannel.js"></script>
+    <!-- <script src="js/channels/ADCChannel.js"></script> -->
+    <!-- <script src="js/channels/DigitalInputChannel.js"></script> -->
+    <script src="js/channels/PWMChannel.js"></script>
+    <script src="js/channels/RelayChannel.js"></script>
+    <script src="js/channels/ServoChannel.js"></script>
+    <script src="js/channels/StepperChannel.js"></script>
+</head>
+
+<body>
+    <script>
+        $(document).ready(YB.App.start);
+    </script>
+    <div class="col-xl-8 col-lg-10 mx-auto">
+        <nav id="navbar"
+            class="navbar sticky-top navbar-expand-md bg-body-tertiary navbar-light bg-light rounded-bottom"
+            style="display: none">
+            <div class="container-fluid">
+                <a class="navbar-brand" onclick="YB.App.openPage('control')" href="#control">
+                    <img class="logo align-top me-3 rounded" src="logo.png" alt="Avast ye scurvy dog." width="30"
+                        height="30">
+                    <span id="boardName">Yarrboard</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav align-items-center">
+                        <li id="controlNav" class="nav-item nav-permission">
+                            <a class="nav-link active" onclick="YB.App.openPage('control')" aria-current="page"
+                                href="#control">Control</a>
+                        </li>
+                        <li id="statsNav" class="nav-item nav-permission">
+                            <a class="nav-link" onclick="YB.App.openPage('stats')" href="#stats">Status</a>
+                        </li>
+                        <!-- <li id="graphsNav" class="nav-item nav-permission mfdHide" style="display: none">
+                            <a class="nav-link" onclick="YB.App.openPage('graphs')" href="#graphs">Graphs</a>
+                        </li> -->
+                        <li id="configNav" class="nav-item nav-permission">
+                            <a class="nav-link" onclick="YB.App.openPage('config')" href="#config">Config</a>
+                        </li>
+                        <li id="settingsNav" class="nav-item nav-permission">
+                            <a class="nav-link" onclick="YB.App.openPage('settings')" href="#settings">Settings</a>
+                        </li>
+                        <li id="systemNav" class="nav-item nav-permission">
+                            <a class="nav-link" onclick="YB.App.openPage('system')" href="#system">System</a>
+                        </li>
+                        <li id="loginNav" class="nav-item" style="display: none">
+                            <a class="nav-link" onclick="YB.App.openPage('login')" href="#login">Login</a>
+                        </li>
+                        <li id="logoutNav" class="nav-item" style="display: none">
+                            <a class="nav-link" onclick="YB.App.openPage('logout')" href="#logout">Logout</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <script>
+            $('.navbar-collapse ul li a').click(function () {
+                $('.navbar-toggler:visible').click();
+            });
+            $(function () {
+                $('.navbar-collapse ul li a:not(.dropdown-toggle)').bind('click touchstart', function () {
+                    $('.navbar-toggler:visible').click();
+                });
+            });
+        </script>
+        <main>
+            <div id="loading">
+                <div class="d-flex justify-content-center align-items-center" style="height: 300px">
+                    <div class="spinner-border" role="status" style="width: 7rem; height: 7rem;"></div>
+                </div>
+            </div>
+            <div class="mx-3 mt-3">
+                <div id="liveAlertPlaceholder"></div>
+                <div id="controlPage" class="pageContainer row" style="display:none">
+                    <div id="adcControlDiv" style="display:none" class="col-md-12">
+                        <h4 class="text-center">Analog Inputs</h4>
+                        <table id="adcTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adcTableBody" class="table-group-divider"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="configPage" class="pageContainer" style="display:none">
+                    <form class="row g-3" id="ConfigForm">
+                    </form>
+                </div>
+                <div id="graphsPage" class="pageContainer" style="display:none">
+                </div>
+                <div id="statsPage" class="pageContainer" style="display:none">
+                    <div class="row">
+                        <div class="col-sm" id="statsContainer">
+                        </div>
+                        <div class="col-sm">
+                            <h5>Board Information</h5>
+                            <table id="statsTable" class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Name</th>
+                                        <th class="text-end" scope="col">Info</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="table-group-divider">
+                                    <tr class="uptime" onclick="$('#last_reboot').toggle()">
+                                        <th scope="row">Uptime</th>
+                                        <td id="uptime" class="text-end"></td>
+                                    </tr>
+                                    <tr id="last_reboot" style="display: none">
+                                        <th scope="row">Last Reboot Reason</th>
+                                        <td id="last_reboot_reason" class="text-end"></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">IP Address</th>
+                                        <td id="ip_address" class="text-end"></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">WiFi Signal</th>
+                                        <td class="text-end">
+                                            <span id="rssi" class="align-middle"></span>
+                                            <svg class="rssi_icon text-danger" id="rssi_icon_0"
+                                                xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                fill="currentColor" class="bi bi-reception-0" viewBox="0 0 16 16">
+                                                <path
+                                                    d="M0 13.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5" />
+                                            </svg>
+                                            <svg class="rssi_icon text-warning" id="rssi_icon_1"
+                                                xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                fill="currentColor" class="bi bi-reception-1" viewBox="0 0 16 16">
+                                                <path
+                                                    d="M0 11.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm4 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5" />
+                                            </svg>
+                                            <svg class="rssi_icon text-warning" id="rssi_icon_2"
+                                                xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                fill="currentColor" class="bi bi-reception-2" viewBox="0 0 16 16">
+                                                <path
+                                                    d="M0 11.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm4-3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm4 5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5" />
+                                            </svg>
+                                            <svg class="rssi_icon text-warning" id="rssi_icon_3"
+                                                xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                fill="currentColor" class="bi bi-reception-3" viewBox="0 0 16 16">
+                                                <path
+                                                    d="M0 11.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm4-3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm4-3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm4 8a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5" />
+                                            </svg>
+                                            <svg class="rssi_icon text-success" id="rssi_icon_4"
+                                                xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                fill="currentColor" class="bi bi-reception-4" viewBox="0 0 16 16">
+                                                <path
+                                                    d="M0 11.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm4-3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm4-3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5zm4-3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5z" />
+                                            </svg>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">MQTT Server</th>
+                                        <td id="mqtt_status" class="text-end"></td>
+                                    </tr>
+                                    <tr onclick="$('#other_versions').toggle()">
+                                        <th scope="row">Firmware Version</th>
+                                        <td id="firmware_version" class="text-end"></td>
+                                    </tr>
+                                    <tr id="other_versions" style="display: none">
+                                        <td colspan="2" align="right">
+                                            <table class="table ministats">
+                                                <tbody>
+                                                    <tr>
+                                                        <th scope="row">Hardware</th>
+                                                        <td id="hardware_version" class="text-end"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th scope="row">Yarrboard Client</th>
+                                                        <td id="yarrboard_client_version" class="text-end"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th scope="row">ESP-IDF</th>
+                                                        <td id="esp_idf_version" class="text-end"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th scope="row">Arduino</th>
+                                                        <td id="arduino_version" class="text-end"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th scope="row">PsychicHttp</th>
+                                                        <td id="psychic_http_version" class="text-end"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th scope="row">Git Hash</th>
+                                                        <td id="git_hash" class="text-end"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th scope="row">Build Time</th>
+                                                        <td id="build_time" class="text-end"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr id="bus_voltage_row">
+                                        <th scope="row">Bus Voltage</th>
+                                        <td id="bus_voltage" class="text-end"></td>
+                                    </tr>
+                                    <tr id="fan_rpm_row">
+                                        <th scope="row">Fan RPMs</th>
+                                        <td id="fan_rpm" class="text-end"></td>
+                                    </tr>
+                                    <tr onclick="$('#message_stats').toggle()">
+                                        <th scope="row">Loop Speed</th>
+                                        <td id="fps" class="text-end"></td>
+                                    </tr>
+                                    <tr id="message_stats" style="display: none">
+                                        <td colspan="2" align="right">
+                                            <table class="table ministats">
+                                                <tbody>
+                                                    <tr>
+                                                        <th>Message RX Rate</th>
+                                                        <td id="received_message_mps" class="text-end"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Message TX Rate</th>
+                                                        <td id="sent_message_mps" class="text-end"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Message RX Total</th>
+                                                        <td id="received_message_total" class="text-end">
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Message TX Total</th>
+                                                        <td id="sent_message_total" class="text-end"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Websocket Clients</th>
+                                                        <td id="websocket_client_count" class="text-end">
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>HTTP Clients</th>
+                                                        <td id="http_client_count" class="text-end"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Total Clients</th>
+                                                        <td id="total_client_count" class="text-end"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr onclick="$('#memory_stats').toggle()">
+                                        <th scope="row">Memory Usage</th>
+                                        <td class="align-middle">
+                                            <div id="memory_usage" class="progress" role="progressbar"
+                                                aria-label="Memory Usage" aria-valuenow="0" aria-valuemin="0"
+                                                aria-valuemax="100">
+                                                <div class="progress-bar" style="width: 0%">0 KiB</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr id="memory_stats" style="display: none">
+                                        <td colspan="2" align="right">
+                                            <table class="table ministats">
+                                                <tr>
+                                                    <th scope="row">Heap Size</th>
+                                                    <td id="heap_size" class="text-end"></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Min Free Heap</th>
+                                                    <td id="min_free_heap" class="text-end"></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Free Heap</th>
+                                                    <td id="free_heap" class="text-end"></td>
+                                                </tr>
+                                                <tr>
+                                                    <th scope="row">Max Alloc Heap</th>
+                                                    <td id="max_alloc_heap" class="text-end"></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <th scope="row">Unique ID</th>
+                                        <td id="uuid" class="text-end"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id="settingsPage" class="pageContainer" style="display:none">
+                    <h4>Settings</h4>
+                    <div id="generalSettingsForm" class="p-3 mb-3 border border-secondary rounded">
+                        <h5>General</h5>
+
+                        <div class="form-floating mb-3">
+                            <input id="board_name" type="text" class="form-control">
+                            <label for="board_name">Board Name</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <select id="startup_melody" class="form-select" aria-label="Startup Melody">
+                            </select>
+                            <label for="default_role">Startup Melody</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="text-center">
+                            <button id="saveGeneralSettings" type="button" class="btn btn-primary">
+                                Save General Settings
+                            </button>
+                        </div>
+                    </div>
+                    <div id="authenticationSettingsForm" class="p-3 mb-3 border border-secondary rounded">
+                        <h5>Authentication</h5>
+                        <div class="form-floating mb-3">
+                            <select id="default_role" class="form-select" aria-label="Default User Role">
+                                <option value="nobody">Nobody - Everyone must login.</option>
+                                <option value="guest">Guest - Anyone can view and interact. (Admin must
+                                    login)
+                                </option>
+                                <option value="admin">Admin - Anyone has full control. (No login)</option>
+                            </select>
+                            <label for="default_role">Default User Role</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-floating mb-3 admin_credentials">
+                            <input id="admin_user" type="text" class="form-control">
+                            <label for="admin_user">Admin Username</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-floating mb-3 admin_credentials">
+                            <input id="admin_pass" type="text" class="form-control">
+                            <label for="admin_pass">Admin Password</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-floating mb-3 guest_credentials">
+                            <input id="guest_user" type="text" class="form-control">
+                            <label for="guest_user">Guest Username</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-floating mb-3 guest_credentials">
+                            <input id="guest_pass" type="text" class="form-control">
+                            <label for="guest_pass">Guest Password</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="text-center">
+                            <button id="saveAuthenticationSettings" type="button" class="btn btn-primary">
+                                Save Authentication Settings
+                            </button>
+                        </div>
+                    </div>
+                    <div id="webServerSettingsForm" class="p-3 mb-3 border border-secondary rounded">
+                        <h5>Web Server</h5>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="app_enable_api" checked>
+                            <label class="form-check-label" for="app_enable_api">
+                                Enable Web API - <a
+                                    href="https://github.com/hoeken/yarrboard#web-api-protocol">documentation</a>
+                            </label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="app_enable_mfd" checked>
+                            <label class="form-check-label" for="app_enable_mfd">
+                                Enable MFD Integration - <a
+                                    href="https://github.com/hoeken/yarrboard#mfd-integration">documentation</a>
+                            </label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="app_enable_ssl" checked>
+                            <label class="form-check-label" for="app_enable_ssl">
+                                Enable SSL / HTTPS Encryption - <a
+                                    href="https://github.com/hoeken/yarrboard#enable-ssl">documentation</a>
+                            </label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-floating mb-3" style="display: none" id="server_cert_container">
+                            <textarea class="form-control" id="server_cert" placeholder=""></textarea>
+                            <label for="server_cert">Server Certificate</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-floating mb-3" style="display: none" id="server_key_container">
+                            <textarea class="form-control" id="server_key" placeholder=""></textarea>
+                            <label for="server_key">Server Private Key</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="text-center">
+                            <button id="saveWebServerSettings" type="button" class="btn btn-primary">
+                                Save Web Server Settings</button>
+                        </div>
+                    </div>
+                    <div id="mqttSettingsForm" class="p-3 mb-3 border border-secondary rounded">
+                        <h5>MQTT</h5>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="app_enable_mqtt" checked>
+                            <label class="form-check-label" for="app_enable_mqtt">
+                                Enable MQTT Publishing - <a
+                                    href="https://github.com/hoeken/yarrboard#enable-mqtt">documentation</a>
+                            </label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-check form-switch mb-3 mqtt_field" style="display: none">
+                            <input class="form-check-input" type="checkbox" id="app_use_hostname_as_mqtt_uuid" checked>
+                            <label class="form-check-label" for="app_use_hostname_as_mqtt_uuid">
+                                Use hostname as MQTT Unique ID
+                            </label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-check form-switch mb-3 mqtt_field" style="display: none">
+                            <input class="form-check-input" type="checkbox" id="app_enable_ha_integration" checked>
+                            <label class="form-check-label" for="app_enable_ha_integration">
+                                Enable Home Assistant Integration - <a
+                                    href="https://github.com/hoeken/yarrboard#enable-ha">documentation</a>
+                            </label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-floating mb-3 mqtt_field" style="display: none">
+                            <input id="mqtt_server" type="text" class="form-control">
+                            <label for="mqtt_server">MQTT Server</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-floating mb-3 mqtt_field" style="display: none">
+                            <input id="mqtt_user" type="text" class="form-control">
+                            <label for="mqtt_user">MQTT Username</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-floating mb-3 mqtt_field" style="display: none">
+                            <input id="mqtt_pass" type="text" class="form-control">
+                            <label for="mqtt_pass">MQTT Password</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-floating mb-3 mqtt_field" style="display: none">
+                            <textarea class="form-control" id="mqtt_cert" placeholder=""></textarea>
+                            <label for="mqtt_cert">MQTT Certificate</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="text-center">
+                            <button id="saveMQTTSettings" type="button" class="btn btn-primary">
+                                Save MQTT Settings
+                            </button>
+                        </div>
+                    </div>
+                    <div id="networkSettingsForm" class="p-3 mb-3 border border-secondary rounded">
+                        <h5>Network</h5>
+                        <div class="form-floating mb-3">
+                            <select id="wifi_mode" class="form-select" aria-label="Wifi Mode">
+                                <option value="client">Client (Yarrboard connects to WiFi)</option>
+                                <option value="ap">AP (You connect to Yarrboard)</option>
+                            </select>
+                            <label for="wifi_mode">Wifi Mode</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input id="wifi_ssid" type="text" class="form-control">
+                            <label for="wifi_ssid">Wifi Name (SSID)</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input id="wifi_pass" type="text" class="form-control">
+                            <label for="wifi_pass">Wifi Password</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="input-group form-floating mb-3">
+                            <input id="local_hostname" type="text" class="form-control" placeholder="">
+                            <label for="local_hostname">Local Hostname</label>
+                            <span class="input-group-text">.local</span>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="text-center">
+                            <button id="saveNetworkSettings" type="button" class="btn btn-primary">
+                                Save Network Settings
+                            </button>
+                        </div>
+                    </div>
+                    <div id="miscSettingsForm" class="p-3 mb-3 border border-secondary rounded">
+                        <h5>Miscellaneous</h5>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="app_enable_ota" checked>
+                            <label class="form-check-label" for="app_enable_ota">
+                                Enable Arduino OTA - for development w/ VSCode
+                            </label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="app_enable_serial" checked>
+                            <label class="form-check-label" for="app_enable_serial">
+                                Enable Serial / USB API - <a
+                                    href="https://github.com/hoeken/yarrboard#serial-api-protocol">documentation</a>
+                            </label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="text-center">
+                            <button id="saveMiscellaneousSettings" type="button" class="btn btn-primary">
+                                Save Miscellaneous Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="systemPage" class="pageContainer" style="display:none">
+                    <div class="row justify-content-center">
+                        <div class="col-md-12 mb-3">
+                            <div clas="row">
+                                <h5>Firmware</h5>
+                                <div id="firmware_checking" class="alert alert-secondary" role="alert">
+                                    Checking for new firmware...
+                                </div>
+                                <div id="firmware_up_to_date" class="alert alert-success" role="alert"
+                                    style="display: none">
+                                    Firmware is up to date.
+                                </div>
+                                <div id="firmware_update_available" style="display: none"
+                                    class="alert alert-primary mt-3" role="alert">
+                                    <h1>New Firmware Available</h1>
+                                    <ul>
+                                        <li>Version: <span id="new_firmware_version"></span> (<a id="firmware_bin"
+                                                href="">Firmware</a>)</li>
+                                    </ul>
+                                    <div id="firmware_changelog" style="display: none">
+                                        <h1>Changelog</h1>
+                                    </div>
+                                    <button id="btn_update_firmware" type="button" class="btn btn-primary"
+                                        onclick="YB.App.updateFirmware()">Update
+                                        Firmware</button>
+                                    <br />
+                                    <div id="progress_wrapper" style="display: none" class="mt-4">
+                                        <p>Update may take a while, please be patient. After an update, this
+                                            page
+                                            will
+                                            refresh. You may need to clear your browser cache after updating the
+                                            firmware if you are having issues.</p>
+                                        Firmware Update:
+                                        <div class="progress" role="progressbar" aria-label="Firmware Update"
+                                            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                            <div id="firmware_progress"
+                                                class="progress-bar progress-bar-striped progress-bar-animated"
+                                                style="width: 0%">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div id="adminAlertPlaceholder"></div>
+                                <h5>Board Configuration</h5>
+                                <div class="small mb-1">JSON configuration file for the board: Edit it here,
+                                    download a
+                                    backup, or load a whole config at once.</div>
+                                <div id="configurationUI">
+                                    <div class="mb-3">
+                                        <textarea class="form-control" id="configurationTextarea" rows="10"
+                                            placeholder="Loading..."></textarea>
+                                        <div id="invalidConfigurationJSON" class="text-danger" style="display: none">
+                                            Invalid JSON found.
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <button id="configurationOpen"
+                                            class="btn btn-secondary d-flex align-items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                fill="currentColor" class="bi bi-folder2-open" viewBox="0 0 16 16">
+                                                <path
+                                                    d="M.5 3a.5.5 0 0 1 .5-.5h3.672a.5.5 0 0 1 .353.146L6.5 4h7a.5.5 0 0 1 .5.5V6H1V3.5a.5.5 0 0 1-.5-.5" />
+                                                <path
+                                                    d="M.5 7h15l-1.528 6.11a2 2 0 0 1-1.94 1.39H3.968a2 2 0 0 1-1.94-1.39z" />
+                                            </svg>
+                                            Open
+                                        </button>
+                                        <input id="configurationFileInput" type="file"
+                                            accept=".json,application/json,text/*" hidden>
+
+                                        <button id="configurationCopy"
+                                            class="btn btn-secondary d-flex align-items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16">
+                                                <path fill-rule="evenodd"
+                                                    d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z" />
+                                            </svg>
+                                            <span id="copyIndicator">Copy</span>
+                                        </button>
+
+                                        <button id="configurationSave"
+                                            class="btn btn-primary d-flex align-items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                fill="currentColor" class="bi bi-floppy" viewBox="0 0 16 16">
+                                                <path d="M11 2H9v3h2z" />
+                                                <path
+                                                    d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z" />
+                                            </svg>
+                                            <span id="saveIndicator">Save</span>
+                                        </button>
+
+                                        <button id="configurationDownload"
+                                            class="btn btn-success d-flex align-items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                                <path
+                                                    d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+                                                <path
+                                                    d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+                                            </svg>
+                                            Download
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <h5 class="mb-3">Danger Zone</h5>
+                                <div class="d-flex justify-content-between">
+                                    <button class="btn btn-primary btn-lg w-50 me-2" type="button"
+                                        onclick="YB.App.restartBoard()">
+                                        Restart Board
+                                    </button>
+                                    <button class="btn btn-danger btn-lg w-50 ms-2" type="button"
+                                        onclick="YB.App.resetToFactory()">
+                                        Reset to Factory Defaults
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="loginPage" style="display:none" class="pageContainer form-signin mt-3 mx-auto">
+                    <h1 class="text-center d-flex align-items-center justify-content-center mb-4">
+                        <img class="logo me-4 rounded-3" src="logo.png" alt="" width="64" height="64">
+                        <span id="loginTitle">Yarrboard</span>
+                    </h1>
+                    <div class="form-floating">
+                        <input type="username" class="form-control" id="username" placeholder="admin">
+                        <label for="username">Username</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="password" class="form-control" id="password" placeholder="admin">
+                        <label for="password">Password</label>
+                    </div>
+                    <button class="btn btn-primary w-100 py-2" onclick="YB.App.doLogin()">Log in</button>
+                    <p class="text-center text-muted my-2">Default: admin/admin or guest/guest</p>
+                    <div id="liveAlertPlaceholder"></div>
+                    <script>
+                    </script>
+                </div>
+            </div>
+        </main>
+        <footer class="p-4 text-body-secondary text-center">
+            <div id="darkModeUI" class="row justify-content-center">
+                <div class="col-auto">
+                    <label for="darkSwitch">Dark&nbsp;Mode</label>
+                </div>
+                <div class="col-auto">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="darkSwitch">
+                    </div>
+                </div>
+            </div>
+            <div id="brightnessUI" class="row justify-content-center" style="display: none">
+                <div class="col-auto">
+                    <label for="brightnessSlider">Brightness</label>
+                </div>
+                <div class="col-auto">
+                    <div id="brightnessControl" class="form-check form-switch">
+                        <input type="range" class="form-range" min="0" max="100" id="brightnessSlider">
+                    </div>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div id="websocket_status">
+                    WebSocket:
+                    <span id="connection_startup" class="connection_status text-primary">CONNECTING</span>
+                    <span id="connection_good" class="connection_status text-success"
+                        style="display: none">CONNECTED</span>
+                    <span id="connection_retrying" class="connection_status text-warning"
+                        style="display: none">RETRYING</span>
+                    <span id="connection_failed" class="connection_status text-danger"
+                        style="display: none">FAILED</span>
+                </div>
+                <div id="copyright">
+                    <a id="projectName" href="https://github.com/hoeken/yarrboard">Yarrboard</a> &copy; <span
+                        onclick="$('#debug_log').toggle()" id="year">2025</span><br>
+                    <a href="https://www.oshwa.org/"><img src="oshw-logo-antipixel.webp"></a>
+                </div>
+            </div>
+            <div id="debug_log" style="display: none">
+                <h4>Debug Console</h4>
+                <form id="json_console_form" class="row g-2 mb-2 align-items-center">
+                    <div class="col flex-grow-1">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="json_console_payload"
+                                name="json_console_payload" placeholder="Enter JSON Command...">
+                            <button type="button" id="json_console_send" class="btn btn-primary">Send</button>
+                        </div>
+                    </div>
+                    <div class=" col-auto form-check ms-2">
+                        <input class="form-check-input" type="checkbox" id="debug_log_autoscroll"
+                            name="debug_log_autoscroll" checked>
+                        <label class="form-check-label" for="debug_log_autoscroll">Autoscroll</label>
+                    </div>
+                </form>
+                <textarea id="debug_log_text"></textarea>
+            </div>
+            <!-- Viewport:
+            <span class="d-none d-xs-block d-sm-none">xs</span>
+            <span class="d-none d-sm-block d-md-none">sm</span>
+            <span class="d-none d-md-block d-lg-none">md</span>
+            <span class="d-none d-lg-block d-xl-none">lg</span>
+            <span class="d-none d-xl-block d-xxl-none">xl</span>
+            <span class="d-none d-xxl-block">xxl</span> -->
+        </footer>
+    </div>
+</body>
+
+</html>

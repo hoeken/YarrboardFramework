@@ -19,15 +19,7 @@
 
 // generated at build by running "gulp" in the firmware directory.
 #include "index.html.gz.h"
-
-#ifdef YB_IS_FROTHFET
-  #include "logo-frothfet.png.gz.h"
-#elif YB_IS_BRINEOMATIC
-  #include "logo-brineomatic.png.gz.h"
-#else
-  #include "logo-navico.png.gz.h"
-  #include "logo-yarrboard.png.gz.h"
-#endif
+#include "logo.png.gz.h"
 
 #ifdef YB_HAS_FANS
   #include "fans.h"
