@@ -11,17 +11,18 @@
 
 #include "FastLED.h"
 #include "YarrboardConfig.h"
+#include "controllers/BaseController.h"
 
 class YarrboardApp;
 class ConfigManager;
 
-class RGBController
+class RGBController : BaseController
 {
   public:
-    RGBController(YarrboardApp& app, ConfigManager& config);
+    RGBController(YarrboardApp& app);
 
-    void setup();
-    void loop();
+    bool setup() override;
+    void loop() override;
 
     void setStatusColor(uint8_t r, uint8_t g, uint8_t b);
     void setStatusColor(const CRGB& color);
@@ -29,9 +30,6 @@ class RGBController
     void setPixelColor(uint8_t c, const CRGB& color);
 
   private:
-    YarrboardApp& _app;
-    ConfigManager& _config;
-
     unsigned long lastRGBUpdateMillis = 0;
 };
 

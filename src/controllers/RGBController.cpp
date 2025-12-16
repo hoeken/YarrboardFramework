@@ -6,19 +6,18 @@
   License: GPLv3
 */
 
-#include "RGBController.h"
+#include "controllers/RGBController.h"
 #include "ConfigManager.h"
 
 #ifdef YB_HAS_STATUS_RGB
 CRGB _leds[YB_STATUS_RGB_COUNT];
 #endif
 
-RGBController::RGBController(YarrboardApp& app, ConfigManager& config) : _app(app),
-                                                                         _config(config)
+RGBController::RGBController(YarrboardApp& app) : BaseController(app, "rgb")
 {
 }
 
-void RGBController::setup()
+bool RGBController::setup()
 {
 #ifdef YB_HAS_STATUS_RGB
   FastLED.addLeds<YB_STATUS_RGB_TYPE, YB_STATUS_RGB_PIN, YB_STATUS_RGB_ORDER>(_leds, YB_STATUS_RGB_COUNT);
@@ -27,6 +26,7 @@ void RGBController::setup()
   rgb_set_status_color(CRGB::Blue);
   FastLED.show();
 #endif
+  return true;
 }
 
 void RGBController::loop()

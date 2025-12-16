@@ -8,9 +8,9 @@
 
 #include "controllers/NetworkController.h"
 #include "ConfigManager.h"
-#include "RGBController.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
+#include "controllers/RGBController.h"
 
 NetworkController* NetworkController::_instance = nullptr;
 
