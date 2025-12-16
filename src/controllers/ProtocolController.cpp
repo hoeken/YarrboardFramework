@@ -137,9 +137,12 @@ void ProtocolController::loop()
 bool ProtocolController::registerCommand(UserRole role, const char* command, ProtocolMessageHandler handler)
 {
   if (commandMap.full()) {
-    YBP.println("Error: Protocol command list is full.");
+    YBP.printf("❌ Error: Protocol command list is full. (%s)\n", command);
     return false;
   }
+
+  if (hasCommand(command))
+    YBP.printf("⚠️ Warning: Overwriting protocol command '%s'\n", command);
 
   commandMap[command] = {role, handler};
   return true;
