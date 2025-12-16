@@ -12,15 +12,17 @@
 
 * protocol hooks
   * move the controller specific commands to each controllers setup.
-  * onGenerateUpdate(callback) - generate update json
-  * onGenerateFastUpdate(callback) - generate fast update json
-  * onGenerateStats(callback) - generate stats json
+  * generateUpdateHook(json) - generate update json
+  * generateFastUpdateHook(callback) - generate fast update json
+  * generateStatsHook(callback) - generate stats json
+
   * onMessage() - gets called for every single message
     * return true = continue
     * return false = stop
 
-* figure out how to manage BaseChannel mqtt calls -> really dont want to have to pass config + app details to them.
-  * probably have the ChannelController handle it
+* figure out how to manage BaseChannel mqtt calls
+  * move all the mqtt stuff to ChannelController
+  * move all the templated calls from BaseChannel to ChannelController
 
 * investigate how to implement ChannelControllers in a way that is extensible
 * copy the ChannelRegistry style from JS and port to c++
