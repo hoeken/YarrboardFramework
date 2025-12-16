@@ -21,7 +21,7 @@ NetworkController::NetworkController(YarrboardApp& app, ConfigManager& config) :
 {
 }
 
-void NetworkController::setup()
+bool NetworkController::setup()
 {
 
   _instance = this; // Capture the instance for callbacks
@@ -29,7 +29,12 @@ void NetworkController::setup()
   uint64_t chipid = ESP.getEfuseMac(); // unique 48-bit MAC base ID
   snprintf(_config.uuid, sizeof(_config.uuid), "%04X%08lX", (uint16_t)(chipid >> 32), (uint32_t)chipid);
 
-  setupWifi();
+  if (_config.is_first_boot)
+    setupImprov();
+  else
+    setupWifi();
+
+  return !_config.is_first_boot;
 }
 
 void NetworkController::loop()
@@ -184,8 +189,7 @@ void NetworkController::setupImprov()
 
 void NetworkController::loopImprov()
 {
-  if (_config.is_first_boot)
-    improvSerial.handleSerial();
+  improvSerial.handleSerial();
 }
 
 // ==========================================================
@@ -234,6 +238,6 @@ void NetworkController::_handleImprovConnected(const char* ssid, const char* pas
   char error[128];
   _config.saveConfig(error, sizeof(error));
 
-  // full_setup();
-  _config.is_first_boot = false;
+  // a bit hacky until I can figure out how to call app.setup from here.
+  ESP.restart();
 }

@@ -52,17 +52,11 @@ void YarrboardApp::setup()
   piezo_setup();
 #endif
 
-  // get an IP address
-  if (config.is_first_boot)
-    network.setupImprov();
+  // we need network to function!
+  if (network.setup())
+    YBP.println("Network ok");
   else
-    full_setup();
-}
-
-void YarrboardApp::full_setup()
-{
-  network.setup();
-  YBP.println("Network ok");
+    return;
 
   ntp_setup();
   YBP.println("NTP ok");
@@ -130,10 +124,11 @@ void YarrboardApp::full_setup()
 
 void YarrboardApp::loop()
 {
-}
+  if (config.is_first_boot) {
+    network.loopImprov();
+    return;
+  }
 
-void YarrboardApp::full_loop()
-{
   // start our interval timer
   it.start();
 

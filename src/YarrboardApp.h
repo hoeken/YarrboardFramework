@@ -40,9 +40,6 @@ class YarrboardApp
     void setup();
     void loop();
 
-    void full_setup();
-    void full_loop();
-
     unsigned int framerate;
 
   private:

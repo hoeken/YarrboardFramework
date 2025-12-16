@@ -24,7 +24,7 @@ class NetworkController
   public:
     NetworkController(YarrboardApp& app, ConfigManager& config);
 
-    void setup();
+    bool setup();
     void loop();
 
     void setupImprov();
