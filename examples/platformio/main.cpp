@@ -8,13 +8,16 @@
   CONDITIONS OF ANY KIND, either express or implied.
 */
 
+#include "controllers/NavicoController.h"
 #include <Arduino.h>
 #include <YarrboardFramework.h>
 
 YarrboardApp yba;
+NavicoController navico(yba);
 
 void setup()
 {
+  yba.registerController(navico);
   yba.setup();
 }
 

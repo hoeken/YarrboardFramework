@@ -6,8 +6,6 @@
     * html/logo.png -> overrides framework.html
     * html/css/* -> gets added to the framework css includes
     * html/js/* -> gets added to the framework js includes
-* convert ntp to controller
-* convert rgb + piezo to controller (or move to app?)
 * BaseControllers refactor
   * setup, loop, end
   * static _instance

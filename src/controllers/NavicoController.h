@@ -9,24 +9,21 @@
 #ifndef YARR_NAVICO_H
 #define YARR_NAVICO_H
 
+#include "controllers/BaseController.h"
 #include <Arduino.h>
 #include <WiFi.h>
 
 class YarrboardApp;
 class ConfigManager;
 
-class NavicoController
+class NavicoController : public BaseController
 {
   public:
-    NavicoController(YarrboardApp& app, ConfigManager& config);
+    NavicoController(YarrboardApp& app);
 
-    void setup();
-    void loop();
+    virtual void loop() override;
 
   private:
-    YarrboardApp& _app;
-    ConfigManager& _config;
-
     unsigned long lastNavicoPublishMillis = 0;
     const int PUBLISH_PORT = 2053;
     IPAddress MULTICAST_GROUP_IP;

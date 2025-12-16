@@ -163,4 +163,8 @@ typedef enum { YBP_MODE_WEBSOCKET,
   #define YB_USB_SERIAL 1
 #endif
 
+#ifndef YB_MAX_CONTROLLERS
+  #define YB_MAX_CONTROLLERS 30
+#endif
+
 #endif // YARR_CONFIG_H

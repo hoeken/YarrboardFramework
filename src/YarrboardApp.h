@@ -20,13 +20,17 @@
 #include "IntervalTimer.h"
 #include "MQTTController.h"
 #include "NTPController.h"
-#include "NavicoController.h"
 #include "NetworkController.h"
 #include "OTAController.h"
 #include "ProtocolController.h"
 #include "RGBController.h"
 #include "RollingAverage.h"
 #include "YarrboardDebug.h"
+#include "controllers/BaseController.h"
+
+#include <cstring>         // For strcmp
+#include <etl/algorithm.h> // For finding/removing
+#include <etl/vector.h>
 
 class YarrboardApp
 {
@@ -36,7 +40,6 @@ class YarrboardApp
     HTTPController http;
     ProtocolController protocol;
     AuthController auth;
-    NavicoController navico;
     MQTTController mqtt;
     OTAController ota;
     RGBController rgb;
@@ -50,6 +53,22 @@ class YarrboardApp
 
     unsigned int framerate;
 
+    static constexpr size_t MAX_CONTROLLERS = 16;
+
+    // Register a controller instance (non-owning).
+    // Returns false if full or name duplicate.
+    bool registerController(BaseController& controller);
+
+    // Lookup by name (nullptr if not found)
+    BaseController* getController(const char* name);
+    const BaseController* getController(const char* name) const;
+
+    // Remove by name (returns true if removed)
+    bool removeController(const char* name);
+
+    ConfigManager& getConfig() { return config; }
+    const ConfigManager& getConfig() const { return config; }
+
   private:
     WebsocketPrint networkLogger;
 
@@ -59,6 +78,8 @@ class YarrboardApp
     RollingAverage framerateAvg;
     unsigned long lastLoopMicros = 0;
     unsigned long lastLoopMillis = 0;
+
+    etl::vector<BaseController*, YB_MAX_CONTROLLERS> _controllers;
 };
 
 #endif /* YarrboardApp_h */

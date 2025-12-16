@@ -18,7 +18,6 @@ YarrboardApp::YarrboardApp() : config(*this),
                                http(*this, config),
                                protocol(*this, config),
                                auth(*this, config),
-                               navico(*this, config),
                                mqtt(*this, config),
                                ota(*this, config),
                                rgb(*this, config),
@@ -100,6 +99,13 @@ void YarrboardApp::setup()
 #ifdef YB_IS_BRINEOMATIC
   brineomatic_setup();
 #endif
+
+  for (auto* c : _controllers) {
+    if (c->setup())
+      YBP.printf("%s OK\n");
+    else
+      YBP.printf("%s FAILED\n");
+  }
 
   // we need to do this last so that all our channels, etc are fully configured.
   mqtt.setup();
@@ -189,9 +195,9 @@ void YarrboardApp::loop()
   ota.loop();
   it.time("ota_loop");
 
-  if (config.app_enable_mfd) {
-    navico.loop();
-    it.time("navico_loop");
+  for (auto* c : _controllers) {
+    c->loop();
+    it.time(c->getName());
   }
 
   // our debug.
@@ -212,4 +218,60 @@ void YarrboardApp::loop()
     framerate = framerateAvg.average();
     lastLoopMillis = millis();
   }
+}
+
+// Register a controller instance (non-owning).
+// Returns false if full or name duplicate.
+bool YarrboardApp::registerController(BaseController& controller)
+{
+  const char* n = controller.getName();
+  if (!n || !*n)
+    return false;
+
+  if (getController(n) != nullptr) {
+    // duplicate name
+    return false;
+  }
+
+  if (_controllers.full()) {
+    return false;
+  }
+
+  _controllers.push_back(&controller);
+  return true;
+}
+
+// Lookup by name (nullptr if not found)
+BaseController* YarrboardApp::getController(const char* name)
+{
+  if (!name || !*name)
+    return nullptr;
+
+  for (auto* c : _controllers) {
+    if (c && c->getName() && (std::strcmp(c->getName(), name) == 0)) {
+      return c;
+    }
+  }
+  return nullptr;
+}
+
+const BaseController* YarrboardApp::getController(const char* name) const
+{
+  return const_cast<YarrboardApp*>(this)->getController(name);
+}
+
+// Remove by name (returns true if removed)
+bool YarrboardApp::removeController(const char* name)
+{
+  if (!name || !*name)
+    return false;
+
+  for (size_t i = 0; i < _controllers.size(); i++) {
+    BaseController* c = _controllers[i];
+    if (c && c->getName() && (std::strcmp(c->getName(), name) == 0)) {
+      _controllers.erase(_controllers.begin() + i);
+      return true;
+    }
+  }
+  return false;
 }
