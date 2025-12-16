@@ -9,9 +9,8 @@
 #ifndef YARR_RGB_H
 #define YARR_RGB_H
 
-#include "YarrboardConfig.h"
-
 #include "FastLED.h"
+#include "YarrboardConfig.h"
 
 class YarrboardApp;
 class ConfigManager;

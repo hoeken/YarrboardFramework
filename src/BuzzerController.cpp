@@ -6,31 +6,177 @@
   License: GPLv3
 */
 
-#include "piezo.h"
+#include "BuzzerController.h"
 #include "YarrboardDebug.h"
 
+BuzzerController::BuzzerController(YarrboardApp& app, ConfigManager& config) : _app(app),
+                                                                               _config(config)
+{
+}
+
+void BuzzerController::setup()
+{
 #ifdef YB_HAS_PIEZO
+  pinMode(YB_PIEZO_PIN, OUTPUT);
 
-  #define LEDC_RES_BITS 10
-  #define BUZZER_DUTY   512 // ~50% at 10-bit
+  if (!piezoIsActive) {
+    // LEDC once
+    if (!ledcAttach(YB_PIEZO_PIN, 1000, LEDC_RES_BITS)) {
+      YBP.println("Error attaching piezo to LEDC channel.");
+      return;
+    } else {
+      piezoIsActive = false;
+    }
+  }
 
-// our global note buffer
-static Note g_noteBuffer[YB_MAX_MELODY_LENGTH]; // pick a safe max size
-static size_t g_noteCount = 0;
+  // shh.
+  buzzerMute();
 
-// ---------- Buzzer task control ----------
-static TaskHandle_t buzzerTaskHandle = nullptr;
-static const Note* g_seq = nullptr;
-static size_t g_len = 0;
-static portMUX_TYPE g_mux = portMUX_INITIALIZER_UNLOCKED;
+  // Create buzzer task (small stack, low priority)
+  // You can pin it to a core if you like; here we let the scheduler decide.
+  xTaskCreate(
+    BuzzerTask,
+    "buzzer_task",
+    2048, // stack words
+    nullptr,
+    1, // low priority is fine
+    &buzzerTaskHandle);
 
-  #ifdef YB_PIEZO_ACTIVE
-bool piezoIsActive = true;
-  #elif defined(YB_PIEZO_PASSIVE)
-bool piezoIsActive = false;
-  #else
-bool piezoIsActive = false;
-  #endif
+  playMelodyByName(startup_melody);
+#endif
+}
+
+void BuzzerController::loop()
+{
+}
+
+void BuzzerController::generateMelodyJSON(JsonVariant output)
+{
+#ifdef YB_HAS_PIEZO
+  output["melodies"][0] = "NONE";
+  for (size_t i = 0; i < melodyCount; i++)
+    output["melodies"][i + 1] = melodyTable[i].name;
+#endif
+}
+
+bool BuzzerController::playMelodyByName(const char* melody)
+{
+#ifdef YB_HAS_PIEZO
+  if (!strcmp(melody, "NONE"))
+    return true;
+
+  const Note* seq = nullptr;
+  size_t len = 0;
+
+  for (size_t i = 0; i < melodyCount; i++) {
+    if (!strcmp(melody, melodyTable[i].name)) {
+      playMelody(melodyTable[i].seq, melodyTable[i].len);
+      return true;
+    }
+  }
+  return false;
+#else
+  return true;
+#endif
+}
+
+// Signal the task to start (or restart) a melody.
+// Safe to call from loop/ISRs (but here we use regular context).
+void BuzzerController::playMelody(const Note* seq, size_t len)
+{
+#ifdef YB_HAS_PIEZO
+  // wait until we're done playing.
+  if (g_len > 0 || g_seq != nullptr)
+    return;
+
+  // max size
+  g_len = len;
+  if (g_len > YB_MAX_MELODY_LENGTH)
+    return;
+
+  portENTER_CRITICAL(&g_mux);
+  // copy into persistent storage
+  for (size_t i = 0; i < len; i++) {
+    g_noteBuffer[i] = seq[i];
+  }
+  g_seq = g_noteBuffer;
+  portEXIT_CRITICAL(&g_mux);
+
+  if (buzzerTaskHandle)
+    xTaskNotifyGive(buzzerTaskHandle); // wake the task
+#endif
+}
+
+// ---------- Low-level helpers ----------
+void BuzzerController::buzzerMute()
+{
+#ifdef YB_HAS_PIEZO
+  if (piezoIsActive)
+    digitalWrite(YB_PIEZO_PIN, LOW);
+  else
+    ledcWrite(YB_PIEZO_PIN, 0);
+#endif
+}
+
+void BuzzerController::buzzerTone(uint16_t freqHz)
+{
+#ifdef YB_HAS_PIEZO
+  if (freqHz == 0) {
+    buzzerMute(); // rest
+  } else {
+    if (piezoIsActive) {
+      digitalWrite(YB_PIEZO_PIN, HIGH);
+    } else {
+      ledcWriteTone(YB_PIEZO_PIN, freqHz); // hardware retune
+    }
+  }
+#endif
+}
+
+// ---------- FreeRTOS task ----------
+void BuzzerTask(void* /*pv*/)
+{
+#ifdef YB_HAS_PIEZO
+  // Sleep until someone calls playMelody()
+  for (;;) {
+    // Block here until notified OR timeout (so we can gracefully mute if nothing to do)
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+    // Snapshot the current request
+    portENTER_CRITICAL(&g_mux);
+    const Note* seq = g_seq;
+    size_t len = g_len;
+    portEXIT_CRITICAL(&g_mux);
+
+    if (!seq || len == 0) {
+      // Nothing to play
+      buzzerMute();
+      continue;
+    }
+
+    for (size_t i = 0; i < len; ++i) {
+      // Do the note
+      buzzerTone(seq[i].freqHz);
+
+      // Precise sleep for note duration (only this task sleeps)
+      TickType_t xLastWake = xTaskGetTickCount();
+      TickType_t durTicks = pdMS_TO_TICKS(seq[i].ms);
+      if (durTicks > 0)
+        vTaskDelayUntil(&xLastWake, durTicks);
+    }
+
+    buzzerMute();
+
+    // we're done.
+    portENTER_CRITICAL(&g_mux);
+    g_seq = nullptr;
+    g_len = 0;
+    portEXIT_CRITICAL(&g_mux);
+  }
+#endif
+}
+
+#ifdef YB_HAS_PIEZO
 
 // Example melody (C scale up)
 static const Note STARTUP[] = {
@@ -668,147 +814,4 @@ static const Melody melodyTable[] = {
   #endif
 };
 static const size_t melodyCount = sizeof(melodyTable) / sizeof(melodyTable[0]);
-
-void piezo_setup()
-{
-  pinMode(YB_PIEZO_PIN, OUTPUT);
-
-  if (!piezoIsActive) {
-    // LEDC once
-    if (!ledcAttach(YB_PIEZO_PIN, 1000, LEDC_RES_BITS)) {
-      YBP.println("Error attaching piezo to LEDC channel.");
-      return;
-    } else {
-      piezoIsActive = false;
-    }
-  }
-
-  // shh.
-  buzzerMute();
-
-  // Create buzzer task (small stack, low priority)
-  // You can pin it to a core if you like; here we let the scheduler decide.
-  xTaskCreate(
-    BuzzerTask,
-    "buzzer_task",
-    2048, // stack words
-    nullptr,
-    1, // low priority is fine
-    &buzzerTaskHandle);
-
-  playMelodyByName(startup_melody);
-}
-
-void generateMelodyJSON(JsonVariant output)
-{
-  output["melodies"][0] = "NONE";
-  for (size_t i = 0; i < melodyCount; i++)
-    output["melodies"][i + 1] = melodyTable[i].name;
-}
-
-bool playMelodyByName(const char* melody)
-{
-  if (!strcmp(melody, "NONE"))
-    return true;
-
-  const Note* seq = nullptr;
-  size_t len = 0;
-
-  for (size_t i = 0; i < melodyCount; i++) {
-    if (!strcmp(melody, melodyTable[i].name)) {
-      playMelody(melodyTable[i].seq, melodyTable[i].len);
-      return true;
-    }
-  }
-  return false;
-}
-
-// Signal the task to start (or restart) a melody.
-// Safe to call from loop/ISRs (but here we use regular context).
-void playMelody(const Note* seq, size_t len)
-{
-  // wait until we're done playing.
-  if (g_len > 0 || g_seq != nullptr)
-    return;
-
-  // max size
-  g_len = len;
-  if (g_len > YB_MAX_MELODY_LENGTH)
-    return;
-
-  portENTER_CRITICAL(&g_mux);
-  // copy into persistent storage
-  for (size_t i = 0; i < len; i++) {
-    g_noteBuffer[i] = seq[i];
-  }
-  g_seq = g_noteBuffer;
-  portEXIT_CRITICAL(&g_mux);
-
-  if (buzzerTaskHandle)
-    xTaskNotifyGive(buzzerTaskHandle); // wake the task
-}
-
-// ---------- Low-level helpers ----------
-static inline void buzzerMute()
-{
-  if (piezoIsActive)
-    digitalWrite(YB_PIEZO_PIN, LOW);
-  else
-    ledcWrite(YB_PIEZO_PIN, 0);
-}
-
-static inline void buzzerTone(uint16_t freqHz)
-{
-  if (freqHz == 0) {
-    buzzerMute(); // rest
-  } else {
-    if (piezoIsActive) {
-      digitalWrite(YB_PIEZO_PIN, HIGH);
-    } else {
-      ledcWriteTone(YB_PIEZO_PIN, freqHz); // hardware retune
-    }
-  }
-}
-
-// ---------- FreeRTOS task ----------
-void BuzzerTask(void* /*pv*/)
-{
-  // Sleep until someone calls playMelody()
-  for (;;) {
-    // Block here until notified OR timeout (so we can gracefully mute if nothing to do)
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-    // Snapshot the current request
-    portENTER_CRITICAL(&g_mux);
-    const Note* seq = g_seq;
-    size_t len = g_len;
-    portEXIT_CRITICAL(&g_mux);
-
-    if (!seq || len == 0) {
-      // Nothing to play
-      buzzerMute();
-      continue;
-    }
-
-    for (size_t i = 0; i < len; ++i) {
-      // Do the note
-      buzzerTone(seq[i].freqHz);
-
-      // Precise sleep for note duration (only this task sleeps)
-      TickType_t xLastWake = xTaskGetTickCount();
-      TickType_t durTicks = pdMS_TO_TICKS(seq[i].ms);
-      if (durTicks > 0)
-        vTaskDelayUntil(&xLastWake, durTicks);
-    }
-
-    buzzerMute();
-
-    // we're done.
-    portENTER_CRITICAL(&g_mux);
-    g_seq = nullptr;
-    g_len = 0;
-    portEXIT_CRITICAL(&g_mux);
-  }
-}
-
 #endif

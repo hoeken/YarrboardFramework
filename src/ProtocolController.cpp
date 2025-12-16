@@ -7,6 +7,7 @@
 */
 
 #include "ProtocolController.h"
+#include "BuzzerController.h"
 #include "ConfigManager.h"
 #include "MQTTController.h"
 #include "YarrboardApp.h"
@@ -35,10 +36,6 @@
 
 #ifdef YB_HAS_STEPPER_CHANNELS
   #include "stepper_channel.h"
-#endif
-
-#ifdef YB_HAS_PIEZO
-  #include "piezo.h"
 #endif
 
 ProtocolController::ProtocolController(YarrboardApp& app, ConfigManager& config) : _app(app),
@@ -671,7 +668,7 @@ void ProtocolController::handlePlaySound(JsonVariantConst input, JsonVariant out
     if (!strcmp(melody, "NONE"))
       return;
 
-    if (playMelodyByName(melody))
+    if (_app.piezo.playMelodyByName(melody))
       return;
     else
       return generateErrorJSON(output, "Unknown melody name");
@@ -1503,10 +1500,7 @@ void ProtocolController::generateConfigJSON(JsonVariant output)
   output["brightness"] = _config.globalBrightness;
   output["git_hash"] = GIT_HASH;
   output["build_time"] = BUILD_TIME;
-
-#ifdef YB_HAS_PIEZO
-  generateMelodyJSON(output);
-#endif
+  _app.buzzer.generateMelodyJSON(output);
   _config.generateBoardConfig(output);
 
   output["is_development"] = YB_IS_DEVELOPMENT;

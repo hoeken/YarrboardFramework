@@ -15,10 +15,6 @@
 
 #include "ntp.h"
 
-#ifdef YB_HAS_PIEZO
-  #include "piezo.h"
-#endif
-
 YarrboardApp::YarrboardApp() : config(*this),
                                network(*this, config),
                                http(*this, config),
@@ -28,6 +24,7 @@ YarrboardApp::YarrboardApp() : config(*this),
                                mqtt(*this, config),
                                ota(*this, config),
                                rgb(*this, config),
+                               buzzer(*this, config),
                                networkLogger(protocol),
                                loopSpeed(100, 1000),
                                framerateAvg(10, 10000)
@@ -42,13 +39,11 @@ void YarrboardApp::setup()
   // get our prefs early on.
   config.setup();
 
-  // audio visual notifications
   rgb.setup();
   YBP.println("RGB ok");
 
-#ifdef YB_HAS_PIEZO
-  piezo_setup();
-#endif
+  buzzer.setup();
+  YBP.println("Buzzer ok");
 
   network.setup();
   YBP.println("Network ok");
@@ -130,6 +125,9 @@ void YarrboardApp::loop()
 
   rgb.loop();
   it.time("rgb_loop");
+
+  buzzer.loop();
+  it.time("buzzer_loop");
 
 #ifdef YB_HAS_ADC_CHANNELS
   adc_channels_loop();

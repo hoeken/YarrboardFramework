@@ -25,6 +25,7 @@
 #include "RGBController.h"
 #include "RollingAverage.h"
 #include "YarrboardDebug.h"
+#include "BuzzerController.h"
 
 class YarrboardApp
 {
@@ -38,6 +39,7 @@ class YarrboardApp
     MQTTController mqtt;
     OTAController ota;
     RGBController rgb;
+    BuzzerController buzzer;
 
     YarrboardApp();
 
