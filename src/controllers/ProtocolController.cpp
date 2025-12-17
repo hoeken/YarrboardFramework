@@ -1407,10 +1407,6 @@ void ProtocolController::generateConfigJSON(JsonVariant output)
     output["has_coredump"] = has_coredump;
   output["boot_log"] = startupLogger.c_str();
 
-#ifdef YB_HAS_BUS_VOLTAGE
-  output["bus_voltage"] = true;
-#endif
-
   // do we want to flag it for config?
   if (_cfg.is_first_boot)
     output["first_boot"] = true;
@@ -1424,10 +1420,6 @@ void ProtocolController::generateUpdateJSON(JsonVariant output)
   for (auto& c : _app.getControllers()) {
     c->generateUpdateHook(output);
   }
-
-  // #ifdef YB_HAS_BUS_VOLTAGE
-  //   output["bus_voltage"] = getBusVoltage();
-  // #endif
 
   // #ifdef YB_HAS_PWM_CHANNELS
   //   JsonArray channels = output["pwm"].to<JsonArray>();
@@ -1480,9 +1472,9 @@ void ProtocolController::generateFastUpdateJSON(JsonVariant output)
   output["fast"] = 1;
   output["uptime"] = esp_timer_get_time();
 
-#ifdef YB_HAS_BUS_VOLTAGE
-  output["bus_voltage"] = getBusVoltage();
-#endif
+  for (auto& c : _app.getControllers()) {
+    c->generateFastUpdateHook(output);
+  }
 
   byte j;
 
@@ -1536,9 +1528,9 @@ void ProtocolController::generateStatsJSON(JsonVariant output)
   else
     output["ip_address"] = WiFi.localIP();
 
-#ifdef YB_HAS_BUS_VOLTAGE
-  output["bus_voltage"] = getBusVoltage();
-#endif
+  for (auto& c : _app.getControllers()) {
+    c->generateStatsHook(output);
+  }
 
 #ifdef YB_HAS_PWM_CHANNELS
   // info about each of our channels

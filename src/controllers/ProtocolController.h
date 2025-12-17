@@ -24,10 +24,6 @@
   #include "fans.h"
 #endif
 
-#ifdef YB_HAS_BUS_VOLTAGE
-  #include "bus_voltage.h"
-#endif
-
 #ifdef YB_IS_BRINEOMATIC
   #include "brineomatic.h"
 #endif

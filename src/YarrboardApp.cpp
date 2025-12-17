@@ -57,11 +57,6 @@ void YarrboardApp::setup()
   // get our prefs early on.
   config.setup();
 
-#ifdef YB_HAS_BUS_VOLTAGE
-  bus_voltage_setup();
-  YBP.println("Bus voltage ok");
-#endif
-
 #ifdef YB_IS_BRINEOMATIC
   brineomatic_setup();
 #endif
@@ -90,11 +85,6 @@ void YarrboardApp::loop()
 #ifdef YB_HAS_FANS
   fans_loop();
   it.time("fans_loop");
-#endif
-
-#ifdef YB_HAS_BUS_VOLTAGE
-  bus_voltage_loop();
-  it.time("bus_voltage_loop");
 #endif
 
 #ifdef YB_IS_BRINEOMATIC
