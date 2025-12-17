@@ -17,7 +17,7 @@
 struct Note {
     uint16_t freqHz;
     uint16_t ms;
-}; // freq=0 => rest
+};
 
 struct Melody {
     const char* name;
@@ -27,13 +27,14 @@ struct Melody {
 
 #define YB_MAX_MELODY_LENGTH 100
 #define LEDC_RES_BITS        10
-#define BUZZER_DUTY          512 // ~50% at 10-bit
+#define BUZZER_DUTY          512
 #define MELODY_ENTRY(x)      {#x, x, sizeof(x) / sizeof(Note)}
 
 class YarrboardApp;
 class ConfigManager;
 
-void BuzzerTask(void* /*pv*/);
+// Forward declaration
+void BuzzerTask(void* pv);
 
 class BuzzerController : public BaseController
 {
@@ -45,17 +46,22 @@ class BuzzerController : public BaseController
     bool playMelodyByName(const char* melody);
     void generateMelodyJSON(JsonVariant output);
 
+    // Make the task a friend so it can access private static members
+    friend void BuzzerTask(void* pv);
+
   private:
 #ifdef YB_HAS_PIEZO
-    // our global note buffer
-    static Note g_noteBuffer[YB_MAX_MELODY_LENGTH]; // pick a safe max size
-    static size_t g_noteCount = 0;
+    // --- DECLARATIONS ONLY (No assignments here) ---
 
-    // ---------- Buzzer task control ----------
-    static TaskHandle_t buzzerTaskHandle = nullptr;
-    static const Note* g_seq = nullptr;
-    static size_t g_len = 0;
-    static portMUX_TYPE g_mux = portMUX_INITIALIZER_UNLOCKED;
+    // our global note buffer
+    static Note g_noteBuffer[YB_MAX_MELODY_LENGTH];
+    static size_t g_noteCount;
+
+    // Buzzer task control
+    static TaskHandle_t buzzerTaskHandle;
+    static const Note* g_seq;
+    static size_t g_len;
+    static portMUX_TYPE g_mux;
 
   #ifdef YB_PIEZO_ACTIVE
     bool piezoIsActive = true;

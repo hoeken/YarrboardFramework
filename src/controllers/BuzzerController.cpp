@@ -9,6 +9,15 @@
 #include "controllers/BuzzerController.h"
 #include "YarrboardDebug.h"
 
+#ifdef YB_HAS_PIEZO
+Note BuzzerController::g_noteBuffer[YB_MAX_MELODY_LENGTH];
+size_t BuzzerController::g_noteCount = 0;
+TaskHandle_t BuzzerController::buzzerTaskHandle = nullptr;
+const Note* BuzzerController::g_seq = nullptr;
+size_t BuzzerController::g_len = 0;
+portMUX_TYPE BuzzerController::g_mux = portMUX_INITIALIZER_UNLOCKED;
+#endif
+
 BuzzerController::BuzzerController(YarrboardApp& app) : BaseController(app, "buzzer")
 {
 }

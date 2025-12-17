@@ -1,10 +1,12 @@
 ## v1.0.0 Release
 
-* Fix default values - #defines arent good enough.
+* convert frothfet
+* convert brineomatic
 
 * fix our CI hooks
 
 * modify the gulp.js script to pull from the framework lib directory
+  * it should also write the files to the framework lib directory for inclusion
 * project specific gulp rules to pull in custom stuff logo, css, js, etc.
     * html/index.html -> overrides framework html
     * html/logo.png -> overrides framework.html
