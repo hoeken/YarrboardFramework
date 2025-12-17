@@ -14,8 +14,7 @@
 
 OTAController* OTAController::_instance = nullptr;
 
-OTAController::OTAController(YarrboardApp& app) : BaseController(app, "ota"),
-                                                  FOTA(YB_HARDWARE_VERSION, YB_FIRMWARE_VERSION, YB_VALIDATE_FIRMWARE_SIGNATURE)
+OTAController::OTAController(YarrboardApp& app) : BaseController(app, "ota")
 {
   MyPubKey = new CryptoMemAsset("RSA Key", public_key, strlen(public_key) + 1);
 }
@@ -29,16 +28,18 @@ bool OTAController::setup()
     ArduinoOTA.begin();
   }
 
-  FOTA.setManifestURL(_cfg.firmware_manifest_url);
-  FOTA.setPubKey(MyPubKey);
-  FOTA.useBundledCerts();
+  FOTA = new esp32FOTA(_app.hardware_version, _app.firmware_version, validate_firmware);
 
-  FOTA.setUpdateBeginFailCb(_updateBeginFailCallbackStatic);
-  FOTA.setProgressCb(_progressCallbackStatic);
-  FOTA.setUpdateEndCb(_updateEndCallbackStatic);
-  FOTA.setUpdateCheckFailCb(_updateCheckFailCallbackStatic);
+  FOTA->setManifestURL(firmware_manifest_url);
+  FOTA->setPubKey(MyPubKey);
+  FOTA->useBundledCerts();
 
-  FOTA.printConfig();
+  FOTA->setUpdateBeginFailCb(_updateBeginFailCallbackStatic);
+  FOTA->setProgressCb(_progressCallbackStatic);
+  FOTA->setUpdateEndCb(_updateEndCallbackStatic);
+  FOTA->setUpdateCheckFailCb(_updateCheckFailCallbackStatic);
+
+  FOTA->printConfig();
 
   return true;
 }
@@ -46,7 +47,7 @@ bool OTAController::setup()
 void OTAController::loop()
 {
   if (doOTAUpdate) {
-    FOTA.handle();
+    FOTA->handle();
     doOTAUpdate = false;
   }
 
@@ -63,7 +64,7 @@ void OTAController::end()
 
 bool OTAController::checkOTA()
 {
-  return FOTA.execHTTPcheck();
+  return FOTA->execHTTPcheck();
 }
 
 void OTAController::startOTA()

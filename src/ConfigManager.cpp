@@ -8,6 +8,28 @@ ConfigManager::ConfigManager(YarrboardApp& app) : _app(app), is_first_boot(true)
 
 bool ConfigManager::setup()
 {
+  // setup some defaults
+  strlcpy(board_name, _app.board_name, sizeof(board_name));
+  strlcpy(local_hostname, _app.default_hostname, sizeof(local_hostname));
+  strlcpy(admin_user, _app.default_admin_user, sizeof(admin_user));
+  strlcpy(admin_pass, _app.default_admin_pass, sizeof(admin_pass));
+  strlcpy(guest_user, _app.default_guest_user, sizeof(guest_user));
+  strlcpy(guest_pass, _app.default_guest_pass, sizeof(guest_pass));
+  app_update_interval = _app.update_interval;
+
+  app_enable_mfd = _app.enable_mfd;
+  app_enable_api = _app.enable_http_api;
+  app_enable_serial = _app.enable_serial_api;
+  app_enable_ota = _app.enable_arduino_ota;
+  app_enable_ssl = _app.enable_ssl;
+  app_enable_mqtt = _app.enable_mqtt;
+  app_enable_ha_integration = _app.enable_ha_integration;
+  app_use_hostname_as_mqtt_uuid = _app.use_hostname_as_mqtt_uuid;
+
+  app_default_role = _app.default_role;
+  serial_role = _app.default_role;
+  api_role = _app.default_role;
+
   if (preferences.begin("yarrboard", false)) {
     YBP.println("Prefs OK");
     YBP.printf("There are: %u entries available in the 'yarrboard' prefs table.\n", preferences.freeEntries());
@@ -122,11 +144,12 @@ void ConfigManager::generateBoardConfig(JsonVariant output)
   // our identifying info
   output["name"] = board_name;
   output["uuid"] = uuid;
-  output["firmware_version"] = YB_FIRMWARE_VERSION;
-  output["hardware_version"] = YB_HARDWARE_VERSION;
+  output["firmware_version"] = _app.firmware_version;
+  output["hardware_version"] = _app.hardware_version;
   output["esp_idf_version"] = esp_get_idf_version();
   output["arduino_version"] = ESP_ARDUINO_VERSION_STR;
   output["psychic_http_version"] = PSYCHIC_VERSION_STR;
+  output["yarrboard_framework_version"] = YARRBOARD_VERSION_STR;
   output["git_hash"] = GIT_HASH;
   output["build_time"] = BUILD_TIME;
 
@@ -277,7 +300,7 @@ bool ConfigManager::loadNetworkConfigFromJSON(JsonVariant config, char* error, s
   const char* v;
 
   // local_hostname
-  v = config["local_hostname"] | YB_DEFAULT_HOSTNAME;
+  v = config["local_hostname"] | _app.default_hostname;
   strlcpy(local_hostname, v, sizeof(local_hostname));
 
   // wifi_ssid
@@ -304,19 +327,19 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
   strlcpy(startup_melody, v, sizeof(startup_melody));
 
   // admin_user
-  v = config["admin_user"] | YB_DEFAULT_ADMIN_USER;
+  v = config["admin_user"] | _app.default_admin_user;
   strlcpy(admin_user, v, sizeof(admin_user));
 
   // admin_pass
-  v = config["admin_pass"] | YB_DEFAULT_ADMIN_PASS;
+  v = config["admin_pass"] | _app.default_admin_pass;
   strlcpy(admin_pass, v, sizeof(admin_pass));
 
   // guest_user
-  v = config["guest_user"] | YB_DEFAULT_GUEST_USER;
+  v = config["guest_user"] | _app.default_guest_user;
   strlcpy(guest_user, v, sizeof(guest_user));
 
   // guest_pass
-  v = config["guest_pass"] | YB_DEFAULT_GUEST_PASS;
+  v = config["guest_pass"] | _app.default_guest_pass;
   strlcpy(guest_pass, v, sizeof(guest_pass));
 
   // MQTT fields
@@ -331,12 +354,12 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
   mqtt_cert = config["mqtt_cert"] | "";
 
   if (config["app_update_interval"]) {
-    app_update_interval = config["app_update_interval"] | YB_DEFAULT_APP_UPDATE_INTERVAL;
+    app_update_interval = config["app_update_interval"] | _app.update_interval;
     app_update_interval = max(100u, app_update_interval);
     app_update_interval = min(10000u, app_update_interval);
   }
 
-  app_default_role = YB_DEFAULT_APP_DEFAULT_ROLE;
+  app_default_role = _app.default_role;
   if (config["default_role"]) {
     v = config["default_role"];
     if (!strcmp(v, "nobody"))
@@ -349,14 +372,14 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
   serial_role = app_default_role;
   api_role = app_default_role;
 
-  app_enable_mfd = config["app_enable_mfd"] | YB_DEFAULT_APP_ENABLE_MFD;
-  app_enable_api = config["app_enable_api"] | YB_DEFAULT_APP_ENABLE_API;
-  app_enable_serial = config["app_enable_serial"] | YB_DEFAULT_APP_ENABLE_SERIAL;
-  app_enable_ota = config["app_enable_ota"] | YB_DEFAULT_APP_ENABLE_OTA;
-  app_enable_ssl = config["app_enable_ssl"] | YB_DEFAULT_APP_ENABLE_SSL;
-  app_enable_mqtt = config["app_enable_mqtt"] | YB_DEFAULT_APP_ENABLE_MQTT;
-  app_enable_ha_integration = config["app_enable_ha_integration"] | YB_DEFAULT_APP_ENABLE_HA_INTEGRATION;
-  app_use_hostname_as_mqtt_uuid = config["app_use_hostname_as_mqtt_uuid"] | YB_DEFAULT_USE_HOSTNAME_AS_MQTT_UUID;
+  app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
+  app_enable_api = config["app_enable_api"] | _app.enable_http_api;
+  app_enable_serial = config["app_enable_serial"] | _app.enable_serial_api;
+  app_enable_ota = config["app_enable_ota"] | _app.enable_arduino_ota;
+  app_enable_ssl = config["app_enable_ssl"] | _app.enable_ssl;
+  app_enable_mqtt = config["app_enable_mqtt"] | _app.enable_mqtt;
+  app_enable_ha_integration = config["app_enable_ha_integration"] | _app.enable_ha_integration;
+  app_use_hostname_as_mqtt_uuid = config["app_use_hostname_as_mqtt_uuid"] | _app.use_hostname_as_mqtt_uuid;
 
   server_cert = config["server_cert"] | "";
   server_key = config["server_key"] | "";
@@ -368,7 +391,7 @@ bool ConfigManager::loadBoardConfigFromJSON(JsonVariant config, char* error, siz
 {
   bool result = true;
 
-  const char* v = config["name"] | YB_BOARD_NAME;
+  const char* v = config["name"] | _app.board_name;
   strlcpy(board_name, v, sizeof(board_name));
 
   for (auto& c : _app.getControllers()) {

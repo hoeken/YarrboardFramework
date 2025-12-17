@@ -46,6 +46,30 @@ class YarrboardApp
     BuzzerController buzzer;
     NTPController ntp;
 
+    const char* board_name = "Yarrboard";
+    const char* firmware_version = "Unknown";
+    const char* hardware_version = "Unknown";
+    const char* manufacturer = "Unknown";
+
+    const char* default_hostname = "yarrboard";
+    const char* default_admin_user = "admin";
+    const char* default_admin_pass = "admin";
+    const char* default_guest_user = "guest";
+    const char* default_guest_pass = "guest";
+
+    uint32_t update_interval = 500;
+
+    bool enable_mfd = false;
+    bool enable_http_api = false;
+    bool enable_serial_api = false;
+    bool enable_arduino_ota = false;
+    bool enable_ssl = false;
+    bool enable_mqtt = false;
+    bool enable_ha_integration = false;
+    bool use_hostname_as_mqtt_uuid = true;
+
+    UserRole default_role = NOBODY;
+
     YarrboardApp();
 
     void setup();

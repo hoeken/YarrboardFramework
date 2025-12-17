@@ -12,6 +12,7 @@
 #include "YarrboardDebug.h"
 #include "controllers/BuzzerController.h"
 #include "controllers/MQTTController.h"
+#include "controllers/OTAController.h"
 #include "utility.h"
 
 ProtocolController::ProtocolController(YarrboardApp& app) : BaseController(app, "protocol")
@@ -266,7 +267,7 @@ void ProtocolController::generateHelloJSON(JsonVariant output, UserRole role)
   output["default_role"] = getRoleText(_cfg.app_default_role);
   output["name"] = _cfg.board_name;
   output["brightness"] = _cfg.globalBrightness;
-  output["firmware_version"] = YB_FIRMWARE_VERSION;
+  output["firmware_version"] = _app.firmware_version;
 }
 
 void ProtocolController::handleGetConfig(JsonVariantConst input, JsonVariant output)
@@ -312,7 +313,7 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
   }
 
   // update variable
-  strlcpy(_cfg.board_name, input["board_name"] | YB_BOARD_NAME, sizeof(_cfg.board_name));
+  strlcpy(_cfg.board_name, input["board_name"] | _app.board_name, sizeof(_cfg.board_name));
   strlcpy(_cfg.startup_melody, input["startup_melody"] | YB_PIEZO_DEFAULT_MELODY, sizeof(_cfg.startup_melody));
 
   // save it to file.
@@ -365,7 +366,7 @@ void ProtocolController::handleSetNetworkConfig(JsonVariantConst input, JsonVari
   strlcpy(new_wifi_mode, input["wifi_mode"] | YB_DEFAULT_AP_MODE, sizeof(new_wifi_mode));
   strlcpy(new_wifi_ssid, input["wifi_ssid"] | YB_DEFAULT_AP_SSID, sizeof(new_wifi_ssid));
   strlcpy(new_wifi_pass, input["wifi_pass"] | YB_DEFAULT_AP_PASS, sizeof(new_wifi_pass));
-  strlcpy(_cfg.local_hostname, input["local_hostname"] | YB_DEFAULT_HOSTNAME, sizeof(_cfg.local_hostname));
+  strlcpy(_cfg.local_hostname, input["local_hostname"] | _app.default_hostname, sizeof(_cfg.local_hostname));
 
   // make sure we can connect before we save
   if (!strcmp(new_wifi_mode, "client")) {
@@ -458,10 +459,10 @@ void ProtocolController::handleSetAuthenticationConfig(JsonVariantConst input, J
   }
 
   // get our data
-  strlcpy(_cfg.admin_user, input["admin_user"] | YB_DEFAULT_ADMIN_USER, sizeof(_cfg.admin_user));
-  strlcpy(_cfg.admin_pass, input["admin_pass"] | YB_DEFAULT_ADMIN_PASS, sizeof(_cfg.admin_pass));
-  strlcpy(_cfg.guest_user, input["guest_user"] | YB_DEFAULT_GUEST_USER, sizeof(_cfg.guest_user));
-  strlcpy(_cfg.guest_pass, input["guest_pass"] | YB_DEFAULT_GUEST_PASS, sizeof(_cfg.guest_pass));
+  strlcpy(_cfg.admin_user, input["admin_user"] | _app.default_admin_user, sizeof(_cfg.admin_user));
+  strlcpy(_cfg.admin_pass, input["admin_pass"] | _app.default_admin_pass, sizeof(_cfg.admin_pass));
+  strlcpy(_cfg.guest_user, input["guest_user"] | _app.default_guest_user, sizeof(_cfg.guest_user));
+  strlcpy(_cfg.guest_pass, input["guest_pass"] | _app.default_guest_pass, sizeof(_cfg.guest_pass));
 
   if (input["default_role"]) {
     if (!strcmp(input["default_role"], "admin"))
@@ -482,8 +483,8 @@ void ProtocolController::handleSetWebServerConfig(JsonVariantConst input, JsonVa
 {
   bool old_app_enable_ssl = _cfg.app_enable_ssl;
 
-  _cfg.app_enable_mfd = input["app_enable_mfd"] | YB_DEFAULT_APP_ENABLE_MFD;
-  _cfg.app_enable_api = input["app_enable_api"] | YB_DEFAULT_APP_ENABLE_API;
+  _cfg.app_enable_mfd = input["app_enable_mfd"] | _app.enable_mfd;
+  _cfg.app_enable_api = input["app_enable_api"] | _app.enable_http_api;
   _cfg.app_enable_ssl = input["app_enable_ssl"] | _cfg.app_enable_ssl;
   _cfg.server_cert = input["server_cert"] | "";
   _cfg.server_key = input["server_key"] | "";
@@ -523,8 +524,8 @@ void ProtocolController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant
 
 void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output)
 {
-  _cfg.app_enable_serial = input["app_enable_serial"] | YB_DEFAULT_APP_ENABLE_SERIAL;
-  _cfg.app_enable_ota = input["app_enable_ota"] | YB_DEFAULT_APP_ENABLE_OTA;
+  _cfg.app_enable_serial = input["app_enable_serial"] | _app.enable_serial_api;
+  _cfg.app_enable_ota = input["app_enable_ota"] | _app.enable_arduino_ota;
 
   // save it to file.
   char error[128] = "Unknown";
@@ -1394,7 +1395,7 @@ void ProtocolController::generateConfigJSON(JsonVariant output)
   output["brightness"] = _cfg.globalBrightness;
   output["git_hash"] = GIT_HASH;
   output["build_time"] = BUILD_TIME;
-  output["firmware_manifest_url"] = _cfg.firmware_manifest_url;
+  output["firmware_manifest_url"] = _app.ota.firmware_manifest_url;
 
   _app.buzzer.generateMelodyJSON(output);
   _cfg.generateBoardConfig(output);

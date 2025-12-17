@@ -43,6 +43,21 @@ void YarrboardApp::setup()
 {
   debug_setup();
 
+  YBP.println("Yarrboard");
+  YBP.print("Hardware Version: ");
+  YBP.println(hardware_version);
+  YBP.print("Firmware Version: ");
+  YBP.println(firmware_version);
+  YBP.printf("Firmware build: %s (%s)\n", GIT_HASH, BUILD_TIME);
+  YBP.print("Last Reset: ");
+  YBP.println(getResetReason());
+
+  // we need littlefs to store our coredump
+  if (!LittleFS.begin(true)) {
+    YBP.println("ERROR: Unable to mount LittleFS");
+  }
+  YBP.printf("LittleFS Storage: %d / %d\n", LittleFS.usedBytes(), LittleFS.totalBytes());
+
   // get our prefs early on.
   config.setup();
 

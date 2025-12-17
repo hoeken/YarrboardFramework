@@ -31,8 +31,11 @@ class OTAController : public BaseController
     bool checkOTA();
     void startOTA();
 
+    const char* firmware_manifest_url = "https://raw.githubusercontent.com/hoeken/yarrboard-firmware/main/firmware.json";
+    bool validate_firmware = true;
+
   private:
-    esp32FOTA FOTA;
+    esp32FOTA* FOTA;
 
     // my key for future firmware signing
     const char* public_key = R"PUBLIC_KEY(

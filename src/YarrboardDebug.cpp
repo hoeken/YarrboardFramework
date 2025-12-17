@@ -65,22 +65,6 @@ void debug_setup()
   // our debug logs should use YBP too
   esp_log_set_vprintf(debug_log_vprintf);
 
-  YBP.println("Yarrboard");
-  YBP.print("Hardware Version: ");
-  YBP.println(YB_HARDWARE_VERSION);
-  YBP.print("Firmware Version: ");
-  YBP.println(YB_FIRMWARE_VERSION);
-  YBP.printf("Firmware build: %s (%s)\n", GIT_HASH, BUILD_TIME);
-
-  YBP.print("Last Reset: ");
-  YBP.println(getResetReason());
-
-  // we need littlefs to store our coredump
-  if (!LittleFS.begin(true)) {
-    YBP.println("ERROR: Unable to mount LittleFS");
-  }
-  YBP.printf("LittleFS Storage: %d / %d\n", LittleFS.usedBytes(), LittleFS.totalBytes());
-
   if (checkCoreDump()) {
     has_coredump = true;
     YBP.println("WARNING: Coredump Found.");

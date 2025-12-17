@@ -197,9 +197,9 @@ void MQTTController::haDiscovery()
   JsonObject device = doc["dev"].to<JsonObject>();
   device["ids"] = ha_dev_uuid;
   device["name"] = _cfg.board_name;
-  device["mf"] = YB_MANUFACTURER;
-  device["mdl"] = YB_HARDWARE_VERSION;
-  device["sw"] = YB_FIRMWARE_VERSION;
+  device["mf"] = _app.manufacturer;
+  device["mdl"] = _app.hardware_version;
+  device["sw"] = _app.firmware_version;
   device["sn"] = _cfg.uuid;
   char config_url[128];
   sprintf(config_url, "http://%s.local", _cfg.local_hostname);
@@ -208,7 +208,7 @@ void MQTTController::haDiscovery()
   // our origin to let HA know where it came from.
   JsonObject origin = doc["o"].to<JsonObject>();
   origin["name"] = "yarrboard";
-  origin["sw"] = YB_FIRMWARE_VERSION;
+  origin["sw"] = _app.firmware_version;
   origin["url"] = "https://github.com/hoeken/yarrboard-firmware";
 
   // our components array

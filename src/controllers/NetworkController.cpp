@@ -158,7 +158,7 @@ void NetworkController::setupImprov()
   // Serial Configuration
   improvSerial.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32,
     _cfg.board_name,
-    YB_FIRMWARE_VERSION,
+    _app.firmware_version,
     _cfg.board_name,
     device_url.c_str());
 
@@ -169,7 +169,7 @@ void NetworkController::setupImprov()
   // Bluetooth Configuration
   improvBLE.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32,
     _cfg.board_name,
-    YB_FIRMWARE_VERSION,
+    _app.firmware_version,
     _cfg.board_name,
     device_url.c_str());
 
