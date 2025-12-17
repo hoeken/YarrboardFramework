@@ -10,6 +10,18 @@ HTTPController::HTTPController(YarrboardApp& app) : BaseController(app, "http")
 
 bool HTTPController::setup()
 {
+  // if (!index_length) {
+  //   index_length = index_html_gz_len;
+  //   index_sha = index_html_gz_sha;
+  //   index_data = index_html_gz;
+  // }
+
+  // if (!logo_length) {
+  //   logo_length = logo_gz_len;
+  //   logo_sha = logo_gz_sha;
+  //   logo_data = logo_gz;
+  // }
+
   sendMutex = xSemaphoreCreateMutex();
   if (sendMutex == NULL) {
     YBP.println("Failed to create send mutex");
@@ -46,7 +58,7 @@ bool HTTPController::setup()
     if (request->header("If-Modified-Since").indexOf(last_modified) > 0)
       return response->send(304);
     // What about our ETag?
-    else if (request->header("If-None-Match").equals(index_html_gz_sha))
+    else if (request->header("If-None-Match").equals(index_sha))
       return response->send(304);
     else {
       response->setCode(200);
@@ -58,10 +70,10 @@ bool HTTPController::setup()
       // And set the last-modified datetime so we can check if we need to send
       // it again next time or not
       response->addHeader("Last-Modified", last_modified);
-      response->addHeader("ETag", index_html_gz_sha);
+      response->addHeader("ETag", index_sha);
 
       // add our actual content
-      response->setContent(index_html_gz, index_html_gz_len);
+      response->setContent(index_data, index_length);
 
       return response->send();
     }
@@ -72,8 +84,8 @@ bool HTTPController::setup()
     response->setContentType("image/png");
     response->addHeader("Content-Encoding", "gzip");
     response->addHeader("Last-Modified", last_modified);
-    response->addHeader("ETag", logo_gz_sha);
-    response->setContent(logo_gz, logo_gz_len);
+    response->addHeader("ETag", logo_sha);
+    response->setContent(logo_data, logo_length);
     return response->send();
   });
 

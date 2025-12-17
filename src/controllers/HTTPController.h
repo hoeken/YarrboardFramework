@@ -20,8 +20,8 @@
 #include <freertos/queue.h>
 
 // generated at build by running "gulp" in the firmware directory.
-#include "index.html.gz.h"
-#include "logo.png.gz.h"
+// #include "index.html.gz.h"
+// #include "logo.png.gz.h"
 
 #ifdef YB_HAS_FANS
   #include "fans.h"
@@ -45,6 +45,14 @@ class HTTPController : public BaseController
     void loop() override;
 
     void sendToAllWebsockets(const char* jsonString, UserRole auth_level);
+
+    uint32_t index_length = 0;
+    const char* index_sha;
+    const uint8_t* index_data;
+
+    uint32_t logo_length = 0;
+    const char* logo_sha;
+    const uint8_t* logo_data;
 
     unsigned int websocketClientCount = 0;
     unsigned int httpClientCount = 0;
