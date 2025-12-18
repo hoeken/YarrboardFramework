@@ -400,22 +400,5 @@ bool ConfigManager::loadBoardConfigFromJSON(JsonVariant config, char* error, siz
     c->loadConfigHook(config, error, len);
   }
 
-  // #ifdef YB_IS_BRINEOMATIC
-  //   if (config["brineomatic"]) {
-  //     JsonVariant bom = config["brineomatic"].as<JsonVariant>();
-
-  //     // validate prunes invalid entries, so it's safe to load even on error.
-  //     // we don't want a single bad config option to nuke the whole config loading.
-  //     if (!wm.validateConfigJSON(bom, error, len)) {
-  //       YBP.println(error);
-  //       result = false;
-  //     }
-
-  //     wm.loadGeneralConfigJSON(bom);
-  //     wm.loadHardwareConfigJSON(bom);
-  //     wm.loadSafeguardsConfigJSON(bom);
-  //   }
-  // #endif
-
   return result;
 }

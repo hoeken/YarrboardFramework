@@ -136,20 +136,6 @@ class ProtocolController : public BaseController
     void handleSetTheme(JsonVariantConst input, JsonVariant output);
     void handleSetBrightness(JsonVariantConst input, JsonVariant output);
 
-#ifdef YB_IS_BRINEOMATIC
-    void handleStartWatermaker(JsonVariantConst input, JsonVariant output);
-    void handleFlushWatermaker(JsonVariantConst input, JsonVariant output);
-    void handlePickleWatermaker(JsonVariantConst input, JsonVariant output);
-    void handleDepickleWatermaker(JsonVariantConst input, JsonVariant output);
-    void handleStopWatermaker(JsonVariantConst input, JsonVariant output);
-    void handleIdleWatermaker(JsonVariantConst input, JsonVariant output);
-    void handleManualWatermaker(JsonVariantConst input, JsonVariant output);
-    void handleSetWatermaker(JsonVariantConst input, JsonVariant output);
-    void handleBrineomaticSaveGeneralConfig(JsonVariantConst input, JsonVariant output);
-    void handleBrineomaticSaveHardwareConfig(JsonVariantConst input, JsonVariant output);
-    void handleBrineomaticSaveSafeguardsConfig(JsonVariantConst input, JsonVariant output);
-#endif
-
     void generateHelloJSON(JsonVariant output, UserRole role);
     void generateUpdateJSON(JsonVariant output);
     void generateFastUpdateJSON(JsonVariant output);
