@@ -31,12 +31,11 @@ class MQTTController : public BaseController
     void onTopic(const char* topic, int qos, OnMessageUserCallback callback);
     void onConnect(bool sessionPresent);
     void publish(const char* topic, const char* payload, bool use_prefix = true);
+    void traverseJSON(JsonVariant node, const char* topic_prefix);
 
   private:
     PsychicMqttClient mqttClient;
     unsigned long previousMQTTMillis = 0;
-
-    void traverseJSON(JsonVariant node, const char* topic_prefix);
 
     void haDiscovery();
     void receiveMessage(const char* topic, const char* payload, int retain, int qos, bool dup);

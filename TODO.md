@@ -1,6 +1,5 @@
 ## v1.0.0 Release
 
-* convert frothfet
 * convert brineomatic
 
 * move all non-protocol handlers out of ProtocolController

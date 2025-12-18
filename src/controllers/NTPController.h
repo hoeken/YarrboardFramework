@@ -24,6 +24,8 @@ class NTPController : public BaseController
 
     bool setup() override;
     bool isReady() { return ntp_is_ready; }
+    int64_t getTime();
+    void printLocalTime();
 
   private:
     const char* ntpServer1 = "pool.ntp.org";
@@ -31,9 +33,6 @@ class NTPController : public BaseController
     const long gmtOffset_sec = 0;
     const int daylightOffset_sec = 0;
     bool ntp_is_ready = false;
-
-    int64_t ntp_get_time();
-    void printLocalTime();
 
     // --- THE CALLBACK TRAP ---
     // Libraries expecting C-style function pointers cannot take normal member functions.

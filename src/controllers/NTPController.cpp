@@ -52,7 +52,7 @@ void NTPController::printLocalTime()
   YBP.println(buffer);
 }
 
-int64_t NTPController::ntp_get_time()
+int64_t NTPController::getTime()
 {
   time_t now;
   time(&now);
