@@ -1,19 +1,14 @@
 ## v1.0.0 Release
 
+* add a board url -> eg. github.com/brineomatic-rev-b
+* add a project url -> eg. brineomatic.com
+
 * fix our CI hooks
 * copy the release.yml from psychic
 * setup module on arduino
 * setup module on platformio
 
 ## Long Term
-
-* we need to add an order field to controllers that determines how they loop.
-  * sort on add.
-  * mqtt needs to be last
-
-* global brightness
-  * rgb controller -> setMaxBrightness()
-  * onBrightness -> max * brightness
 
 * modify the gulp.js script to pull from the framework lib directory
   * it should also write the files to the framework lib directory for inclusion
@@ -22,6 +17,14 @@
       * html/logo.png -> overrides framework.html
       * html/css/* -> gets added to the framework css includes
       * html/js/* -> gets added to the framework js includes
+
+* we need to add an order field to controllers that determines how they loop.
+  * sort on add.
+  * mqtt needs to be last
+
+* global brightness
+  * rgb controller -> setMaxBrightness()
+  * onBrightness -> max * brightness
 
 * login, hello, logout are special commands.  can we modify this?
   * probably too much work for now.  implementing a queue similar to websockets would be the best way.
