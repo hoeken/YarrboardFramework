@@ -163,7 +163,7 @@ void NetworkController::setupImprov()
 
   improvSerial.onImprovError(_onImprovErrorStatic);
   improvSerial.setCustomConnectWiFi(_onImprovCustomConnectWiFiStatic);
-  improvSerial.setCustomConnectWiFi(_onImprovCustomConnectWiFiStatic);
+  improvSerial.onImprovConnected(_onImprovConnectedStatic);
 
   // Bluetooth Configuration
   improvBLE.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32,
@@ -212,9 +212,17 @@ bool NetworkController::_onImprovCustomConnectWiFiStatic(const char* ssid, const
 
 void NetworkController::_handleImprovError(ImprovTypes::Error err)
 {
-  YBP.printf("wifi error: %d\n", err);
+  YBP.printf("[improv] WiFi failed to connect.\n", err);
 
   _app.setStatusColor(CRGB::Red);
+
+  // reset our wifi.
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect(true, true);
+  WiFi.mode(WIFI_OFF);
+  delay(250);
+
+  _app.setStatusColor(CRGB::Blue);
 }
 
 void NetworkController::_handleImprovConnected(const char* ssid, const char* password)

@@ -1,8 +1,6 @@
 ## v1.0.0 Release
 
-* improv wifi wont connect after first failure.
-
-* fix our CI hookss
+* fix our CI hooks
 * copy the release.yml from psychic
 * setup module on arduino
 * setup module on platformio
