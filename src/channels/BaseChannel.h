@@ -36,11 +36,10 @@ class BaseChannel
     virtual void generateUpdate(JsonVariant output);
     virtual void generateStats(JsonVariant output);
 
-    virtual void haGenerateDiscovery(JsonVariant doc);
-    virtual void haPublishAvailable();
-    virtual void haPublishState();
-
-    void mqttUpdate();
+    virtual void haGenerateDiscovery(JsonVariant doc, const char* uuid, MQTTController* mqtt);
+    virtual void haPublishAvailable(MQTTController* mqtt);
+    virtual void haPublishState(MQTTController* mqtt);
+    void mqttUpdate(MQTTController* mqtt);
 
   protected:
     char ha_key[YB_HOSTNAME_LENGTH];

@@ -126,30 +126,30 @@ class ChannelController : public BaseController
       }
     }
 
-    void mqttUpdateHook() override
+    void mqttUpdateHook(MQTTController* mqtt) override
     {
       for (auto& ch : _channels) {
         if (ch.isEnabled) {
-          ch.mqttUpdate();
+          ch.mqttUpdate(mqtt);
         }
       }
     }
 
-    void haUpdateHook() override
+    void haUpdateHook(MQTTController* mqtt) override
     {
       for (auto& ch : _channels) {
         if (ch.isEnabled) {
-          ch.haPublishAvailable();
-          ch.haPublishState();
+          ch.haPublishAvailable(mqtt);
+          ch.haPublishState(mqtt);
         }
       }
     }
 
-    void haGenerateDiscoveryHook(JsonVariant components) override
+    void haGenerateDiscoveryHook(JsonVariant components, const char* uuid, MQTTController* mqtt) override
     {
       for (auto& ch : _channels) {
         if (ch.isEnabled)
-          ch.haGenerateDiscovery(components);
+          ch.haGenerateDiscovery(components, uuid, mqtt);
       }
     }
 

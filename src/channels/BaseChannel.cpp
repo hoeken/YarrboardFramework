@@ -106,34 +106,29 @@ void BaseChannel::generateStats(JsonVariant config)
 {
 }
 
-void BaseChannel::mqttUpdate()
+void BaseChannel::mqttUpdate(MQTTController* mqtt)
 {
-  // JsonDocument output;
-  // this->generateUpdate(output);
+  JsonDocument output;
+  this->generateUpdate(output);
 
-  // char topic[128];
-  // snprintf(topic, sizeof(topic), "%s/%s", this->channel_type, this->key);
-  // traverseJSON(output, topic);
+  char topic[128];
+  snprintf(topic, sizeof(topic), "%s/%s", this->channel_type, this->key);
+  mqtt->traverseJSON(output, topic);
 }
 
-void BaseChannel::haGenerateDiscovery(JsonVariant doc)
+void BaseChannel::haGenerateDiscovery(JsonVariant doc, const char* uuid, MQTTController* mqtt)
 {
-  // if (config.app_use_hostname_as_mqtt_uuid)
-  //   strncpy(ha_key, config.local_hostname, sizeof(key));
-  // else
-  //   strncpy(ha_key, config.uuid, sizeof(key));
-
-  // // generate our id / topics
-  // sprintf(ha_uuid, "%s_%s_%s", ha_key, channel_type, this->key);
-  // sprintf(ha_topic_avail, "yarrboard/%s/%s/%s/ha_availability", ha_key, channel_type, this->key);
+  // generate our id / topics
+  sprintf(ha_uuid, "%s_%s_%s", uuid, channel_type, this->key);
+  sprintf(ha_topic_avail, "yarrboard/%s/%s/%s/ha_availability", uuid, channel_type, this->key);
 }
 
-void BaseChannel::haPublishAvailable()
+void BaseChannel::haPublishAvailable(MQTTController* mqtt)
 {
-  // mqtt_publish(ha_topic_avail, "online", false);
+  mqtt->publish(ha_topic_avail, "online", false);
 }
 
-void BaseChannel::haPublishState()
+void BaseChannel::haPublishState(MQTTController* mqtt)
 {
   return;
 }

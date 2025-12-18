@@ -15,6 +15,7 @@
 
 class YarrboardApp;
 class ConfigManager;
+class MQTTController;
 
 class BaseController
 {
@@ -30,9 +31,9 @@ class BaseController
     virtual void generateUpdateHook(JsonVariant output) {};
     virtual void generateFastUpdateHook(JsonVariant output) {};
     virtual void generateStatsHook(JsonVariant output) {};
-    virtual void mqttUpdateHook() {};
-    virtual void haUpdateHook() {};
-    virtual void haGenerateDiscoveryHook(JsonVariant components) {};
+    virtual void mqttUpdateHook(MQTTController* mqtt) {};
+    virtual void haUpdateHook(MQTTController* mqtt) {};
+    virtual void haGenerateDiscoveryHook(JsonVariant components, const char* uuid, MQTTController* mqtt) {};
 
   protected:
     YarrboardApp& _app;

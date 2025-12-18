@@ -1,9 +1,5 @@
 ## v1.0.0 Release
 
-* figure out how to manage BaseChannel mqtt calls
-  * move all the mqtt stuff to ChannelController
-  * move all the templated calls from BaseChannel to ChannelController
-
 * global brightness -> needs a controller hook
   * implement hook on rgb
   * implement hook on pwm
