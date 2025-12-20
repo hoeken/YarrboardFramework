@@ -29,6 +29,15 @@ void setup()
   yba.http.logo_sha = logo_gz_sha;
   yba.http.logo_data = logo_gz;
 
+  yba.board_name = "Framework Test";
+  yba.default_hostname = "yarrboard";
+  yba.firmware_version = "1.2.3";
+  yba.hardware_version = "REV_A_B_C";
+  yba.manufacturer = "Test Manufacturer";
+  yba.hardware_url = "http://example.com/my-hardware-page";
+  yba.project_name = "Yarrboard Framework";
+  yba.project_url = "https://github.com/hoeken/YarrboardFramework";
+
   yba.registerController(navico);
   yba.setup();
 }

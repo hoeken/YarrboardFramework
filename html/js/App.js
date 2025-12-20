@@ -1131,12 +1131,19 @@
 
       //various other component versions
       $("#build_time").html(msg.build_time);
-      $("#hardware_version").html(msg.hardware_version);
+      if (msg.hardware_url.length)
+        $("#hardware_version").html(`<a href="${msg.hardware_url}">${msg.hardware_version}</a>`);
+      else
+        $("#hardware_version").html(msg.hardware_version);
       $("#esp_idf_version").html(`${msg.esp_idf_version}`);
       $("#arduino_version").html(`v${msg.arduino_version}`);
       $("#yarrboard_framework_version").html(`v${msg.yarrboard_framework_version}`);
       $("#psychic_http_version").html(`v${msg.psychic_http_version}`);
       $("#yarrboard_client_version").html(`v${YarrboardClient.version}`);
+
+      $('#projectName')
+        .attr('href', msg.project_url)
+        .text(msg.project_name);
 
       //show some info about restarts
       if (msg.last_restart_reason)
