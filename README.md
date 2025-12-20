@@ -98,6 +98,24 @@ Channels inherit from `BaseChannel` and implement:
 - `mqttUpdate()` - MQTT publishing with hierarchical topics
 - `haGenerateDiscovery()` - Home Assistant device registration
 
+## Installation
+
+### PlatformIO Registry
+
+Install the library from the PlatformIO Registry by adding it to your `platformio.ini`:
+
+```ini
+[env:myenv]
+lib_deps =
+    hoeken/YarrboardFramework
+```
+
+Or install via the PlatformIO CLI:
+
+```bash
+pio pkg install --library "hoeken/YarrboardFramework"
+```
+
 ## Usage
 
 ### Project Structure
