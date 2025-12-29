@@ -5,7 +5,6 @@
   * if wifi does not connect, we should wait for a 5s press of boot, re-enable is_first_boot (or new variable like improve_finished = false)
 
 * bootstrap nav bar seems to be slightly broken
-  * link colors not changing back after leaving page
   * nav bar not working well on vertical mobile
 
 * global brightness

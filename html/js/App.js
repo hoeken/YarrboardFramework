@@ -212,8 +212,8 @@
           YB.App.openPage("control");
       }
       else {
-        //update our nav
-        $('#controlNav .nav-link').removeClass("active");
+        //update our nav - remove active from all nav links first
+        $('.navbar-nav .nav-link').removeClass("active");
         $(`#${page}Nav a`).addClass("active");
 
         //is our new page ready?
