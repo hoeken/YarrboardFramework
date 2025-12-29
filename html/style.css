@@ -42,101 +42,11 @@ div#firmware_update_available h2 {
     border: 0;
 }
 
-tr.switchRow,
-tr.rgbRow,
-tr.adcRow,
-tr.pwmRow #statsTable tbody tr {
-    height: 48px;
-}
-
-/* .controlCard {
-    height: 160px;
-} */
-
-.brineomaticControlButton {
-    width: 100%;
-    font-weight: bold;
-    font-size: 1.5rem !important;
-}
-
-.brineomaticControlButton span {
-    width: 100px;
-    display: inline-block;
-}
-
-#bomTableBody th {
-    width: 50%;
-}
-
-.relayButton,
-.pwmButton {
-    width: 100%;
-    height: 100px;
-    font-weight: bold;
-    font-size: 1.3rem !important;
-}
-
-.servoName,
-.stepperName {
-    font-weight: bold;
-    font-size: 1.3rem !important;
-}
-
 #mqtt_cert,
 #server_key,
 #server_cert {
     height: 150px;
 }
-
-.pwmButton .pwmDutySlider {
-    height: 75px;
-}
-
-.pwmData {
-    width: 70px;
-    font-size: 1rem !important;
-}
-
-.pwmDutySliderButton {
-    width: 45px;
-}
-
-.pwmDutyCycle {
-    font-size: 0.8rem;
-}
-
-.relayIcon svg,
-.pwmIcon svg {
-    width: 32px;
-    height: 32px;
-    fill: currentColor;
-}
-
-/* // Extra small devices (portrait phones, less than 576px)
-@media (max-width: 575.98px) { ... } */
-
-/* Small devices (landscape phones, less than 768px) */
-@media (max-width: 767.98px) {
-    .pwmButton {
-        height: 70px;
-        font-size: 1.1rem !important;
-    }
-
-    .pwmButton .pwmDutySlider {
-        height: 50px;
-    }
-
-    .pwmData {
-        width: 45px;
-        font-size: 0.8rem !important;
-    }
-}
-
-/* // Medium devices (tablets, less than 992px)
-@media (max-width: 991.98px) { ... } */
-
-/* // Large devices (desktops, less than 1200px)
-@media (max-width: 1199.98px) { ... } */
 
 .logo {
     color-scheme: light;
@@ -144,14 +54,6 @@ tr.pwmRow #statsTable tbody tr {
     forced-color-adjust: none;
     /* Safari/iOS: don't touch my colors */
 }
-
-/* [data-bs-theme="light"] {
-    --bs-body-bg: #eee;
-}
-
-[data-bs-theme="light"] .navbar {
-    background: #ccc;
-} */
 
 #configurationTextarea.is-drop-target {
     outline: 2px dashed var(--bs-primary);
@@ -169,21 +71,6 @@ table.ministats tbody tr:last-child td {
     border-bottom: none;
 }
 
-input[type=range][orient=vertical] {
-    writing-mode: vertical-lr;
-    direction: rtl;
-    appearance: slider-vertical;
-    width: 16px;
-    vertical-align: bottom;
-}
-
-/* When Bootstrap dark theme is active */
-html[data-bs-theme="dark"] .c3 .c3-gauge-value,
-html[data-bs-theme="dark"] .c3 .c3-gauge-units,
-html[data-bs-theme="dark"] .c3 .c3-axis text {
-    fill: var(--bs-body-color) !important;
-}
-
 .scrollFix {
     scroll-margin-top: 4.5rem;
 }
@@ -191,20 +78,6 @@ html[data-bs-theme="dark"] .c3 .c3-axis text {
 hr.bold {
     border: 0;
     border-top: 2px solid currentColor;
-}
-
-.filterPressureError,
-.membranePressureError,
-.motorTemperatureError,
-.tankLevelError {
-    display: none;
-}
-
-.filterPressureError>.d-flex,
-.membranePressureError>.d-flex,
-.motorTemperatureError>.d-flex,
-.tankLevelError>.d-flex {
-    height: 100px;
 }
 
 #debug_log_text {
