@@ -401,6 +401,55 @@ async function embedFile(filename) {
     await writeHeaderFile(source, destination, safeName, filename);
 }
 
+async function generateMetaInclude() {
+    const metaIncludePath = join(PATHS.src, 'gulped.h');
+    const wstream = createWriteStream(metaIncludePath);
+
+    // Collect all files and their struct names
+    const allFiles = ['index.html', ...PROJECT_ASSETS.files];
+    const structNames = allFiles.map(file => file.replace(/[^a-z0-9]/gi, '_') + '_gz');
+
+    // Write header guard
+    wstream.write(`#ifndef GULPED_H\n`);
+    wstream.write(`#define GULPED_H\n\n`);
+    wstream.write(`// Auto-generated file - includes all gulped assets\n\n`);
+
+    // Include all header files
+    wstream.write(`#include "index.html.gz.h"\n`);
+    for (const file of PROJECT_ASSETS.files) {
+        const headerFile = `${file}.gz.h`;
+        wstream.write(`#include "${headerFile}"\n`);
+    }
+
+    wstream.write(`\n`);
+
+    // Create array of pointers to GulpedFile structs
+    wstream.write(`// Array of pointers to all gulped files\n`);
+    wstream.write(`const GulpedFile* gulpedFiles[] = {\n`);
+    for (let i = 0; i < structNames.length; i++) {
+        wstream.write(`    &${structNames[i]}`);
+        if (i < structNames.length - 1) {
+            wstream.write(',');
+        }
+        wstream.write('\n');
+    }
+    wstream.write(`};\n\n`);
+
+    // Add count constant
+    wstream.write(`// Total number of gulped files\n`);
+    wstream.write(`const int gulpedFilesCount = ${structNames.length};\n\n`);
+
+    wstream.write(`#endif // GULPED_H`);
+    wstream.end();
+
+    return new Promise((resolve, reject) => {
+        wstream.on('finish', () => {
+            resolve();
+        });
+        wstream.on('error', reject);
+    });
+}
+
 function createFileTask(filename) {
     const compress = () => compressFile(filename);
     const embed = () => embedFile(filename);
@@ -419,7 +468,8 @@ const buildAll = series(
     injectAssets,
     minifyAndCompress,
     embedHtml,
-    ...fileTasks
+    ...fileTasks,
+    generateMetaInclude
 );
 
 // ============================================================================
@@ -432,5 +482,6 @@ export {
     injectAssets,
     minifyAndCompress,
     embedHtml,
+    generateMetaInclude,
     buildAll as default
 };

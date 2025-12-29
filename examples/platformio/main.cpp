@@ -13,8 +13,7 @@
 #include <YarrboardFramework.h>
 
 // generated at build by running "gulp" in the firmware directory.
-#include "src/gulp/index.html.gz.h"
-#include "src/gulp/logo.png.gz.h"
+#include "src/gulp/gulped.h"
 
 YarrboardApp yba;
 NavicoController navico(yba);

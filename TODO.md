@@ -1,8 +1,7 @@
 ## v1.1
 
 * find a way to provide html/css/js/etc files as part of library framework included.
-  * create a meta-include with #includes for each gulped file
-  * remove oshw-pixel file
+  * create a meta-include header at gulp/gulped.h with #includes for each gulped file
   * split css between framework and project
 
 * is_first_boot / improvwifi
