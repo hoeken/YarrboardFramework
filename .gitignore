@@ -34,8 +34,7 @@ node_modules
 **.pio
 **.vscode
 /build
-examples/arduino/
-examples/platformio/lib/PsychicHttp
-examples/websockets/lib/PsychicHttp
+examples/platformio/src
+examples/platformio/dist
 Visual\ Micro
 *.gz.h

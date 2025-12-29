@@ -79,16 +79,22 @@ if not framework_path:
 os.environ["YARRBOARD_FRAMEWORK_PATH"] = framework_path
 
 # Set the project path - this is where project-specific assets live (html/, src/, etc.)
-# Use PROJECT_SRC_DIR from PlatformIO to get the actual source directory
-# This correctly handles when src_dir is set to examples/platformio or other custom paths
-try:
-    project_src_dir = env["PROJECT_SRC_DIR"]
-    project_path = project_src_dir
-    print(f"Using PROJECT_SRC_DIR from PlatformIO: {project_path}")
-except KeyError:
-    # Fallback to current working directory if PROJECT_SRC_DIR is not available
-    project_path = os.getcwd()
-    print(f"PROJECT_SRC_DIR not available, using current directory: {project_path}")
+# For the framework examples, we need to use PROJECT_SRC_DIR (e.g., examples/platformio)
+# For real projects, we want the project root directory (where platformio.ini lives)
+project_path = os.getcwd()
+
+# Check if we're building framework examples by seeing if cwd contains YarrboardFramework
+if "YarrboardFramework" in project_path:
+    # We're in the framework repo, use PROJECT_SRC_DIR for examples
+    try:
+        project_src_dir = env["PROJECT_SRC_DIR"]
+        project_path = project_src_dir
+        print(f"Framework example detected - using PROJECT_SRC_DIR: {project_path}")
+    except KeyError:
+        print(f"Framework repo but PROJECT_SRC_DIR not available, using cwd: {project_path}")
+else:
+    # Real project - use project root (current working directory)
+    print(f"Using project root directory: {project_path}")
 
 os.environ["YARRBOARD_PROJECT_PATH"] = project_path
 

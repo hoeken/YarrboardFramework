@@ -13,8 +13,8 @@
 #include <YarrboardFramework.h>
 
 // generated at build by running "gulp" in the firmware directory.
-#include "index.html.gz.h"
-#include "logo.png.gz.h"
+#include "src/gulp/index.html.gz.h"
+#include "src/gulp/logo.png.gz.h"
 
 YarrboardApp yba;
 NavicoController navico(yba);
@@ -25,9 +25,9 @@ void setup()
   yba.http.index_sha = index_html_gz_sha;
   yba.http.index_data = index_html_gz;
 
-  yba.http.logo_length = logo_gz_len;
-  yba.http.logo_sha = logo_gz_sha;
-  yba.http.logo_data = logo_gz;
+  yba.http.logo_length = logo_png_gz_len;
+  yba.http.logo_sha = logo_png_gz_sha;
+  yba.http.logo_data = logo_png_gz;
 
   yba.board_name = "Framework Test";
   yba.default_hostname = "yarrboard";

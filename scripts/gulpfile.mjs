@@ -30,9 +30,9 @@ import { deleteAsync } from 'del';
 import inline from 'gulp-inline';
 import inlineImages from 'gulp-css-base64';
 import favicon from 'gulp-base64-favicon';
-import { readFileSync, createWriteStream, readdirSync, existsSync } from 'fs';
+import { readFileSync, createWriteStream, readdirSync, existsSync, mkdirSync, statSync } from 'fs';
 import { createHash } from 'crypto';
-import { join, basename } from 'path';
+import { join, basename, relative } from 'path';
 
 // ============================================================================
 // Configuration
@@ -57,10 +57,86 @@ console.log(`Using project path: ${PROJECT_PATH}`);
 
 const PATHS = {
     frameworkHtml: join(FRAMEWORK_PATH, 'html'),  // Framework HTML/CSS/JS
-    projectHtml: join(PROJECT_PATH, 'html'),      // Project-specific assets (logos)
+    projectHtml: join(PROJECT_PATH, 'html'),      // Project-specific assets (logos, CSS, JS)
     dist: join(PROJECT_PATH, 'dist'),             // Output directory
     src: join(PROJECT_PATH, 'src/gulp')           // Generated headers directory
 };
+
+console.log('PATHS configuration:');
+console.log(`  frameworkHtml: ${PATHS.frameworkHtml}`);
+console.log(`  projectHtml: ${PATHS.projectHtml}`);
+console.log(`  dist: ${PATHS.dist}`);
+console.log(`  src: ${PATHS.src}`);
+
+// Ensure the output directory exists
+if (!existsSync(PATHS.src)) {
+    console.log(`Creating missing directory: ${PATHS.src}`);
+    mkdirSync(PATHS.src, { recursive: true });
+}
+
+// Recursively scan directory for files matching extension
+function scanDirectory(dir, extension, baseDir = dir) {
+    const files = [];
+
+    if (!existsSync(dir)) {
+        console.log(`  Directory does not exist: ${dir}`);
+        return files;
+    }
+
+    const entries = readdirSync(dir);
+    console.log(`  Scanning directory: ${dir} (${entries.length} entries)`);
+
+    for (const entry of entries) {
+        const fullPath = join(dir, entry);
+        const stat = statSync(fullPath);
+
+        if (stat.isDirectory()) {
+            console.log(`    Found subdirectory: ${entry}`);
+            files.push(...scanDirectory(fullPath, extension, baseDir));
+        } else if (entry.endsWith(extension)) {
+            // Store relative path from base directory for better organization
+            const relativePath = relative(baseDir, fullPath);
+            console.log(`    Found matching file: ${entry} -> ${relativePath}`);
+            files.push(relativePath);
+        } else {
+            // console.log(`    Skipping file: ${entry} (doesn't end with ${extension})`);
+        }
+    }
+
+    return files;
+}
+
+// Find project CSS and JS files
+function findProjectAssets() {
+    console.log(`\n=== Scanning for project assets ===`);
+    console.log(`Project HTML path: ${PATHS.projectHtml}`);
+    console.log(`Path exists: ${existsSync(PATHS.projectHtml)}`);
+
+    const assets = {
+        css: [],
+        js: []
+    };
+
+    if (existsSync(PATHS.projectHtml)) {
+        console.log(`Scanning for .css files...`);
+        assets.css = scanDirectory(PATHS.projectHtml, '.css');
+
+        console.log(`Scanning for .js files...`);
+        assets.js = scanDirectory(PATHS.projectHtml, '.js');
+
+        console.log(`\nFound ${assets.css.length} project CSS file(s):`);
+        assets.css.forEach(file => console.log(`  - ${file}`));
+
+        console.log(`Found ${assets.js.length} project JS file(s):`);
+        assets.js.forEach(file => console.log(`  - ${file}`));
+    } else {
+        console.log(`Project HTML directory does not exist, skipping asset scan`);
+    }
+
+    console.log(`=== Asset scan complete ===\n`);
+
+    return assets;
+}
 
 // Intelligently find logos in project and framework directories
 function findLogos() {
@@ -97,9 +173,10 @@ function findLogos() {
 }
 
 const LOGOS = findLogos();
+const PROJECT_ASSETS = findProjectAssets();
 
 const HTML_MIN_OPTIONS = {
-    removeComments: true,
+    removeComments: false,
     minifyCSS: true,
     minifyJS: true
 };
@@ -116,6 +193,49 @@ const INLINE_OPTIONS = {
 // ============================================================================
 // Utility Functions
 // ============================================================================
+
+// Inject project CSS and JS into the HTML
+function injectProjectAssets(htmlPath, assets) {
+    if (assets.css.length === 0 && assets.js.length === 0) {
+        console.log('No project assets to inject');
+        return;
+    }
+
+    let html = readFileSync(htmlPath, 'utf8');
+
+    // Inject CSS files into <head>
+    if (assets.css.length > 0) {
+        let cssContent = '\n<!-- Project CSS -->\n';
+
+        for (const cssFile of assets.css) {
+            const cssPath = join(PATHS.projectHtml, cssFile);
+            const css = readFileSync(cssPath, 'utf8');
+            cssContent += `<!-- ${cssFile} -->\n<style>\n${css}\n</style>\n`;
+        }
+
+        // Insert before </head>
+        html = html.replace('</head>', cssContent + '</head>');
+        console.log(`Injected ${assets.css.length} CSS file(s) into <head>`);
+    }
+
+    // Inject JS files before </body>
+    if (assets.js.length > 0) {
+        let jsContent = '\n<!-- Project JS -->\n';
+
+        for (const jsFile of assets.js) {
+            const jsPath = join(PATHS.projectHtml, jsFile);
+            const js = readFileSync(jsPath, 'utf8');
+            jsContent += `<!-- ${jsFile} -->\n<script>\n${js}\n</script>\n`;
+        }
+
+        // Insert before </body>
+        html = html.replace('</body>', jsContent + '</body>');
+        console.log(`Injected ${assets.js.length} JS file(s) before </body>`);
+    }
+
+    // Write the modified HTML back
+    createWriteStream(htmlPath).end(html);
+}
 
 async function writeHeaderFile(source, destination, name) {
     return new Promise((resolve, reject) => {
@@ -164,6 +284,22 @@ function buildInlineHtml() {
     return src(join(PATHS.frameworkHtml, '*.html'))
         .pipe(favicon({ src: PATHS.frameworkHtml }))
         .pipe(inline(INLINE_OPTIONS))
+        .pipe(dest(PATHS.dist));
+}
+
+async function injectAssets() {
+    const htmlPath = join(PATHS.dist, 'index.html');
+
+    if (!existsSync(htmlPath)) {
+        console.log('No HTML file found to inject assets into');
+        return;
+    }
+
+    injectProjectAssets(htmlPath, PROJECT_ASSETS);
+}
+
+function minifyAndCompress() {
+    return src(join(PATHS.dist, 'index.html'))
         .pipe(htmlmin(HTML_MIN_OPTIONS))
         .pipe(gzip())
         .pipe(dest(PATHS.dist));
@@ -214,6 +350,8 @@ const logoTasks = LOGOS.map(logo => createLogoTask(logo));
 const buildAll = series(
     clean,
     buildInlineHtml,
+    injectAssets,
+    minifyAndCompress,
     embedHtml,
     ...logoTasks
 );
@@ -225,6 +363,8 @@ const buildAll = series(
 export {
     clean,
     buildInlineHtml,
+    injectAssets,
+    minifyAndCompress,
     embedHtml,
     buildAll as default
 };
