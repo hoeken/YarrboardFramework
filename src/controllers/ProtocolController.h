@@ -25,6 +25,7 @@
 #include <functional>
 
 typedef enum {
+  YBP_MODE_NONE,
   YBP_MODE_WEBSOCKET,
   YBP_MODE_HTTP,
   YBP_MODE_SERIAL
@@ -33,9 +34,15 @@ typedef enum {
 class YarrboardApp;
 class ConfigManager;
 
+struct ProtocolContext {
+    YBMode mode = YBP_MODE_NONE;
+    UserRole role = NOBODY;
+    uint32_t clientId = 0;
+};
+
 // message handler callback definition
 // void(JsonVariantConst input, JsonVariant output)
-using ProtocolMessageHandler = std::function<void(JsonVariantConst, JsonVariant)>;
+using ProtocolMessageHandler = std::function<void(JsonVariantConst, JsonVariant, ProtocolContext)>;
 
 class ProtocolController : public BaseController
 {
@@ -55,11 +62,11 @@ class ProtocolController : public BaseController
 
     // Overload 2: Member Function Helper
     template <typename T>
-    bool registerCommand(UserRole role, const char* command, T* instance, void (T::*method)(JsonVariantConst, JsonVariant))
+    bool registerCommand(UserRole role, const char* command, T* instance, void (T::*method)(JsonVariantConst, JsonVariant, ProtocolContext))
     {
       // No casting needed on 'this'. We use the explicitly passed 'instance'.
-      return registerCommand(role, command, [instance, method](JsonVariantConst in, JsonVariant out) {
-        (instance->*method)(in, out);
+      return registerCommand(role, command, [instance, method](JsonVariantConst in, JsonVariant out, ProtocolContext context) {
+        (instance->*method)(in, out, context);
       });
     }
 
@@ -72,7 +79,7 @@ class ProtocolController : public BaseController
     void sendToAll(JsonVariantConst output, UserRole auth_level);
     void sendToAll(const char* jsonString, UserRole auth_level);
 
-    void handleReceivedJSON(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection = NULL);
+    void handleReceivedJSON(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     static void generateErrorJSON(JsonVariant output, const char* error);
     static void generateSuccessJSON(JsonVariant output, const char* success);
 
@@ -108,30 +115,29 @@ class ProtocolController : public BaseController
 
     void handleSerialJson();
 
-    void handleHello(JsonVariantConst input, JsonVariant output, UserRole role);
-    void handleLogin(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection);
-    void handleLogout(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection = NULL);
-
-    void handlePing(JsonVariantConst input, JsonVariant output);
-    void handleGetConfig(JsonVariantConst input, JsonVariant output);
-    void handleGetStats(JsonVariantConst input, JsonVariant output);
-    void handleGetUpdate(JsonVariantConst input, JsonVariant output);
-    void handleGetFullConfig(JsonVariantConst input, JsonVariant output);
-    void handleGetNetworkConfig(JsonVariantConst input, JsonVariant output);
-    void handleGetAppConfig(JsonVariantConst input, JsonVariant output);
-    void handleSetGeneralConfig(JsonVariantConst input, JsonVariant output);
-    void handleSetNetworkConfig(JsonVariantConst input, JsonVariant output);
-    void handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output);
-    void handleSetWebServerConfig(JsonVariantConst input, JsonVariant output);
-    void handleSetMQTTConfig(JsonVariantConst input, JsonVariant output);
-    void handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output);
-    void handleSaveConfig(JsonVariantConst input, JsonVariant output);
-    void handleRestart(JsonVariantConst input, JsonVariant output);
-    void handleCrashMe(JsonVariantConst input, JsonVariant output);
-    void handleFactoryReset(JsonVariantConst input, JsonVariant output);
-    void handleOTAStart(JsonVariantConst input, JsonVariant output);
-    void handleSetTheme(JsonVariantConst input, JsonVariant output);
-    void handleSetBrightness(JsonVariantConst input, JsonVariant output);
+    void handleHello(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleLogin(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleLogout(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handlePing(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleGetConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleGetStats(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleGetUpdate(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleGetFullConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleGetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleGetAppConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleSetGeneralConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleSetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleSetMQTTConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleSaveConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleRestart(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleCrashMe(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleFactoryReset(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleOTAStart(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleSetTheme(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleSetBrightness(JsonVariantConst input, JsonVariant output, ProtocolContext context);
 
     void generateConfigMessage(JsonVariant output);
 };

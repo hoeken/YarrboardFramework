@@ -749,7 +749,7 @@ void BuzzerController::playMelody(const Note* seq, size_t len)
     xTaskNotifyGive(buzzerTaskHandle); // wake the task
 }
 
-void BuzzerController::handlePlaySound(JsonVariantConst input, JsonVariant output)
+void BuzzerController::handlePlaySound(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   // expect: "melody": "name"
   if (input["melody"]) {

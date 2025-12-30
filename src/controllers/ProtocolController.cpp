@@ -25,6 +25,9 @@ ProtocolController::ProtocolController(YarrboardApp& app) : BaseController(app, 
 bool ProtocolController::setup()
 {
   registerCommand(NOBODY, "ping", this, &ProtocolController::handlePing);
+  registerCommand(NOBODY, "hello", this, &ProtocolController::handleHello);
+  registerCommand(NOBODY, "login", this, &ProtocolController::handleLogin);
+  registerCommand(NOBODY, "logout", this, &ProtocolController::handleLogout);
 
   registerCommand(GUEST, "get_config", this, &ProtocolController::handleGetConfig);
   registerCommand(GUEST, "get_stats", this, &ProtocolController::handleGetStats);
@@ -136,7 +139,9 @@ void ProtocolController::handleSerialJson()
       serializeJson(output, Serial);
     }
   } else {
-    handleReceivedJSON(input, output, YBP_MODE_SERIAL);
+    ProtocolContext context;
+    context.mode = YBP_MODE_SERIAL;
+    handleReceivedJSON(input, output, context);
 
     // we can have empty responses
     if (output.size()) {
@@ -148,8 +153,7 @@ void ProtocolController::handleSerialJson()
   }
 }
 
-void ProtocolController::handleReceivedJSON(JsonVariantConst input, JsonVariant output, YBMode mode,
-  PsychicWebSocketClient* connection)
+void ProtocolController::handleReceivedJSON(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   // make sure its correct
   if (!input["cmd"].is<String>())
@@ -170,7 +174,7 @@ void ProtocolController::handleReceivedJSON(JsonVariantConst input, JsonVariant 
   totalReceivedMessages++;
 
   // what would you say you do around here?
-  UserRole role = _app.auth.getUserRole(input, mode, connection->socket());
+  context.role = _app.auth.getUserRole(input, context.mode, context.clientId);
 
   // Try to find the command in the new map system
   auto it = commandMap.find(cmd);
@@ -180,49 +184,39 @@ void ProtocolController::handleReceivedJSON(JsonVariantConst input, JsonVariant 
   if (it != commandMap.end()) {
 
     // We found the command, so we must enforce auth.
-    // Do NOT fall through if unauthorized.
-    if (!_app.auth.hasPermission(it->second.role, role)) {
-      return generateErrorJSON(output, "Unauthorized.");
+    if (!_app.auth.hasPermission(it->second.role, context.role)) {
+      String error = "Unauthorized for " + String(cmd);
+      return generateErrorJSON(output, error.c_str());
     }
 
     // Execute Handler
     if (it->second.handler) {
-      it->second.handler(input, output);
+      it->second.handler(input, output, context);
       return;
     }
   }
-
-  // login is a tricky one that we really need mode + connection information for.
-  if (!strcmp(cmd, "login"))
-    return handleLogin(input, output, mode, connection);
-  // hello is also a tricky one since we need to let them know their role.
-  else if (!strcmp(cmd, "hello"))
-    return handleHello(input, output, role);
-  // logout is another special case.
-  else if (!strcmp(cmd, "logout"))
-    return handleLogout(input, output, mode, connection);
 
   // if we got here, no bueno.
   String error = "Invalid command: " + String(cmd);
   return generateErrorJSON(output, error.c_str());
 }
 
-void ProtocolController::handleHello(JsonVariantConst input, JsonVariant output, UserRole role)
+void ProtocolController::handleHello(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   output["msg"] = "hello";
-  output["role"] = _app.auth.getRoleText(role);
+  output["role"] = _app.auth.getRoleText(context.role);
   output["default_role"] = _app.auth.getRoleText(_cfg.app_default_role);
   output["name"] = _cfg.board_name;
   output["brightness"] = _cfg.globalBrightness;
   output["firmware_version"] = _app.firmware_version;
 }
 
-void ProtocolController::handleGetConfig(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleGetConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   generateConfigMessage(output);
 }
 
-void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   // some basic statistics and info
   output["msg"] = "stats";
@@ -254,7 +248,7 @@ void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant outp
   }
 }
 
-void ProtocolController::handleGetUpdate(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleGetUpdate(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   output["msg"] = "update";
   output["uptime"] = esp_timer_get_time();
@@ -264,7 +258,7 @@ void ProtocolController::handleGetUpdate(JsonVariantConst input, JsonVariant out
   }
 }
 
-void ProtocolController::handleGetFullConfig(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleGetFullConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   // build our message
   output["msg"] = "full_config";
@@ -274,19 +268,19 @@ void ProtocolController::handleGetFullConfig(JsonVariantConst input, JsonVariant
   _cfg.generateFullConfig(cfg);
 }
 
-void ProtocolController::handleGetNetworkConfig(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleGetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   output["msg"] = "network_config";
   _cfg.generateNetworkConfig(output);
 }
 
-void ProtocolController::handleGetAppConfig(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleGetAppConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   output["msg"] = "app_config";
   _cfg.generateAppConfig(output);
 }
 
-void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   if (!input["board_name"].is<String>())
     return generateErrorJSON(output, "'board_name' is a required parameter");
@@ -311,7 +305,7 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
   generateConfigMessage(output);
 }
 
-void ProtocolController::handleSetNetworkConfig(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleSetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   // clear our first boot flag since they submitted the network page.
   _cfg.is_first_boot = false;
@@ -403,7 +397,7 @@ void ProtocolController::handleSetNetworkConfig(JsonVariantConst input, JsonVari
   }
 }
 
-void ProtocolController::handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   if (!input["admin_user"].is<String>())
     return generateErrorJSON(output, "'admin_user' is a required parameter");
@@ -465,7 +459,7 @@ void ProtocolController::handleSetAuthenticationConfig(JsonVariantConst input, J
     return generateErrorJSON(output, error);
 }
 
-void ProtocolController::handleSetWebServerConfig(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   bool old_app_enable_ssl = _cfg.app_enable_ssl;
 
@@ -485,7 +479,7 @@ void ProtocolController::handleSetWebServerConfig(JsonVariantConst input, JsonVa
     ESP.restart();
 }
 
-void ProtocolController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   _cfg.app_enable_mqtt = input["app_enable_mqtt"];
   _cfg.app_enable_ha_integration = input["app_enable_ha_integration"];
@@ -508,7 +502,7 @@ void ProtocolController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant
     _app.mqtt.disconnect();
 }
 
-void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   _cfg.app_enable_serial = input["app_enable_serial"] | _app.enable_serial_api;
   _cfg.app_enable_ota = input["app_enable_ota"] | _app.enable_arduino_ota;
@@ -525,7 +519,7 @@ void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, Js
     _app.ota.end();
 }
 
-void ProtocolController::handleSaveConfig(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleSaveConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   char error[128] = "Unknown";
 
@@ -555,7 +549,7 @@ void ProtocolController::handleSaveConfig(JsonVariantConst input, JsonVariant ou
   ESP.restart();
 }
 
-void ProtocolController::handleLogin(JsonVariantConst input, JsonVariant output, YBMode mode, PsychicWebSocketClient* connection)
+void ProtocolController::handleLogin(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   if (!input["user"].is<String>())
     return generateErrorJSON(output, "'user' is a required parameter");
@@ -588,10 +582,10 @@ void ProtocolController::handleLogin(JsonVariantConst input, JsonVariant output,
   // okay, are we in?
   if (is_authenticated) {
     // check to see if there's room for us.
-    if (mode == YBP_MODE_WEBSOCKET) {
-      if (!_app.auth.logClientIn(connection->socket(), role))
+    if (context.mode == YBP_MODE_WEBSOCKET) {
+      if (!_app.auth.logClientIn(context.clientId, role))
         return generateErrorJSON(output, "Too many connections.");
-    } else if (mode == YBP_MODE_SERIAL) {
+    } else if (context.mode == YBP_MODE_SERIAL) {
       _app.auth.logSerialClientIn(role);
     }
 
@@ -606,28 +600,27 @@ void ProtocolController::handleLogin(JsonVariantConst input, JsonVariant output,
   return generateErrorJSON(output, "Wrong username/password.");
 }
 
-void ProtocolController::handleLogout(JsonVariantConst input, JsonVariant output, YBMode mode,
-  PsychicWebSocketClient* connection)
+void ProtocolController::handleLogout(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
-  if (!_app.auth.isLoggedIn(input, mode, connection->socket()))
+  if (!_app.auth.isLoggedIn(input, context.mode, context.clientId))
     return generateErrorJSON(output, "You are not logged in.");
 
   // what type of client are you?
-  if (mode == YBP_MODE_WEBSOCKET) {
-    _app.auth.removeClientFromAuthList(connection->socket());
-  } else if (mode == YBP_MODE_SERIAL) {
+  if (context.mode == YBP_MODE_WEBSOCKET) {
+    _app.auth.removeClientFromAuthList(context.clientId);
+  } else if (context.mode == YBP_MODE_SERIAL) {
     _app.auth.logSerialClientOut();
   }
 }
 
-void ProtocolController::handleRestart(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleRestart(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   YBP.println("Restarting board.");
 
   ESP.restart();
 }
 
-void ProtocolController::handleFactoryReset(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleFactoryReset(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   // delete all our prefs
   _cfg.preferences.clear();
@@ -640,7 +633,7 @@ void ProtocolController::handleFactoryReset(JsonVariantConst input, JsonVariant 
   ESP.restart();
 }
 
-void ProtocolController::handleOTAStart(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleOTAStart(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   if (_app.ota.checkOTA())
     _app.ota.startOTA();
@@ -648,7 +641,7 @@ void ProtocolController::handleOTAStart(JsonVariantConst input, JsonVariant outp
     return generateErrorJSON(output, "Firmware already up to date.");
 }
 
-void ProtocolController::handleSetTheme(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleSetTheme(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   if (!input["theme"].is<String>())
     return generateErrorJSON(output, "'theme' is a required parameter");
@@ -664,7 +657,7 @@ void ProtocolController::handleSetTheme(JsonVariantConst input, JsonVariant outp
   sendThemeUpdate();
 }
 
-void ProtocolController::handleSetBrightness(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handleSetBrightness(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   if (input["brightness"].is<float>()) {
     float brightness = input["brightness"];
@@ -731,7 +724,7 @@ void ProtocolController::generateSuccessJSON(JsonVariant output, const char* suc
   output["message"] = success;
 }
 
-void ProtocolController::handlePing(JsonVariantConst input, JsonVariant output)
+void ProtocolController::handlePing(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   output["pong"] = millis();
 }

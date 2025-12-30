@@ -15,6 +15,7 @@
 
 #include "YarrboardConfig.h"
 #include "controllers/BaseController.h"
+#include "controllers/ProtocolController.h"
 #include "driver/ledc.h"
 #include <ArduinoJson.h>
 
@@ -51,7 +52,7 @@ class BuzzerController : public BaseController
     bool playMelodyByName(const char* melody);
     void generateMelodyJSON(JsonVariant output);
 
-    void handlePlaySound(JsonVariantConst input, JsonVariant output);
+    void handlePlaySound(JsonVariantConst input, JsonVariant output, ProtocolContext context);
 
     // Make the task a friend so it can access private static members
     friend void BuzzerTask(void* pv);

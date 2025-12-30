@@ -271,7 +271,12 @@ esp_err_t HTTPController::handleWebServerRequest(JsonVariant input, PsychicReque
 
   if (_cfg.app_enable_api) {
     _app.auth.isApiClientLoggedIn(input);
-    _app.protocol.handleReceivedJSON(input, output, YBP_MODE_HTTP);
+
+    ProtocolContext context;
+    context.mode = YBP_MODE_HTTP;
+    context.clientId = request->client()->socket();
+
+    _app.protocol.handleReceivedJSON(input, output, context);
   } else
     _app.protocol.generateErrorJSON(output, "Web API is disabled.");
 
@@ -356,8 +361,12 @@ void HTTPController::handleWebsocketMessageLoop(WebsocketRequest* request)
     char error[64];
     sprintf(error, "deserializeJson() failed with code %s", err.c_str());
     _app.protocol.generateErrorJSON(output, error);
-  } else
-    _app.protocol.handleReceivedJSON(input, output, YBP_MODE_WEBSOCKET, client);
+  } else {
+    ProtocolContext context;
+    context.mode = YBP_MODE_WEBSOCKET;
+    context.clientId = client->socket();
+    _app.protocol.handleReceivedJSON(input, output, context);
+  }
 
   // empty messages are valid, so don't send a response
   if (output.size()) {
