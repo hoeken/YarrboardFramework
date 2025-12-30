@@ -14,6 +14,7 @@
 #include "ConfigManager.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
+#include "controllers/ProtocolController.h"
 
 MQTTController* MQTTController::_instance = nullptr;
 
@@ -130,8 +131,43 @@ void MQTTController::publish(const char* topic, const char* payload, bool use_pr
 
 void MQTTController::receiveMessage(const char* topic, const char* payload, int retain, int qos, bool dup)
 {
-  YBP.printf("Received Topic: %s\r\n", topic);
-  YBP.printf("Received Payload: %s\r\n", payload);
+  // only if we're enabled.
+  if (!_cfg.app_enable_mqtt_protocol)
+    return;
+
+  JsonDocument input;
+  DeserializationError err = deserializeJson(input, payload);
+  JsonDocument output;
+
+  if (err) {
+    char error[64];
+    sprintf(error, "deserializeJson() failed with code %s", err.c_str());
+    _app.protocol.generateErrorJSON(output, error);
+  } else {
+    ProtocolContext context;
+    context.mode = YBP_MODE_MQTT;
+    _app.protocol.handleReceivedJSON(input, output, context);
+  }
+
+  // we can have empty responses
+  if (output.size()) {
+    // dynamically allocate our buffer
+    size_t jsonSize = measureJson(output);
+    char* jsonBuffer = (char*)malloc(jsonSize + 1);
+
+    // did we get anything?
+    if (jsonBuffer != NULL) {
+      jsonBuffer[jsonSize] = '\0'; // null terminate
+      serializeJson(output, jsonBuffer, jsonSize + 1);
+
+      // post our response
+      this->publish("response", jsonBuffer);
+      free(jsonBuffer);
+    } else {
+      // dont call YBP b/c loops...
+      YBP.println("Error allocating in MQTTController::receiveMessage");
+    }
+  }
 }
 
 void MQTTController::_receiveMessageStatic(const char* topic, const char* payload, int retain, int qos, bool dup)

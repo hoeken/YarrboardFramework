@@ -1,7 +1,5 @@
 ## v2.0
 
-* implement protocol over mqtt
-
 * more App.js functions:
   * addPage("page", "content", openCallback);
   * onOpenPage(page, callback);

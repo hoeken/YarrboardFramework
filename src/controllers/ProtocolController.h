@@ -28,7 +28,8 @@ typedef enum {
   YBP_MODE_NONE,
   YBP_MODE_WEBSOCKET,
   YBP_MODE_HTTP,
-  YBP_MODE_SERIAL
+  YBP_MODE_SERIAL,
+  YBP_MODE_MQTT
 } YBMode;
 
 class YarrboardApp;

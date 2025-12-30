@@ -39,6 +39,7 @@ bool ConfigManager::setup()
   app_enable_ota = _app.enable_arduino_ota;
   app_enable_ssl = _app.enable_ssl;
   app_enable_mqtt = _app.enable_mqtt;
+  app_enable_mqtt_protocol = _app.enable_mqtt_protocol;
   app_enable_ha_integration = _app.enable_ha_integration;
   app_use_hostname_as_mqtt_uuid = _app.use_hostname_as_mqtt_uuid;
 
@@ -190,6 +191,7 @@ void ConfigManager::generateAppConfig(JsonVariant output)
   output["app_enable_ota"] = app_enable_ota;
   output["app_enable_ssl"] = app_enable_ssl;
   output["app_enable_mqtt"] = app_enable_mqtt;
+  output["app_enable_mqtt_protocol"] = app_enable_mqtt_protocol;
   output["app_enable_ha_integration"] = app_enable_ha_integration;
   output["app_use_hostname_as_mqtt_uuid"] = app_use_hostname_as_mqtt_uuid;
   output["mqtt_server"] = mqtt_server;
@@ -394,6 +396,7 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
   app_enable_ota = config["app_enable_ota"] | _app.enable_arduino_ota;
   app_enable_ssl = config["app_enable_ssl"] | _app.enable_ssl;
   app_enable_mqtt = config["app_enable_mqtt"] | _app.enable_mqtt;
+  app_enable_mqtt_protocol = config["app_enable_mqtt_protocol"] | _app.enable_mqtt_protocol;
   app_enable_ha_integration = config["app_enable_ha_integration"] | _app.enable_ha_integration;
   app_use_hostname_as_mqtt_uuid = config["app_use_hostname_as_mqtt_uuid"] | _app.use_hostname_as_mqtt_uuid;
 

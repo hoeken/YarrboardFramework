@@ -75,7 +75,11 @@ UserRole AuthController::getUserRole(JsonVariantConst input, byte mode, int sock
     return _cfg.api_role;
   else if (mode == YBP_MODE_SERIAL)
     return _cfg.serial_role;
-  else
+  else if (mode == YBP_MODE_MQTT) {
+    UserRole role = _cfg.app_default_role;
+    this->checkLoginCredentials(input, role);
+    return role;
+  } else
     return _cfg.app_default_role;
 }
 
@@ -202,6 +206,8 @@ const char* AuthController::getRoleText(UserRole role)
     return "admin";
   else if (role == GUEST)
     return "guest";
-  else
+  else if (role == NOBODY)
     return "nobody";
+  else
+    return "unknown";
 }

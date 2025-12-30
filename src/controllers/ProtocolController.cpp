@@ -482,6 +482,7 @@ void ProtocolController::handleSetWebServerConfig(JsonVariantConst input, JsonVa
 void ProtocolController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   _cfg.app_enable_mqtt = input["app_enable_mqtt"];
+  _cfg.app_enable_mqtt_protocol = input["app_enable_mqtt_protocol"];
   _cfg.app_enable_ha_integration = input["app_enable_ha_integration"];
   _cfg.app_use_hostname_as_mqtt_uuid = input["app_use_hostname_as_mqtt_uuid"];
 

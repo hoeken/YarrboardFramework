@@ -36,15 +36,14 @@
 class YarrboardApp
 {
   public:
-    struct ControllerEntry
-    {
-      BaseController* controller;
-      uint8_t order;
+    struct ControllerEntry {
+        BaseController* controller;
+        uint8_t order;
 
-      ControllerEntry() : controller(nullptr), order(0) {}
-      ControllerEntry(BaseController* c, uint8_t o) : controller(c), order(o) {}
+        ControllerEntry() : controller(nullptr), order(0) {}
+        ControllerEntry(BaseController* c, uint8_t o) : controller(c), order(o) {}
 
-      bool operator<(const ControllerEntry& other) const { return order < other.order; }
+        bool operator<(const ControllerEntry& other) const { return order < other.order; }
     };
 
     ConfigManager config;
@@ -81,6 +80,7 @@ class YarrboardApp
     bool enable_arduino_ota = false;
     bool enable_ssl = false;
     bool enable_mqtt = false;
+    bool enable_mqtt_protocol = false;
     bool enable_ha_integration = false;
     bool use_hostname_as_mqtt_uuid = true;
 

@@ -663,6 +663,7 @@
       return {
         //checkboxes
         app_enable_mqtt: {},
+        app_enable_mqtt_protocol: {},
         app_enable_ha_integration: {},
         app_use_hostname_as_mqtt_uuid: {},
 
@@ -696,6 +697,7 @@
       // pull our form data
       const settings = {
         app_enable_mqtt: $("#app_enable_mqtt").prop("checked"),
+        app_enable_mqtt_protocol: $("#app_enable_mqtt_protocol").prop("checked"),
         app_enable_ha_integration: $("#app_enable_ha_integration").prop("checked"),
         app_use_hostname_as_mqtt_uuid: $("#app_use_hostname_as_mqtt_uuid").prop("checked"),
         mqtt_server: $("#mqtt_server").val().trim(),
@@ -723,6 +725,7 @@
       YB.client.send({
         cmd: "set_mqtt_config",
         app_enable_mqtt: settings.app_enable_mqtt,
+        app_enable_mqtt_protocol: settings.app_enable_mqtt_protocol,
         app_enable_ha_integration: settings.app_enable_ha_integration,
         app_use_hostname_as_mqtt_uuid: settings.app_use_hostname_as_mqtt_uuid,
         mqtt_server: settings.mqtt_server,
@@ -1470,6 +1473,7 @@
 
       //for our mqtt stuff
       $("#app_enable_mqtt").prop("checked", msg.app_enable_mqtt);
+      $("#app_enable_mqtt_protocol").prop("checked", msg.app_enable_mqtt_protocol);
       $("#app_enable_ha_integration").prop("checked", msg.app_enable_ha_integration);
       $("#app_use_hostname_as_mqtt_uuid").prop("checked", msg.app_use_hostname_as_mqtt_uuid);
       $("#mqtt_server").val(msg.mqtt_server);

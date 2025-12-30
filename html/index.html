@@ -461,7 +461,16 @@
                         <div class="form-check form-switch mb-3 mqtt_field" style="display: none">
                             <input class="form-check-input" type="checkbox" id="app_use_hostname_as_mqtt_uuid" checked>
                             <label class="form-check-label" for="app_use_hostname_as_mqtt_uuid">
-                                Use hostname as MQTT Unique ID
+                                Use local hostname as MQTT Unique ID
+                            </label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-check form-switch mb-3 mqtt_field" style="display: none">
+                            <input class="form-check-input" type="checkbox" id="app_enable_mqtt_protocol" checked>
+                            <label class="form-check-label" for="app_enable_mqtt_protocol">
+                                Enable protocol over MQTT (eg. allow json commands to
+                                /yarrboard/{hostname|uuid}/command)
                             </label>
                             <div class="invalid-feedback"></div>
                         </div>

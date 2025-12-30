@@ -53,6 +53,7 @@ class ConfigManager : public BaseController
     bool app_enable_ota;
     bool app_enable_ssl;
     bool app_enable_mqtt;
+    bool app_enable_mqtt_protocol;
     bool app_enable_ha_integration;
     bool app_use_hostname_as_mqtt_uuid;
     UserRole app_default_role;
