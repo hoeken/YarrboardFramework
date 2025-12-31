@@ -1,23 +1,25 @@
 ## v2.0
 
-  * convert other pages to onPageOpen()
-    * control
-    * stats
-    * config
-    * settings
-    * system
-    * login
-    * logout
-* onPageOpen()
-  * pass in our page object
-  * overwrites previous page with that name.
-* add onStart(callback) to YB.App, better hook than dom onready.
+* App.onPageOpen -> Page.onOpen();
+* convert other pages to onPageOpen()
+  * control
+  * stats
+  * config
+  * settings
+  * system
+  * login
+  * logout
+* onOpen()
+  * pass in our page object to the call (this)
+* move stuff from YB.start to onStart callbacks where it makes sense.
+
+* addMessageHandler -> onMessage (homogenize)
+* onMessage -> messageHandler (homogenize)
+* rename control to home
 
 ## Long Term
 
 * other app.* callbacks to register various things?
-  * addMessageHandler -> onMessage (homogenize)
-  * onMessage -> messageHandler (homogenize)
 
 * bug with reconnecting (eg ESP.restart not going down the hello path)
 

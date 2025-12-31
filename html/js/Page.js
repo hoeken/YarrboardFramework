@@ -195,14 +195,8 @@
       'admin': 3
     };
 
-    console.log(`role: ${role}`);
-    console.log(`required: ${this.permissionLevel}`);
-
     var requiredLevel = roleLevel[this.permissionLevel] || 2;
     var userLevel = roleLevel[role] || 0;
-
-    console.log(`userLevel: ${userLevel}`);
-    console.log(`requiredLevel: ${requiredLevel}`);
 
     return userLevel >= requiredLevel;
   };

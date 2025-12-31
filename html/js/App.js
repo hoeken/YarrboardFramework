@@ -7,8 +7,13 @@
   YB.App = {
     config: {},
 
+    startCallbacks: [],
     messageHandlers: {},
     pageOpenHandlers: {},
+
+    onStart: function (callback) {
+      YB.App.startCallbacks.push(callback);
+    },
 
     onPageOpen: function (page, handler) {
       if (!YB.App.pageOpenHandlers[page])
@@ -141,6 +146,10 @@
           }
         }, 10);
       });
+
+      //run our start callbacks
+      for (cb of YB.App.startCallbacks)
+        cb();
     },
 
     startWebsocket: function () {
@@ -1656,7 +1665,7 @@
     displayName: 'System',
     permissionLevel: 'admin',
     showInNavbar: true,
-    ready: false
+    ready: true
   }));
 
   YB.App.addPage(new YB.Page({
