@@ -48,10 +48,13 @@ jobs:
       - name: Cache PlatformIO
         uses: actions/cache@v4
         with:
-          key: ${{ matrix.target }}-pio-v2
+          key: ${{ matrix.target }}-pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ matrix.target }}-pio-
           path: |
             ~/.cache/pip
             ~/.platformio
+            .pio/libdeps
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -64,6 +67,6 @@ jobs:
           pip install --upgrade platformio
 
       - name: Install Library
-        run: pio lib -g install -f $GITHUB_WORKSPACE
+        run: pio pkg install -e ${{ matrix.target }}
 
       - run: PIO_PLATFORM="https://github.com/pioarduino/platform-espressif32/releases/download/${{ matrix.platform }}/platform-espressif32.zip" pio run -e ${{ matrix.target }}
