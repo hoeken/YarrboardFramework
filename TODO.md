@@ -1,11 +1,19 @@
 ## v2.0
 
-* guest/admin login doesnt work when on the #logout page -> wont redirect
-* move stuff from YB.start to onStart callbacks where it makes sense.
-
 * addMessageHandler -> onMessage (homogenize)
 * onMessage -> messageHandler (homogenize)
 * rename control to home
+
+* add Page.onClose(handler)
+  * call just before page.open()
+
+* startUpdateData / statsdata
+  * homogenize to startUpdatePoller / startStatsPoller
+  * add stopUpdatePoller, etc to control.onClose, stats, etc.
+
+* move SendIt/adc stuff to sendit
+
+* add + icons to the expandable info on stats.
 
 ## Long Term
 

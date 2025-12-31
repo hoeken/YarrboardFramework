@@ -349,8 +349,6 @@
       }
     },
 
-
-
     getStatsData: function () {
       if (YB.client.isOpen() && (YB.App.role == 'guest' || YB.App.role == 'admin')) {
         //YB.log("get_stats");
@@ -376,6 +374,7 @@
 
         YB.client.getUpdate();
 
+        //TODO: move ADC specific stuff to SendIt controller
         //keep loading it while we are here.
         if (YB.App.currentPage == "control" || (YB.App.currentPage == "config" && YB.App.config && YB.App.config.hasOwnProperty("adc")))
           return;
@@ -940,7 +939,7 @@
         //check to see if we want a certain page
         if (window.location.hash) {
           let page = window.location.hash.substring(1);
-          if (page != "login" && YB.App.getPage(page))
+          if (page != "login" && page != "logout" && YB.App.getPage(page))
             YB.App.openPage(page);
           else
             YB.App.openPage("control");

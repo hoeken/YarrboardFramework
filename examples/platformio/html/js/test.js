@@ -1,4 +1,4 @@
-//set our control page html
+//use the onStart() call so we arent racing the app startup with document.onready
 YB.App.onStart(function () {
   let control = YB.App.getPage("control");
   control.setContent(`
@@ -9,6 +9,8 @@ YB.App.onStart(function () {
 
 //example page open callback
 YB.App.getPage("stats").onOpen(function () {
-  console.log("Stats Page Opened");
-  return true;
+  $("#statsContainer").append("<h1>Stats Page Opened</h1>");
 });
+
+//we arent using the config page.
+YB.App.removePage("config");
