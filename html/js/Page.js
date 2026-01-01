@@ -14,6 +14,7 @@
     this.position = config.position !== undefined ? config.position : "last";
 
     this.openCallbacks = [];
+    this.closeCallbacks = [];
 
     // Store reference to content div and navbar entry if they already exist
     this._contentDiv = null;
@@ -55,6 +56,16 @@
     //waits until page is ready to open.
     this.openWhenReady();
   };
+
+  YB.Page.prototype.onClose = function (callback) {
+    this.closeCallbacks.push(callback);
+  };
+
+  YB.Page.prototype.close = function (callback) {
+    for (let cb of this.closeCallbacks)
+      cb(this);
+  };
+
 
   YB.Page.prototype.openWhenReady = function () {
     //are we ready yet?

@@ -179,6 +179,11 @@
         return;
       }
 
+      //close the old page to trigger callbacks.
+      let currentPage = YB.App.getPage(YB.App.currentPage);
+      if (currentPage)
+        currentPage.close();
+
       //okay open it.
       pageObj.open();
       YB.App.currentPage = page;
@@ -1569,6 +1574,7 @@
   });
 
   statsPage.onOpen(YB.App.getStatsData);
+  statsPage.onClose(function () { console.log("Stats page closed."); })
   YB.App.addPage(statsPage);
 
   let configPage = new YB.Page({

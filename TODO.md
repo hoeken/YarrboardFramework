@@ -4,9 +4,6 @@
 * onMessage -> messageHandler (homogenize)
 * rename control to home
 
-* add Page.onClose(handler)
-  * call just before page.open()
-
 * startUpdateData / statsdata
   * homogenize to startUpdatePoller / startStatsPoller
   * add stopUpdatePoller, etc to control.onClose, stats, etc.
