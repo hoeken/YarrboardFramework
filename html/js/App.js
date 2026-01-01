@@ -6,33 +6,46 @@
 
   YB.App = {
     config: {},
-
     startCallbacks: [],
-    messageHandlers: {},
+    messageCallbacks: {},
+
+    updateInterval: 500,
+    updatePollerId: null,
+    statsPollerId: null,
+
+    username: null,
+    password: null,
+    role: "nobody",
+    defaultRole: "nobody",
+
+    currentPage: null,
+    pages: {},
+
+    currentlyPickingBrightness: false,
 
     onStart: function (callback) {
       YB.App.startCallbacks.push(callback);
     },
 
-    addMessageHandler: function (message, handler) {
-      if (!YB.App.messageHandlers[message])
-        YB.App.messageHandlers[message] = [];
-      YB.App.messageHandlers[message].push(handler);
+    onMessage: function (message, callback) {
+      if (!YB.App.messageCallbacks[message])
+        YB.App.messageCallbacks[message] = [];
+      YB.App.messageCallbacks[message].push(callback);
     },
 
-    onMessage: function (msg) {
+    messageDispatcher: function (msg) {
       if (msg.debug)
         YB.log(`[server] ${msg.debug}`);
 
       if (msg.msg) {
-        const handlers = YB.App.messageHandlers[msg.msg];
-        if (!handlers) {
-          YB.log("No handler for: " + JSON.stringify(msg));
+        const callbacks = YB.App.messageCallbacks[msg.msg];
+        if (!callbacks) {
+          YB.log("No callback for: " + JSON.stringify(msg));
           return;
         }
 
-        for (let handler of handlers) {
-          handler(msg);
+        for (let callback of callbacks) {
+          callback(msg);
         }
       }
     },
@@ -52,19 +65,6 @@
         delete YB.App.pages[name];
       }
     },
-
-    updateInterval: 500,
-    updateIntervalId: null,
-
-    username: null,
-    password: null,
-    role: "nobody",
-    defaultRole: "nobody",
-
-    currentPage: null,
-    pages: {},
-
-    currentlyPickingBrightness: false,
 
     start: function () {
       // Setup all pages now that DOM is ready
@@ -161,7 +161,7 @@
       };
 
       //app handles messages
-      YB.client.onmessage = YB.App.onMessage;
+      YB.client.onmessage = YB.App.messageDispatcher;
 
       //use custom logger
       YB.client.log = YB.log;
@@ -187,11 +187,6 @@
       //okay open it.
       pageObj.open();
       YB.App.currentPage = page;
-
-      //TODO: move this to the SendIt javascript calls
-      //we need updates for adc config page.
-      if (page == "config" && YB.App.config && YB.App.config.hasOwnProperty("adc"))
-        YB.App.startUpdateData();
     },
 
     isMFD: function () {
@@ -354,40 +349,43 @@
       }
     },
 
-    getStatsData: function () {
-      if (YB.client.isOpen() && (YB.App.role == 'guest' || YB.App.role == 'admin')) {
-        //YB.log("get_stats");
-
-        YB.client.getStats();
-
-        //keep loading it while we are here.
-        if (YB.App.currentPage == "stats")
-          setTimeout(YB.App.getStatsData, YB.App.updateInterval);
+    startStatsPoller: function () {
+      if (!YB.App.statsPollerId) {
+        YB.App.statsPollerId = setInterval(YB.App.getStatsData, YB.App.updateInterval);
       }
     },
 
-    startUpdateData: function () {
-      if (!YB.App.updateIntervalId) {
+    stopStatsPoller: function () {
+      if (YB.App.statsPollerId) {
+        clearInterval(YB.App.statsPollerId);
+        YB.App.statsPollerId = 0;
+      }
+    },
+
+    getStatsData: function () {
+      if (YB.client.isOpen() && (YB.App.role == 'guest' || YB.App.role == 'admin')) {
+        YB.client.getStats();
+      }
+    },
+
+    startUpdatePoller: function () {
+      if (!YB.App.updatePollerId) {
         // YB.log("starting updates");
-        YB.App.updateIntervalId = setInterval(YB.App.getUpdateData, YB.App.updateInterval);
+        YB.App.updatePollerId = setInterval(YB.App.getUpdateData, YB.App.updateInterval);
+      }
+    },
+
+    stopUpdatePoller: function () {
+      if (YB.App.updatePollerId) {
+        //YB.log("stopping updates");
+        clearInterval(YB.App.updatePollerId);
+        YB.App.updatePollerId = 0;
       }
     },
 
     getUpdateData: function () {
       if (YB.client.isOpen() && (YB.App.role == 'guest' || YB.App.role == 'admin')) {
-        //YB.log("get_update");
-
         YB.client.getUpdate();
-
-        //TODO: move ADC specific stuff to SendIt controller
-        //keep loading it while we are here.
-        if (YB.App.currentPage == "control" || (YB.App.currentPage == "config" && YB.App.config && YB.App.config.hasOwnProperty("adc")))
-          return;
-        else {
-          //YB.log("stopping updates");
-          clearInterval(YB.App.updateIntervalId);
-          YB.App.updateIntervalId = 0;
-        }
       }
     },
 
@@ -1539,19 +1537,19 @@
   };
 
   //setup all of our message handlers.
-  YB.App.addMessageHandler("hello", YB.App.handleHelloMessage);
-  YB.App.addMessageHandler("status", YB.App.handleStatusMessage);
-  YB.App.addMessageHandler("config", YB.App.handleConfigMessage);
-  YB.App.addMessageHandler("update", YB.App.handleUpdateMessage);
-  YB.App.addMessageHandler("stats", YB.App.handleStatsMessage);
-  YB.App.addMessageHandler("full_config", YB.App.handleFullConfigMessage);
-  YB.App.addMessageHandler("network_config", YB.App.handleNetworkConfigMessage);
-  YB.App.addMessageHandler("app_config", YB.App.handleAppConfigMessage);
-  YB.App.addMessageHandler("ota_progress", YB.App.handleOTAProgressMessage);
-  YB.App.addMessageHandler("error", YB.App.handleErrorMessage);
-  YB.App.addMessageHandler("login", YB.App.handleLoginMessage);
-  YB.App.addMessageHandler("set_theme", YB.App.handleSetThemeMessage);
-  YB.App.addMessageHandler("set_brightness", YB.App.handleSetBrightnessMessage);
+  YB.App.onMessage("hello", YB.App.handleHelloMessage);
+  YB.App.onMessage("status", YB.App.handleStatusMessage);
+  YB.App.onMessage("config", YB.App.handleConfigMessage);
+  YB.App.onMessage("update", YB.App.handleUpdateMessage);
+  YB.App.onMessage("stats", YB.App.handleStatsMessage);
+  YB.App.onMessage("full_config", YB.App.handleFullConfigMessage);
+  YB.App.onMessage("network_config", YB.App.handleNetworkConfigMessage);
+  YB.App.onMessage("app_config", YB.App.handleAppConfigMessage);
+  YB.App.onMessage("ota_progress", YB.App.handleOTAProgressMessage);
+  YB.App.onMessage("error", YB.App.handleErrorMessage);
+  YB.App.onMessage("login", YB.App.handleLoginMessage);
+  YB.App.onMessage("set_theme", YB.App.handleSetThemeMessage);
+  YB.App.onMessage("set_brightness", YB.App.handleSetBrightnessMessage);
 
   // Create and add all pages
   let controlPage = new YB.Page({
@@ -1562,7 +1560,8 @@
     ready: false
   });
 
-  controlPage.onOpen(YB.App.startUpdateData);
+  controlPage.onOpen(YB.App.startUpdatePoller);
+  controlPage.onClose(YB.App.stopUpdatePoller);
   YB.App.addPage(controlPage);
 
   let statsPage = new YB.Page({
@@ -1573,8 +1572,8 @@
     ready: false
   });
 
-  statsPage.onOpen(YB.App.getStatsData);
-  statsPage.onClose(function () { console.log("Stats page closed."); })
+  statsPage.onOpen(YB.App.startStatsPoller);
+  statsPage.onClose(YB.App.stopStatsPoller);
   YB.App.addPage(statsPage);
 
   let configPage = new YB.Page({

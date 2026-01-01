@@ -66,7 +66,6 @@
       cb(this);
   };
 
-
   YB.Page.prototype.openWhenReady = function () {
     //are we ready yet?
     if (this.ready) {

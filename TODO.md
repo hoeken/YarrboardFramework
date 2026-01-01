@@ -1,16 +1,8 @@
 ## v2.0
 
-* addMessageHandler -> onMessage (homogenize)
-* onMessage -> messageHandler (homogenize)
 * rename control to home
-
-* startUpdateData / statsdata
-  * homogenize to startUpdatePoller / startStatsPoller
-  * add stopUpdatePoller, etc to control.onClose, stats, etc.
-
-* move SendIt/adc stuff to sendit
-
 * add + icons to the expandable info on stats.
+* flesh out test.js and rename
 
 ## Long Term
 
