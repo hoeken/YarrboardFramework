@@ -1,7 +1,8 @@
 ## v2.0
 
-* flesh out test.js and rename
+* add test command and response message
 * figure out a better solution for tracking intervals than resetting every send.
+* get firmware release working
 
 ## Long Term
 
