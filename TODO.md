@@ -1,6 +1,5 @@
 ## v2.0
 
-* rename control to home
 * add + icons to the expandable info on stats.
 * flesh out test.js and rename
 

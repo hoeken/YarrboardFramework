@@ -1,7 +1,7 @@
 //use the onStart() call so we arent racing the app startup with document.onready
 YB.App.onStart(function () {
-  let control = YB.App.getPage("control");
-  control.setContent(`
+  let home = YB.App.getPage("home");
+  home.setContent(`
     <h1>Hello World</h1>
     <p>Edit js/test.js to modify the example</p>
   `);

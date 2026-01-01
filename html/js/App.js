@@ -945,10 +945,10 @@
           if (page != "login" && page != "logout" && YB.App.getPage(page))
             YB.App.openPage(page);
           else
-            YB.App.openPage("control");
+            YB.App.openPage("home");
         }
         else
-          YB.App.openPage("control");
+          YB.App.openPage("home");
       }
       else
         YB.App.openPage('login');
@@ -1142,7 +1142,7 @@
         configPage.ready = true;
 
       if (!YB.App.currentPage)
-        YB.App.openPage('control');
+        YB.App.openPage('home');
     },
 
     handleUpdateMessage: function (msg) {
@@ -1164,9 +1164,9 @@
         $(".mfdHide").show()
       }
 
-      let controlPage = YB.App.getPage('control');
-      if (controlPage)
-        controlPage.ready = true;
+      let homePage = YB.App.getPage('home');
+      if (homePage)
+        homePage.ready = true;
     },
 
     handleStatsMessage: function (msg) {
@@ -1531,7 +1531,7 @@
         if (YB.App.role == "nobody")
           YB.App.openPage("login");
         else
-          YB.App.openPage("control");
+          YB.App.openPage("home");
       }, 100);
     },
   };
@@ -1552,17 +1552,17 @@
   YB.App.onMessage("set_brightness", YB.App.handleSetBrightnessMessage);
 
   // Create and add all pages
-  let controlPage = new YB.Page({
-    name: 'control',
-    displayName: 'Control',
+  let homePage = new YB.Page({
+    name: 'home',
+    displayName: 'Home',
     permissionLevel: 'guest',
     showInNavbar: true,
     ready: false
   });
 
-  controlPage.onOpen(YB.App.startUpdatePoller);
-  controlPage.onClose(YB.App.stopUpdatePoller);
-  YB.App.addPage(controlPage);
+  homePage.onOpen(YB.App.startUpdatePoller);
+  homePage.onClose(YB.App.stopUpdatePoller);
+  YB.App.addPage(homePage);
 
   let statsPage = new YB.Page({
     name: 'stats',

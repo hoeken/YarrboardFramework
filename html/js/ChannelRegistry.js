@@ -185,7 +185,7 @@
       let ch = new ctor();
 
       if (!$(`#${ctype}ControlDiv`).length)
-        $(`#controlPage`).append(ch.generateControlContainer());
+        $(`#homePage`).append(ch.generateControlContainer());
 
       if (!$(`#${ctype}Config`).length)
         $(`#ConfigForm`).append(ch.generateEditContainer());
