@@ -8,15 +8,14 @@
   CONDITIONS OF ANY KIND, either express or implied.
 */
 
-#include "controllers/NavicoController.h"
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <YarrboardFramework.h>
 
 // generated at build by running "gulp" in the firmware directory.
 #include "gulp/gulped.h"
 
 YarrboardApp yba;
-NavicoController navico(yba);
 
 void setup()
 {
@@ -31,7 +30,19 @@ void setup()
   yba.project_name = "Yarrboard Framework";
   yba.project_url = "https://github.com/hoeken/YarrboardFramework";
 
-  yba.registerController(navico);
+  // register the "test" command that requires GUEST or higher permissions
+  yba.protocol.registerCommand(GUEST, "test", [](JsonVariantConst input, JsonVariant output, ProtocolContext context) {
+    // check our input.
+    String foo = input["foo"] | "Unknown";
+
+    // log to console / webconsole
+    YBP.printf("Test Command: %s\n", foo);
+
+    // generate our message back to the client
+    output["msg"] = "test";
+    output["bar"] = foo;
+  });
+
   yba.setup();
 }
 

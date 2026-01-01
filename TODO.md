@@ -1,6 +1,5 @@
 ## v2.0
 
-* add test command and response message
 * figure out a better solution for tracking intervals than resetting every send.
 * get firmware release working
 

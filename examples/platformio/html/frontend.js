@@ -1,6 +1,5 @@
 //
 // Yarrboard Framework Example
-// License: Public Domain
 //
 // This file gets automatically added to the end of the <body>
 // of the HTML for the web interface.
@@ -10,7 +9,7 @@ const homepageMarkdown = `
 
 You can edit **html/frontend.js** to modify this example.
 
-Yarrboard framework works on a JSON based command/message protocol.
+The Yarrboard framework works on a JSON based command/message protocol.
 This allows for a highly responsive web app that compiles to a single static HTML file for quick loading.
 
 In this example code, we have defined a sample command called "test".  Here is the format for that command:
@@ -71,3 +70,7 @@ YB.App.onStart(function () {
 // home and stats page, respectively.
 YB.App.onMessage("update", function (msg) { console.log(msg) });
 YB.App.onMessage("stats", function (msg) { console.log(msg) });
+YB.App.onMessage("test", function (msg) {
+  YB.log(`"test" message handler: ${msg.bar}`);
+  console.log(msg)
+});
