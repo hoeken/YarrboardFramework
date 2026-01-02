@@ -1,9 +1,13 @@
 ## v2.0
 
-* add buzzer and rgb to the example
-* setup firmware release scripts
+* move public key out of OTAController.h and make configurable
+* update changelog
+* update yarrboard-firmware to v2.0.0
+* make release
 
 ## Long Term
+
+* when changing wifi fails, reconnect to original network.
 
 * get espwebtools integrated for first firmware upload
   * modify release script to add firmwares to the release script.

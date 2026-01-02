@@ -43,6 +43,7 @@ void setup()
   yba.hardware_url = "http://example.com/my-hardware-page";
   yba.project_name = "Yarrboard Framework";
   yba.project_url = "https://github.com/hoeken/YarrboardFramework";
+  yba.ota.firmware_manifest_url = "https://raw.githubusercontent.com/hoeken/YarrboardFramework/main/releases/ota_manifest.json";
 
   // register the "test" command that requires GUEST or higher permissions
   yba.protocol.registerCommand(GUEST, "test", [](JsonVariantConst input, JsonVariant output, ProtocolContext context) {
