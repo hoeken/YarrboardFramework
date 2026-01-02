@@ -3,5 +3,5 @@
 		"REV_A_B_C"
 	],
 	"firmware_url_base": "https://raw.githubusercontent.com/hoeken/YarrboardFramework/main/releases/",
-	"signing_key_path": "~/Dropbox/misc/yarrboard/priv_key.pem"
+	"signing_key_path": "~/Dropbox/misc/yarrboard/YarrboardFramework.pem"
 }
