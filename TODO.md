@@ -10,6 +10,8 @@
   * keep all previous firmwares for rollback potential
 
 * other app.* callbacks to register various things?
+  * consolidate config and settings
+    * addSettings() similar to addPage() but with settings content.
 
 * bug with reconnecting (eg ESP.restart not going down the hello path)
 
