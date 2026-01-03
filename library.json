@@ -58,8 +58,9 @@
       "version": "*"
     },
     {
-      "name": "Improv-WiFi-Library",
-      "version": "https://github.com/hoeken/Improv-WiFi-Library.git"
+      "owner": "jnthas",
+      "name": "Improv WiFi Library",
+      "version": "^0.0.4"
     },
     {
       "name": "ArduinoTrace",
