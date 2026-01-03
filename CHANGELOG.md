@@ -1,10 +1,6 @@
 ## v2.0.0
 
-# Yarrboard Framework v2.0.0 — Changelog
-
 > **Note:** v2.0.0 represents a major architectural and usability milestone. While not yet declared “production-ready,” this release significantly expands framework capabilities, refines core systems, and stabilizes the frontend, protocol, and OTA infrastructure.
-
----
 
 ## ✨ Major Features & Enhancements
 
