@@ -1,4 +1,4 @@
-## v2.0.0
+# v2.0.0
 
 > **Note:** v2.0.0 represents a major architectural and usability milestone. While not yet declared “production-ready,” this release significantly expands framework capabilities, refines core systems, and stabilizes the frontend, protocol, and OTA infrastructure.
 
@@ -27,8 +27,6 @@
 - Updated example firmware to use library versioning
 - Fixed OTA message delivery issues
 
----
-
 ## 🌐 Frontend & Web UI
 
 ### Page System & Navigation
@@ -54,8 +52,6 @@
 - Login form element added for autocomplete, etc.
 - Startup melody selector hidden when no buzzer is configured
 
----
-
 ## 🎨 Static Assets, Gulp & Build Pipeline
 
 - Major overhaul of static asset handling:
@@ -71,8 +67,6 @@
 - Reserved endpoints (`coredump`, `site.manifest`, etc.) are now blocked by default
 - Removed OSHW logo
 
----
-
 ## 📡 Networking, Wi-Fi & Provisioning
 
 - Improved first-boot detection when bundling default `yarrboard.json`
@@ -81,14 +75,10 @@
 - Made `IMPROV_BLE` optional
 - Moved NimBLE BLE to an external dependency with a compile-time flag
 
----
-
 ## 🔊 RGB & Buzzer
 - RGB controller now supports `maxBrightness`
 - Brightness scaling now respects max brightness
 - RGB and buzzer support added to examples
-
----
 
 ## 📚 Documentation & Developer Experience
 - Added PlatformIO installation instructions
@@ -96,10 +86,8 @@
 - Updated TODO and roadmap multiple times with future plans
 - Improved example configuration and defaults
 
----
-
 **v2.0.0 lays the foundation for a stable, extensible, and project-aware Yarrboard ecosystem, with major improvements across protocol handling, frontend architecture, OTA, and build tooling.**
 
-## v1.0.0
+# v1.0.0
 
 Initial release.
