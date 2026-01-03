@@ -1,10 +1,11 @@
 ## v2.0
 
 * update changelog
-* update yarrboard-firmware to use v2.0.0
 * make release
 
 ## Long Term
+
+* add notification badge functionality to pages
 
 * when changing wifi fails, reconnect to original network.
 

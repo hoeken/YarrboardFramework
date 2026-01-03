@@ -852,42 +852,49 @@
           $.ajax({
             url: YB.App.config.firmware_manifest_url,
             cache: false,
-            dataType: "json",
-            success: function (jdata) {
-              //did we get anything?
-              let data;
-              for (firmware of jdata)
-                if (firmware.type == YB.App.config.hardware_version)
-                  data = firmware;
-
-              if (!data) {
-                YB.App.showAlert(`Could not find a firmware for this hardware.`, "danger");
-                return;
-              }
-
-              $("#firmware_checking").hide();
-
-              //do we have a new version?
-              if (YB.Util.compareVersions(data.version, YB.App.config.firmware_version)) {
-                if (data.changelog) {
-                  $("#firmware_changelog").append(marked.parse(data.changelog));
-                  $("#firmware_changelog").show();
-                }
-
-                $("#new_firmware_version").html(data.version);
-                $("#firmware_bin").attr("href", `${data.url}`);
-                $("#firmware_update_available").show();
-
-                YB.App.showAlert(`There is a <a onclick="YB.App.openPage('system')" href="/#system">firmware update</a> available (${data.version}).`, "primary");
-              }
-              else
-                $("#firmware_up_to_date").show();
-            }
-          });
+            dataType: "json"
+          })
+            .done(YB.App.checkForUpdatesCallback)
+            .fail(function () {
+              $("#firmware_checking").html("Error checking for firmware updates.");
+              $("#firmware_checking").removeClass("alert-secondary");
+              $("#firmware_checking").addClass("alert-danger");
+            });
         } else {
           $("#firmware_checking").html("No firmware manifest url configured, automatic firmware updating disabled.");
         }
       }
+    },
+
+    checkForUpdatesCallback: function (jdata) {
+      //did we get anything?
+      let data;
+      for (firmware of jdata)
+        if (firmware.type == YB.App.config.hardware_version)
+          data = firmware;
+
+      if (!data) {
+        YB.App.showAdminAlert(`Could not find a firmware for this hardware.`, "danger");
+        return;
+      }
+
+      $("#firmware_checking").hide();
+
+      //do we have a new version?
+      if (YB.Util.compareVersions(data.version, YB.App.config.firmware_version)) {
+        if (data.changelog) {
+          $("#firmware_changelog").append(marked.parse(data.changelog));
+          $("#firmware_changelog").show();
+        }
+
+        $("#new_firmware_version").html(data.version);
+        $("#firmware_bin").attr("href", `${data.url}`);
+        $("#firmware_update_available").show();
+
+        YB.App.showAdminAlert(`There is a <a onclick="YB.App.openPage('system')" href="/#system">firmware update</a> available (${data.version}).`, "primary");
+      }
+      else
+        $("#firmware_up_to_date").show();
     },
 
     updateFirmware: function () {
