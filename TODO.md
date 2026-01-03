@@ -1,5 +1,6 @@
 ## v2.0
 
+* update README
 * make release
 
 ## Long Term
