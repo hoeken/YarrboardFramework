@@ -1,4 +1,6 @@
-## Long Term
+## v2.1
+
+* add github repo url and link to git hash
 
 * add notification badge functionality to pages
 
@@ -13,6 +15,8 @@
     * addSettings() similar to addPage() but with settings content.
 
 * bug with reconnecting (eg ESP.restart not going down the hello path)
+
+## Long Term
 
 * currently we have a chance of collisions if http api + websockets requests happen simulataneously.
   * best to solve this as a mutex (but is this really needed?)
