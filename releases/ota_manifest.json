@@ -1,8 +1,8 @@
 [
     {
         "type": "REV_A_B_C",
-        "version": "2.0.0",
-        "url": "https://raw.githubusercontent.com/hoeken/YarrboardFramework/main/releases/REV_A_B_C/REV_A_B_C-2.0.0.bin",
-        "changelog": "# v2.0.0\n\n> **Note:** v2.0.0 represents a major architectural and usability milestone. While not yet declared \u201cproduction-ready,\u201d this release significantly expands framework capabilities, refines core systems, and stabilizes the frontend, protocol, and OTA infrastructure."
+        "version": "2.0.1",
+        "url": "https://raw.githubusercontent.com/hoeken/YarrboardFramework/main/releases/REV_A_B_C/REV_A_B_C-2.0.1.bin",
+        "changelog": "# v2.0.1\n\n- Fixed a pathing issue with the gulp script on Windows."
     }
 ]
