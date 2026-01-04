@@ -1,3 +1,7 @@
+# v2.0.1
+
+- Fixed a pathing issue with the gulp script on Windows.
+
 # v2.0.0
 
 > **Note:** v2.0.0 represents a major architectural and usability milestone. While not yet declared “production-ready,” this release significantly expands framework capabilities, refines core systems, and stabilizes the frontend, protocol, and OTA infrastructure.
