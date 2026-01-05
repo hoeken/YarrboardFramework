@@ -23,7 +23,8 @@
     <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
 
     <!-- Improv WiFi SDK -->
-    <script type="module" src="https://www.improv-wifi.com/sdk-js/launch-button.js"></script>
+    <script type="module" src="https://www.improv-wifi.com/sdk-ble-js/launch-button.js"></script>
+    <script type="module" src="https://www.improv-wifi.com/sdk-serial-js/serial-launch-button.js"></script>
 
     <!-- Marked.js for Markdown -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.0.0/marked.min.js"></script>
@@ -94,7 +95,6 @@
                 <h4 class="mb-3">WiFi Provisioning</h4>
                 <div class="card mb-4">
                     <div class="card-body">
-                        <h5 class="card-title">Configure WiFi via USB</h5>
                         <p class="card-text">
                             If your board is already flashed with Yarrboard firmware, you can configure WiFi credentials
                             directly from your browser using Improv WiFi.
@@ -102,20 +102,48 @@
                         <p class="card-text">
                             <strong>Requirements:</strong> Chrome, Edge, or Opera browser. You can use USB or Bluetooth.
                         </p>
-                        <improv-wifi-launch-button>
-                            <button slot="activate" class="btn btn-success btn-lg w-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                                    class="bi bi-wifi me-2" viewBox="0 0 16 16">
-                                    <path
-                                        d="M15.384 6.115a.485.485 0 0 0-.047-.736A12.444 12.444 0 0 0 8 3C5.259 3 2.723 3.882.663 5.379a.485.485 0 0 0-.048.736.518.518 0 0 0 .668.05A11.448 11.448 0 0 1 8 4c2.507 0 4.827.802 6.716 2.164.205.148.49.13.668-.049z" />
-                                    <path
-                                        d="M13.229 8.271a.482.482 0 0 0-.063-.745A9.455 9.455 0 0 0 8 6c-1.905 0-3.68.56-5.166 1.526a.48.48 0 0 0-.063.745.525.525 0 0 0 .652.065A8.46 8.46 0 0 1 8 7a8.46 8.46 0 0 1 4.576 1.336c.206.132.48.108.653-.065zm-2.183 2.183c.226-.226.185-.605-.1-.75A6.473 6.473 0 0 0 8 9c-1.06 0-2.062.254-2.946.704-.285.145-.326.524-.1.75l.015.015c.16.16.407.19.611.09A5.478 5.478 0 0 1 8 10c.868 0 1.69.201 2.42.56.203.1.45.07.61-.091l.016-.015zM9.06 12.44c.196-.196.198-.52-.04-.66A1.99 1.99 0 0 0 8 11.5a1.99 1.99 0 0 0-1.02.28c-.238.14-.236.464-.04.66l.706.706a.5.5 0 0 0 .707 0l.707-.707z" />
-                                </svg>
-                                Configure WiFi
-                            </button>
-                            <span slot="unsupported" class="text-danger">Your browser does not support WiFi
-                                provisioning. Please use Chrome, Edge, or Opera.</span>
-                        </improv-wifi-launch-button>
+
+                        <div class="row">
+                            <!-- Improv via BLE Column -->
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <h5 class="card-title">Improv via BLE</h5>
+                                <improv-wifi-launch-button>
+                                    <button slot="activate" class="btn btn-success btn-lg w-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                            class="bi bi-bluetooth me-2" viewBox="0 0 16 16">
+                                            <path fill-rule="evenodd"
+                                                d="m8.543 3.948 1.316 1.316L8.543 6.58zm0 8.104 1.316-1.316L8.543 9.42zm-1.41-4.043L4.275 5.133l.827-.827L7.377 6.58V1.128l4.137 4.136L8.787 8.01l2.745 2.745-4.136 4.137V9.42l-2.294 2.274-.827-.827zM7.903 16c3.498 0 5.904-1.655 5.904-8.01 0-6.335-2.406-7.99-5.903-7.99C4.407 0 2 1.655 2 8.01 2 14.344 4.407 16 7.904 16" />
+                                        </svg>
+                                        Configure via BLE
+                                    </button>
+                                    <span slot="unsupported" class="text-danger">
+                                        Your browser is not supported. To try it out, visit this page with Google
+                                        Chrome or Microsoft Edge<span class="not-supported-i hidden">
+                                            (but not on your iOS device)</span>.
+                                    </span>
+                                </improv-wifi-launch-button>
+                            </div>
+
+                            <!-- Improv via Serial Column -->
+                            <div class="col-md-6">
+                                <h5 class="card-title">Improv via Serial</h5>
+                                <improv-wifi-serial-launch-button>
+                                    <button slot="activate" class="btn btn-success btn-lg w-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                            class="bi bi-usb-symbol me-2" viewBox="0 0 16 16">
+                                            <path
+                                                d="m7.792.312-1.533 2.3A.25.25 0 0 0 6.467 3H7.5v7.319a2.5 2.5 0 0 0-.515-.298L5.909 9.56A1.5 1.5 0 0 1 5 8.18v-.266a1.5 1.5 0 1 0-1 0v.266a2.5 2.5 0 0 0 1.515 2.298l1.076.461a1.5 1.5 0 0 1 .888 1.129 2.001 2.001 0 1 0 1.021-.006v-.902a1.5 1.5 0 0 1 .756-1.303l1.484-.848A2.5 2.5 0 0 0 11.995 7V4.5a.5.5 0 0 0-.5-.5h-.5a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h.5a1.5 1.5 0 0 1 1.5 1.5V7a3.5 3.5 0 0 1-1.836 3.078l-1.484.848A.5.5 0 0 0 8.5 11.5v1.169a2.5 2.5 0 1 0 1 0V11.5a1.5 1.5 0 0 1 .146-.646l1.484-.848A4.5 4.5 0 0 0 12.995 7V2.5a2.5 2.5 0 0 0-2.5-2.5h-.5a1.5 1.5 0 0 0-1.5 1.5v1a1.5 1.5 0 0 0 1.5 1.5h.5a.5.5 0 0 1 .5.5V7a1.5 1.5 0 0 1-.757 1.303l-1.484.848A2.5 2.5 0 0 0 7.5 11.169V3H8.533a.25.25 0 0 0 .208-.389l-1.533-2.3a.25.25 0 0 0-.416 0M6.5 1a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-5 11a1 1 0 1 1 0-2 1 1 0 0 1 0 2m11 1a1 1 0 1 1 0-2 1 1 0 0 1 0 2" />
+                                        </svg>
+                                        Configure via USB
+                                    </button>
+                                    <span slot="unsupported" class="text-danger">
+                                        Your browser is not supported. To try it out, visit this page with Google
+                                        Chrome or Microsoft Edge<span class="not-supported-i hidden">
+                                            (but not on your iOS device)</span>.
+                                    </span>
+                                </improv-wifi-serial-launch-button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -164,7 +192,8 @@
                             </svg>
                             Install Firmware
                         </button>
-                        <span slot="unsupported" class="text-danger">Your browser does not support firmware installation. Please use Chrome, Edge, or Opera.</span>
+                        <span slot="unsupported" class="text-danger">Your browser does not support firmware
+                            installation. Please use Chrome, Edge, or Opera.</span>
                     </esp-web-install-button>
                 </div>
 
