@@ -93,7 +93,7 @@
             <div id="mainContent" class="d-none">
                 <!-- WiFi Provisioning Section -->
                 <div class="card mb-4">
-                    <h5 class="card-title">WiFi Provisioning</h5>
+                    <h4 class="card-title">WiFi Provisioning</h4>
                     <div class="card-body">
                         <p class="card-text">
                             If your board is already flashed with Yarrboard firmware, you can configure WiFi credentials
@@ -148,7 +148,7 @@
                 <!-- Firmware Upload/Update Section -->
                 <div class="card mb-4">
                     <div class="card-body">
-                        <h5 class="card-title">Firmware Upload</h5>
+                        <h4 class="card-title">Firmware Upload</h4>
                         <p class="card-text">
                             Select your board model and firmware version below, then click "Install" to flash firmware
                             directly from your browser via USB.
@@ -157,54 +157,55 @@
                             <strong>Requirements:</strong> Chrome, or Edge browser. Connect your board via USB
                             before clicking Install.
                         </p>
-                    </div>
-                </div>
 
-                <!-- Board Selection -->
-                <div class="mb-3">
-                    <label for="boardSelect" class="form-label fw-bold">Board Model</label>
-                    <select id="boardSelect" class="form-select" aria-label="Select board model">
-                        <option selected disabled>Choose your board model...</option>
-                    </select>
-                </div>
+                        <!-- Board Selection -->
+                        <div class="mb-3">
+                            <label for="boardSelect" class="form-label fw-bold">Board Model</label>
+                            <select id="boardSelect" class="form-select" aria-label="Select board model">
+                                <option selected disabled>Choose your board model...</option>
+                            </select>
+                        </div>
 
-                <!-- Version Selection -->
-                <div class="mb-3">
-                    <label for="versionSelect" class="form-label fw-bold">Firmware Version</label>
-                    <select id="versionSelect" class="form-select" aria-label="Select firmware version" disabled>
-                        <option selected disabled>Select a board first...</option>
-                    </select>
-                </div>
+                        <!-- Version Selection -->
+                        <div class="mb-3">
+                            <label for="versionSelect" class="form-label fw-bold">Firmware Version</label>
+                            <select id="versionSelect" class="form-select" aria-label="Select firmware version"
+                                disabled>
+                                <option selected disabled>Select a board first...</option>
+                            </select>
+                        </div>
 
-                <!-- ESP Web Tools Install Button Container -->
-                <div id="installButtonContainer" class="d-none">
-                    <esp-web-install-button id="installButton">
-                        <button slot="activate" class="btn btn-primary btn-lg w-100">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                                class="bi bi-download me-2" viewBox="0 0 16 16">
-                                <path
-                                    d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
-                                <path
-                                    d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
-                            </svg>
-                            Install Firmware
-                        </button>
-                        <span slot="unsupported" class="text-danger">Your browser does not support firmware
-                            installation. Please use Chrome, Edge, or Opera.</span>
-                    </esp-web-install-button>
-                </div>
+                        <!-- ESP Web Tools Install Button Container -->
+                        <div id="installButtonContainer" class="d-none">
+                            <esp-web-install-button id="installButton">
+                                <button slot="activate" class="btn btn-primary btn-lg w-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                        class="bi bi-download me-2" viewBox="0 0 16 16">
+                                        <path
+                                            d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+                                        <path
+                                            d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+                                    </svg>
+                                    Install Firmware
+                                </button>
+                                <span slot="unsupported" class="text-danger">Your browser does not support firmware
+                                    installation. Please use Chrome, Edge, or Opera.</span>
+                            </esp-web-install-button>
+                        </div>
 
-                <!-- Warning for versions without ESP Web Tools support -->
-                <div id="noEspWebtoolsWarning" class="alert alert-warning version-warning d-none" role="alert">
-                    <strong>Note:</strong> ESP Web Tools flashing is not available for this version.
-                    Please select a newer version with browser-based flashing support.
-                </div>
+                        <!-- Warning for versions without ESP Web Tools support -->
+                        <div id="noEspWebtoolsWarning" class="alert alert-warning version-warning d-none" role="alert">
+                            <strong>Note:</strong> ESP Web Tools flashing is not available for this version.
+                            Please select a newer version with browser-based flashing support.
+                        </div>
 
-                <!-- Changelog Display -->
-                <div id="changelogContainer" class="card mt-4 d-none">
-                    <div class="card-body">
-                        <h5 class="card-title">Changelog</h5>
-                        <div id="changelogDisplay"></div>
+                        <!-- Changelog Display -->
+                        <div id="changelogContainer" class="card mt-4 d-none">
+                            <div class="card-body">
+                                <h5 class="card-title">Changelog</h5>
+                                <div id="changelogDisplay"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
