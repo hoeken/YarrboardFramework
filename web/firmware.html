@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Yarrboard Firmware Installer</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="logo.png">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+
+    <!-- ESP Web Tools -->
+    <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+
+    <!-- Marked.js for Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.0.0/marked.min.js"></script>
+
+    <style>
+        /* Dark mode compatible logo */
+        .logo {
+            color-scheme: light;
+            /* Prevents dark-mode auto inversion */
+            forced-color-adjust: none;
+            /* Safari/iOS: don't touch my colors */
+        }
+
+        /* Changelog heading styles */
+        #changelogDisplay h1 {
+            font-size: 1.4rem;
+        }
+
+        #changelogDisplay h2 {
+            font-size: 1.0rem;
+        }
+
+        /* ESP Web Tools button styling */
+        esp-web-install-button {
+            display: block;
+        }
+
+        /* Loading spinner */
+        .spinner-container {
+            min-height: 300px;
+        }
+
+        /* Version warning styling */
+        .version-warning {
+            margin-top: 1rem;
+        }
+
+        /* Footer styling */
+        footer {
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container col-xl-8 col-lg-10 mx-auto">
+        <!-- Header with Logo and Title -->
+        <nav class="navbar bg-body-tertiary rounded-bottom mb-4">
+            <div class="container-fluid">
+                <a class="navbar-brand d-flex align-items-center" href="https://github.com/hoeken/YarrboardFramework">
+                    <img src="logo.png" alt="Yarrboard" width="30" height="30" class="logo me-2 rounded">
+                    <span>Yarrboard Firmware Installer</span>
+                </a>
+            </div>
+        </nav>
+
+        <main class="mx-3">
+            <!-- Loading State -->
+            <div id="loadingState" class="spinner-container d-flex justify-content-center align-items-center">
+                <div class="spinner-border" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Main Content (initially hidden) -->
+            <div id="mainContent" style="display: none;">
+                <!-- Instructions Card -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Flash Firmware to Your Yarrboard</h5>
+                        <p class="card-text">
+                            Select your board model and firmware version below, then click "Install" to flash firmware
+                            directly from your browser via USB.
+                        </p>
+                        <div class="alert alert-info" role="alert">
+                            <strong>Requirements:</strong> Chrome, Edge, or Opera browser. Connect your board via USB
+                            before clicking Install.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Board Selection -->
+                <div class="mb-3">
+                    <label for="boardSelect" class="form-label fw-bold">Board Model</label>
+                    <select id="boardSelect" class="form-select" aria-label="Select board model">
+                        <option selected disabled>Choose your board model...</option>
+                    </select>
+                </div>
+
+                <!-- Version Selection -->
+                <div class="mb-3">
+                    <label for="versionSelect" class="form-label fw-bold">Firmware Version</label>
+                    <select id="versionSelect" class="form-select" aria-label="Select firmware version" disabled>
+                        <option selected disabled>Select a board first...</option>
+                    </select>
+                </div>
+
+                <!-- ESP Web Tools Install Button Container -->
+                <div id="installButtonContainer" style="display: none;">
+                    <esp-web-install-button id="installButton">
+                        <button slot="activate" class="btn btn-primary btn-lg w-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                class="bi bi-download me-2" viewBox="0 0 16 16">
+                                <path
+                                    d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+                                <path
+                                    d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+                            </svg>
+                            Install Firmware
+                        </button>
+                    </esp-web-install-button>
+                </div>
+
+                <!-- Warning for versions without ESP Web Tools support -->
+                <div id="noEspWebtoolsWarning" class="alert alert-warning version-warning" style="display: none;"
+                    role="alert">
+                    <strong>Note:</strong> ESP Web Tools flashing is not available for this version.
+                    Please select a newer version with browser-based flashing support.
+                </div>
+
+                <!-- Changelog Display -->
+                <div id="changelogContainer" class="card mt-4" style="display: none;">
+                    <div class="card-body">
+                        <h5 class="card-title">Changelog</h5>
+                        <div id="changelogDisplay"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer with Dark Mode Toggle -->
+        <footer class="p-4 text-body-secondary text-center">
+            <div class="row justify-content-center mb-3">
+                <div class="col-auto">
+                    <label for="darkSwitch" class="me-2">Dark Mode</label>
+                    <div class="form-check form-switch d-inline-block">
+                        <input class="form-check-input" type="checkbox" id="darkSwitch">
+                    </div>
+                </div>
+            </div>
+            <div>
+                <a href="https://github.com/hoeken/YarrboardFramework">Yarrboard Framework</a> &copy; 2025
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Configuration
+        const MANIFEST_URL = 'https://raw.githubusercontent.com/hoeken/YarrboardFramework/main/releases/full_manifest.json';
+
+        // Global state
+        let manifestData = null;
+        let currentBoard = null;
+        let currentVersion = null;
+
+        // ============================================================
+        // Dark Mode Functions
+        // ============================================================
+
+        function getStoredTheme() {
+            return localStorage.getItem('theme');
+        }
+
+        function setStoredTheme(theme) {
+            localStorage.setItem('theme', theme);
+        }
+
+        function getPreferredTheme() {
+            const storedTheme = getStoredTheme();
+            if (storedTheme) {
+                return storedTheme;
+            }
+
+            // Check system preference
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                return 'dark';
+            }
+
+            return 'light';
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-bs-theme', theme);
+
+            const darkSwitch = document.getElementById('darkSwitch');
+            if (darkSwitch) {
+                darkSwitch.checked = (theme === 'dark');
+            }
+
+            setStoredTheme(theme);
+        }
+
+        function initDarkMode() {
+            const theme = getPreferredTheme();
+            setTheme(theme);
+
+            // Setup toggle listener
+            const darkSwitch = document.getElementById('darkSwitch');
+            darkSwitch.addEventListener('change', (e) => {
+                setTheme(e.target.checked ? 'dark' : 'light');
+            });
+
+            // Watch for system preference changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                const storedTheme = getStoredTheme();
+                if (!storedTheme) {
+                    setTheme(getPreferredTheme());
+                }
+            });
+        }
+
+        // ============================================================
+        // Board and Version Management
+        // ============================================================
+
+        function populateBoardDropdown() {
+            const boardSelect = document.getElementById('boardSelect');
+
+            // Get board names from manifest (keys of the object)
+            const boards = Object.keys(manifestData).sort();
+
+            // Add options for each board
+            boards.forEach(boardName => {
+                const option = document.createElement('option');
+                option.value = boardName;
+                option.textContent = boardName.replace(/_/g, ' '); // Format name
+                boardSelect.appendChild(option);
+            });
+        }
+
+        function populateVersionDropdown(boardName) {
+            const versionSelect = document.getElementById('versionSelect');
+
+            // Clear existing options
+            versionSelect.innerHTML = '<option selected disabled>Choose firmware version...</option>';
+
+            // Get versions for selected board
+            const versions = manifestData[boardName];
+
+            if (!versions || versions.length === 0) {
+                versionSelect.innerHTML = '<option disabled>No versions available</option>';
+                return;
+            }
+
+            // Add options for each version (already sorted newest first in manifest)
+            versions.forEach(versionData => {
+                const option = document.createElement('option');
+                option.value = versionData.version;
+                option.textContent = `v${versionData.version}`;
+                option.dataset.versionData = JSON.stringify(versionData);
+                versionSelect.appendChild(option);
+            });
+
+            // Enable the select
+            versionSelect.disabled = false;
+        }
+
+        function handleVersionChange() {
+            const versionSelect = document.getElementById('versionSelect');
+            const selectedOption = versionSelect.options[versionSelect.selectedIndex];
+
+            if (!selectedOption || !selectedOption.dataset.versionData) {
+                return;
+            }
+
+            const versionData = JSON.parse(selectedOption.dataset.versionData);
+            currentVersion = versionData;
+
+            // Display changelog
+            displayChangelog(versionData.changelog);
+
+            // Check if ESP Web Tools manifest is available
+            if (versionData.espwebtools_manifest) {
+                showInstallButton(versionData.espwebtools_manifest);
+                hideWarning();
+            } else {
+                hideInstallButton();
+                showWarning();
+            }
+        }
+
+        // ============================================================
+        // Changelog Display
+        // ============================================================
+
+        function displayChangelog(markdownText) {
+            const changelogDisplay = document.getElementById('changelogDisplay');
+            const changelogContainer = document.getElementById('changelogContainer');
+
+            if (!markdownText) {
+                changelogContainer.style.display = 'none';
+                return;
+            }
+
+            // Parse markdown and display
+            changelogDisplay.innerHTML = marked.parse(markdownText);
+            changelogContainer.style.display = 'block';
+        }
+
+        // ============================================================
+        // ESP Web Tools Integration
+        // ============================================================
+
+        function showInstallButton(manifestUrl) {
+            const container = document.getElementById('installButtonContainer');
+            const installButton = document.getElementById('installButton');
+
+            // Set the manifest URL for ESP Web Tools
+            installButton.setAttribute('manifest', manifestUrl);
+
+            // Show the button
+            container.style.display = 'block';
+        }
+
+        function hideInstallButton() {
+            document.getElementById('installButtonContainer').style.display = 'none';
+        }
+
+        function showWarning() {
+            document.getElementById('noEspWebtoolsWarning').style.display = 'block';
+        }
+
+        function hideWarning() {
+            document.getElementById('noEspWebtoolsWarning').style.display = 'none';
+        }
+
+        // ============================================================
+        // Event Listeners
+        // ============================================================
+
+        function setupEventListeners() {
+            // Board selection
+            document.getElementById('boardSelect').addEventListener('change', (e) => {
+                const boardName = e.target.value;
+                currentBoard = boardName;
+                populateVersionDropdown(boardName);
+
+                // Reset version-dependent UI
+                hideInstallButton();
+                hideWarning();
+                document.getElementById('changelogContainer').style.display = 'none';
+            });
+
+            // Version selection
+            document.getElementById('versionSelect').addEventListener('change', handleVersionChange);
+        }
+
+        // ============================================================
+        // Initialization
+        // ============================================================
+
+        async function init() {
+            try {
+                // Fetch the manifest
+                const response = await fetch(MANIFEST_URL);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch manifest: ${response.statusText}`);
+                }
+                manifestData = await response.json();
+
+                // Populate board dropdown
+                populateBoardDropdown();
+
+                // Hide loading, show content
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+
+                // Setup event listeners
+                setupEventListeners();
+
+                // Initialize dark mode
+                initDarkMode();
+            } catch (error) {
+                console.error('Initialization error:', error);
+                document.getElementById('loadingState').innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        <strong>Error:</strong> Failed to load firmware manifest. Please try again later.
+                        <br><br>
+                        <small>${error.message}</small>
+                    </div>
+                `;
+            }
+        }
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+
+</html>
