@@ -5,9 +5,7 @@
   * very basic - just name, title, and content
 
 * get espwebtools integrated for first firmware upload
-  * modify release script to add firmwares to the espwebtools manifest.
-  * keep all previous firmwares for rollback potential
-  * create a hostable page with improv wifi + esp web tools that points to our manifest
+  * add improv wifi to firmware upload page.
 
 * bug with reconnecting (eg ESP.restart not going down the hello path)
   * all queued messages should wait until the connection is authenticated and ready
