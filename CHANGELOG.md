@@ -1,3 +1,7 @@
+# v2.0.2
+
+- Testing new firmware manifest
+
 # v2.0.1
 
 - Fixed a pathing issue with the gulp script on Windows.

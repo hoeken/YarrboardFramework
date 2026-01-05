@@ -317,6 +317,56 @@ if __name__ == '__main__':
 		with open("releases/ota_manifest.json", "w") as text_file:
 				text_file.write(config_str)
 
+	# Update full_manifest.json with the new release information
+	releases_json_path = Path("releases/full_manifest.json")
+
+	# Load existing full_manifest.json or create new structure
+	if releases_json_path.exists():
+		with open(releases_json_path, "r") as f:
+			releases_data = json.load(f)
+	else:
+		releases_data = {}
+
+	# Add new release entries for each board
+	for board_config in boards:
+		board_name = board_config['name']
+
+		# Initialize board array if it doesn't exist
+		if board_name not in releases_data:
+			releases_data[board_name] = []
+
+		# Create new release entry
+		new_release = {
+			"version": version,
+			"url": f'{firmware_url_base}{board_name}/{board_name}-{version}.bin',
+			"espwebtools_manifest": f'{firmware_url_base}{board_name}-{version}-espwebtools/manifest.json',
+			"changelog": changelog
+		}
+
+		# Check if this version already exists for this board
+		version_exists = any(r['version'] == version for r in releases_data[board_name])
+
+		if not version_exists:
+			# Add new release at the beginning (newest first)
+			releases_data[board_name].insert(0, new_release)
+			print(f'Added {board_name} v{version} to releases.json')
+		else:
+			# Update existing release entry
+			for i, r in enumerate(releases_data[board_name]):
+				if r['version'] == version:
+					releases_data[board_name][i] = new_release
+					print(f'Updated {board_name} v{version} in releases.json')
+					break
+
+	# Write updated releases.json
+	releases_json_str = json.dumps(releases_data, indent=2)
+	if test_mode:
+		print(f'\nWould write to releases/releases.json:\n{releases_json_str}')
+	else:
+		with open(releases_json_path, "w") as f:
+			f.write(releases_json_str)
+		print(f'Updated releases/releases.json')
+
 	#some info to the user to finish the release
 	print("Build complete.\n")
 
