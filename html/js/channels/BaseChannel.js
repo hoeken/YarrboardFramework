@@ -14,7 +14,7 @@
 
   BaseChannel.prototype.generateControlContainer = function () {
     return `
-      <div id="${this.channelType}ControlDiv" style="display:none" class="gy-3 col-md-12">
+      <div id="${this.channelType}ControlDiv" style="display:none" class="gy-3 mb-3 col-md-12">
           <div id="${this.channelType}Cards" class="row g-3"></div>
       </div>
     `;
