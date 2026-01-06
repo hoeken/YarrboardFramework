@@ -37,6 +37,11 @@ void HTTPController::registerGulpedFiles(const GulpedFile* files[], int count)
 
 bool HTTPController::setup()
 {
+  if (!WiFi.isConnected()) {
+    YBP.println("WiFi not connected.");
+    return false;
+  }
+
   sendMutex = xSemaphoreCreateMutex();
   if (sendMutex == NULL) {
     YBP.println("Failed to create send mutex");
@@ -69,7 +74,7 @@ bool HTTPController::setup()
 
   // Register all gulped file routes
   for (auto& pair : gulpedFiles) {
-    YBP.printf("Registered gulp file at %s\n", pair.first);
+    // YBP.printf("Registered gulp file at %s\n", pair.first);
     server->on(pair.first, HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
       return handleGulpedFile(request, response);
     });
@@ -225,6 +230,11 @@ void HTTPController::loop()
 
 void HTTPController::sendToAllWebsockets(const char* jsonString, UserRole auth_level)
 {
+  // if the mutex hasn't been created yet, we're not ready to send
+  if (sendMutex == NULL) {
+    return;
+  }
+
   // make sure we're allowed to see the message
   if (auth_level > _cfg.app_default_role) {
     for (byte i = 0; i < YB_CLIENT_LIMIT; i++) {

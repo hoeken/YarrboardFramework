@@ -130,6 +130,8 @@ class YarrboardApp
     unsigned long lastLoopMillis = 0;
 
     etl::vector<ControllerEntry, YB_MAX_CONTROLLERS> _controllers;
+
+    void _handleImprov();
 };
 
 #endif /* YarrboardApp_h */

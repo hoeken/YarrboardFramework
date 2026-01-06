@@ -41,7 +41,7 @@ YarrboardApp::YarrboardApp() : config(*this),
 void YarrboardApp::setup()
 {
   for (const ControllerEntry& entry : _controllers) {
-    if (entry.controller->setup())
+    if (entry.controller->start())
       YBP.printf("✅ %s setup OK\n", entry.controller->getName());
     else
       YBP.printf("❌ %s setup FAILED\n", entry.controller->getName());
@@ -58,11 +58,45 @@ void YarrboardApp::setup()
   lastLoopMicros = micros();
 }
 
+void YarrboardApp::_handleImprov()
+{
+  // First boot mode?  That means we're doing ImprovWifi
+  // we need to check improvDone because of race conditions.
+  if (config.is_first_boot && !network.improvDone) {
+    network.loop(); // Handle Improv serial communication
+    return;
+  }
+
+  // after first boot is done, start the failed controllers
+  if (network.improvDone) {
+    // start our services now!
+    network.startServices();
+
+    // save our json config.
+    char error[128];
+    config.saveConfig(error, sizeof(error));
+
+    YBP.println("Re-starting failed controllers.");
+    for (const ControllerEntry& entry : _controllers) {
+      if (!entry.controller->isStarted()) {
+        if (entry.controller->start())
+          YBP.printf("✅ %s setup OK\n", entry.controller->getName());
+        else
+          YBP.printf("❌ %s setup FAILED\n", entry.controller->getName());
+      }
+    }
+
+    // we're totally done now.
+    network.improvDone = false;
+    YBP.println("First Boot Setup Complete.");
+  }
+}
+
 void YarrboardApp::loop()
 {
-  // are we first boot? aka Improv mode?
-  if (config.is_first_boot) {
-    network.loop(); // Handle Improv serial communication
+  // for first boot.
+  if (config.is_first_boot || network.improvDone) {
+    _handleImprov();
     return;
   }
 

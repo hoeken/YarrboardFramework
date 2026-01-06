@@ -86,3 +86,13 @@ void NavicoController::loop()
     lastNavicoPublishMillis = millis();
   }
 }
+
+bool NavicoController::setup()
+{
+  if (!WiFi.isConnected()) {
+    YBP.println("WiFi not connected.");
+    return false;
+  }
+
+  return true;
+}

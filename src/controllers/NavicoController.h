@@ -26,6 +26,7 @@ class NavicoController : public BaseController
     NavicoController(YarrboardApp& app);
 
     void loop() override;
+    bool setup() override;
 
   private:
     unsigned long lastNavicoPublishMillis = 0;

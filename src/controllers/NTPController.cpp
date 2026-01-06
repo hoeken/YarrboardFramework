@@ -23,6 +23,11 @@ bool NTPController::setup()
 {
   _instance = this; // Capture the instance for callbacks
 
+  if (!WiFi.isConnected()) {
+    YBP.println("WiFi not connected.");
+    return false;
+  }
+
   // Setup our NTP to get the current time.
   sntp_set_time_sync_notification_cb(_timeAvailableCallbackStatic);
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2);

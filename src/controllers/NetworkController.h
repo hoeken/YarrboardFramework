@@ -41,6 +41,7 @@ class NetworkController : public BaseController
     void startServices();
 
     IPAddress apIP;
+    bool improvDone = false;
 
   private:
     ImprovWiFi improvSerial;

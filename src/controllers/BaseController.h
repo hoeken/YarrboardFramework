@@ -26,6 +26,9 @@ class BaseController
   public:
     BaseController(YarrboardApp& app, const char* name);
 
+    bool start();
+    bool isStarted() { return _started; }
+
     virtual bool setup() { return true; }
     virtual void loop() {}
     const char* getName() { return _name; }
@@ -45,6 +48,7 @@ class BaseController
     YarrboardApp& _app;
     ConfigManager& _cfg;
     const char* _name;
+    bool _started = false;
 };
 
 #endif

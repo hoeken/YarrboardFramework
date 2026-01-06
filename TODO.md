@@ -1,9 +1,5 @@
 ## v2.1
 
-* improv serial bug / re-factor
-  * figure out how to re-start failed services gracefully
-    * maybe keep a boolean and then re-loop and call setup on any failed ones?
-
 * consolidate config and settings
   * create addSettingsPanel() similar to addPage() but with settings content.
   * very basic - just name, title, and content

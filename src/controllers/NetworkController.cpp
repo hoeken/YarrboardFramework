@@ -229,11 +229,6 @@ void NetworkController::setupImprov()
   improvBLE.setCustomConnectWiFi(_onImprovCustomConnectWiFiStatic);
   improvBLE.onImprovConnected(_onImprovConnectedStatic);
 #endif
-
-  // wait for improv to complete
-
-  // we're connected, so start us up.
-  // startServices();
 }
 
 // ==========================================================
@@ -289,8 +284,5 @@ void NetworkController::_handleImprovConnected(const char* ssid, const char* pas
 
   // we're connected now.
   _cfg.is_first_boot = false;
-
-  char error[128];
-  _cfg.saveConfig(error, sizeof(error));
-  _cfg.is_first_boot = false;
+  improvDone = true;
 }

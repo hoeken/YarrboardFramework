@@ -47,6 +47,8 @@ bool ConfigManager::setup()
   serial_role = _app.default_role;
   api_role = _app.default_role;
 
+  // our temporary preferences too.
+  preferences.end(); // begin() returns false if already open.
   if (preferences.begin("yarrboard", false)) {
     YBP.printf("There are: %u entries available in the 'yarrboard' prefs table.\n", preferences.freeEntries());
   } else {
@@ -61,12 +63,12 @@ bool ConfigManager::setup()
   char error[YB_ERROR_LENGTH] = "";
 
   // load our config from the json file.
-  if (loadConfigFromFile(YB_BOARD_CONFIG_PATH, error, sizeof(error))) {
-    return true;
-  } else {
+  if (!loadConfigFromFile(YB_BOARD_CONFIG_PATH, error, sizeof(error))) {
     YBP.printf("CONFIG ERROR: %s\n", error);
     return false;
   }
+
+  return true;
 }
 
 bool ConfigManager::saveConfig(char* error, size_t len)

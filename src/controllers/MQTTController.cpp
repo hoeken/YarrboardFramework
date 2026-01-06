@@ -30,6 +30,11 @@ bool MQTTController::setup()
   if (!_cfg.app_enable_mqtt)
     return true;
 
+  if (!WiFi.isConnected()) {
+    YBP.println("WiFi not connected.");
+    return false;
+  }
+
   mqttClient.setServer(_cfg.mqtt_server);
   mqttClient.setCredentials(_cfg.mqtt_user, _cfg.mqtt_pass);
 
