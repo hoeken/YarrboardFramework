@@ -1,11 +1,11 @@
 ## v2.1
 
+* get espwebtools integrated for first firmware upload
+  * re-factor the json to add board image, description, etc.
+
 * consolidate config and settings
   * create addSettingsPanel() similar to addPage() but with settings content.
   * very basic - just name, title, and content
-
-* get espwebtools integrated for first firmware upload
-  * add improv wifi to firmware upload page.
 
 * bug with reconnecting (eg ESP.restart not going down the hello path)
   * all queued messages should wait until the connection is authenticated and ready
