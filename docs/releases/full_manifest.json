@@ -1,0 +1,15 @@
+{
+  "REV_A_B_C": {
+    "name": "Test Firmware Rev A.B.C",
+    "image": "img/rev_a_b_c.jpg",
+    "description": "This is a test board for testing purposes.",
+    "firmware": [
+      {
+        "version": "2.0.1",
+        "url": "https://raw.githubusercontent.com/hoeken/YarrboardFramework/main/releases/REV_A_B_C/REV_A_B_C-2.0.1.bin",
+        "espwebtools_manifest": "https://raw.githubusercontent.com/hoeken/YarrboardFramework/main/releases/REV_A_B_C-2.0.1-espwebtools/manifest.json",
+        "changelog": "# v2.0.1\n\n- Fixed a pathing issue with the gulp script on Windows."
+      }
+    ]
+  }
+}

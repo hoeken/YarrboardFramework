@@ -60,13 +60,13 @@ try:
 		firmware_url_base = release_config.get("firmware_url_base", "")
 		signing_key_path = release_config.get("signing_key_path", "")
 		if not boards:
-			print("🔴 No boards found in release_config.json 🔴")
+			print("🔴 No boards found in config.json 🔴")
 			sys.exit(1)
 		if not firmware_url_base:
-			print("🔴 No firmware_url_base found in release_config.json 🔴")
+			print("🔴 No firmware_url_base found in config.json 🔴")
 			sys.exit(1)
 		if not signing_key_path:
-			print("🔴 No signing_key_path found in release_config.json 🔴")
+			print("🔴 No signing_key_path found in config.json 🔴")
 			sys.exit(1)
 
 		# Validate board configuration format

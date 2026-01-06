@@ -1,7 +1,8 @@
 ## v2.1
 
 * get espwebtools integrated for first firmware upload
-  
+  * update make_release.py with optional path to release folder.
+    * default to docs/releases
 
 * consolidate config and settings
   * create addSettingsPanel() similar to addPage() but with settings content.
