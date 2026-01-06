@@ -336,9 +336,24 @@ if __name__ == '__main__':
 	for board_config in boards:
 		board_name = board_config['name']
 
-		# Initialize board array if it doesn't exist
+		# Initialize board entry if it doesn't exist
 		if board_name not in releases_data:
-			releases_data[board_name] = []
+			releases_data[board_name] = {
+				"name": board_config.get('display_name', ''),
+				"image": board_config.get('image', ''),
+				"description": board_config.get('description', ''),
+				"firmware": []
+			}
+		else:
+			# Ensure the structure has all required fields
+			if 'name' not in releases_data[board_name]:
+				releases_data[board_name]['name'] = board_config.get('display_name', '')
+			if 'image' not in releases_data[board_name]:
+				releases_data[board_name]['image'] = board_config.get('image', '')
+			if 'description' not in releases_data[board_name]:
+				releases_data[board_name]['description'] = board_config.get('description', '')
+			if 'firmware' not in releases_data[board_name]:
+				releases_data[board_name]['firmware'] = []
 
 		# Create new release entry
 		new_release = {
@@ -349,28 +364,28 @@ if __name__ == '__main__':
 		}
 
 		# Check if this version already exists for this board
-		version_exists = any(r['version'] == version for r in releases_data[board_name])
+		version_exists = any(r['version'] == version for r in releases_data[board_name]['firmware'])
 
 		if not version_exists:
 			# Add new release at the beginning (newest first)
-			releases_data[board_name].insert(0, new_release)
-			print(f'Added {board_name} v{version} to releases.json')
+			releases_data[board_name]['firmware'].insert(0, new_release)
+			print(f'Added {board_name} v{version} to full_manifest.json')
 		else:
 			# Update existing release entry
-			for i, r in enumerate(releases_data[board_name]):
+			for i, r in enumerate(releases_data[board_name]['firmware']):
 				if r['version'] == version:
-					releases_data[board_name][i] = new_release
-					print(f'Updated {board_name} v{version} in releases.json')
+					releases_data[board_name]['firmware'][i] = new_release
+					print(f'Updated {board_name} v{version} in full_manifest.json')
 					break
 
-	# Write updated releases.json
+	# Write updated full_manifest.json
 	releases_json_str = json.dumps(releases_data, indent=2)
 	if test_mode:
-		print(f'\nWould write to releases/releases.json:\n{releases_json_str}')
+		print(f'\nWould write to releases/full_manifest.json:\n{releases_json_str}')
 	else:
 		with open(releases_json_path, "w") as f:
 			f.write(releases_json_str)
-		print(f'Updated releases/releases.json')
+		print(f'Updated releases/full_manifest.json')
 
 	#some info to the user to finish the release
 	print("Build complete.\n")

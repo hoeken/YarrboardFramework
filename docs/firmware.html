@@ -166,6 +166,18 @@
                             </select>
                         </div>
 
+                        <!-- Board Info Display (Image and Description) -->
+                        <div id="boardInfoContainer" class="card mb-3 d-none">
+                            <div class="card-body">
+                                <div id="boardImageContainer" class="mb-3 d-none text-center">
+                                    <img id="boardImage" src="" alt="Board image" class="img-fluid rounded" style="max-height: 300px;">
+                                </div>
+                                <div id="boardDescriptionContainer" class="d-none">
+                                    <p id="boardDescription" class="card-text mb-0"></p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Version Selection -->
                         <div class="mb-3">
                             <label for="versionSelect" class="form-label fw-bold">Firmware Version</label>
@@ -301,11 +313,55 @@
 
             // Add options for each board
             boards.forEach(boardName => {
+                const boardData = manifestData[boardName];
                 const option = document.createElement('option');
                 option.value = boardName;
-                option.textContent = boardName.replace(/_/g, ' '); // Format name
+
+                // Use the display name if available, otherwise use the board key formatted
+                const displayName = (boardData.name && boardData.name.trim() !== '')
+                    ? boardData.name
+                    : boardName.replace(/_/g, ' ');
+
+                option.textContent = displayName;
                 boardSelect.appendChild(option);
             });
+        }
+
+        function displayBoardInfo(boardName) {
+            const boardData = manifestData[boardName];
+            const boardInfoContainer = document.getElementById('boardInfoContainer');
+            const boardImageContainer = document.getElementById('boardImageContainer');
+            const boardImage = document.getElementById('boardImage');
+            const boardDescriptionContainer = document.getElementById('boardDescriptionContainer');
+            const boardDescription = document.getElementById('boardDescription');
+
+            let hasContent = false;
+
+            // Handle board image
+            if (boardData.image && boardData.image.trim() !== '') {
+                boardImage.src = boardData.image;
+                boardImage.alt = boardData.name || boardName;
+                boardImageContainer.classList.remove('d-none');
+                hasContent = true;
+            } else {
+                boardImageContainer.classList.add('d-none');
+            }
+
+            // Handle board description
+            if (boardData.description && boardData.description.trim() !== '') {
+                boardDescription.textContent = boardData.description;
+                boardDescriptionContainer.classList.remove('d-none');
+                hasContent = true;
+            } else {
+                boardDescriptionContainer.classList.add('d-none');
+            }
+
+            // Show or hide the entire board info container
+            if (hasContent) {
+                boardInfoContainer.classList.remove('d-none');
+            } else {
+                boardInfoContainer.classList.add('d-none');
+            }
         }
 
         function populateVersionDropdown(boardName) {
@@ -314,8 +370,9 @@
             // Clear existing options
             versionSelect.innerHTML = '<option selected disabled>Choose firmware version...</option>';
 
-            // Get versions for selected board
-            const versions = manifestData[boardName];
+            // Get board data and firmware versions
+            const boardData = manifestData[boardName];
+            const versions = boardData?.firmware || [];
 
             if (!versions || versions.length === 0) {
                 versionSelect.innerHTML = '<option disabled>No versions available</option>';
@@ -421,6 +478,11 @@
             document.getElementById('boardSelect').addEventListener('change', (e) => {
                 const boardName = e.target.value;
                 currentBoard = boardName;
+
+                // Display board info (image and description)
+                displayBoardInfo(boardName);
+
+                // Populate version dropdown
                 populateVersionDropdown(boardName);
 
                 // Reset version-dependent UI
