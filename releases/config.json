@@ -3,9 +3,9 @@
 		{
 			"name": "REV_A_B_C",
 			"chip_family": "ESP32-S3",
-			"display_name": "Test Firmware Rev A.B.C",
+			"display_name": "Test Board Rev A.B.C",
 			"image": "img/rev_a_b_c.jpg",
-			"description": "This is a test board for testing purposes."
+			"description": "This is a test board for testing purposes.  This is an optional longer format description of the board."
 		}
 	],
 	"firmware_url_base": "https://raw.githubusercontent.com/hoeken/YarrboardFramework/main/releases/",
