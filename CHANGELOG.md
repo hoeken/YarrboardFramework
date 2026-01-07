@@ -1,6 +1,34 @@
 # v2.1.0
 
-- Testing new firmware manifest
+## 🌐 Frontend & Web UI
+
+### Settings & Configuration
+- Added JavaScript API for custom settings panels via `api.addSettingsPanel()` and related functions
+- Settings page now allows consolidation of settings in a consistent UI
+- Added custom settings panel to example firmware
+
+### Firmware Management
+- Added ESP Web Tools firmware flasher integration
+- Added Improv WiFi support to firmware upload page
+- Added firmware manifest generation (`full_manifest.json`) with list of all available firmwares
+- Enhanced manifest JSON to include title, board image, and description
+
+## 🔌 Networking & WiFi
+
+- Fixed Improv WiFi implementation (both Bluetooth and WiFi now working)
+- Re-factored network controllers to error if WiFi not connected and restart after Improv connects
+- Improved WiFi reconnection logic
+- When changing WiFi fails, now reconnects to original network
+
+## 🛠️ Developer Experience & Build System
+
+- Updated `make_release.py` to point to `docs/releases` by default
+- Refactored git references: renamed `github_url` to `git_url` for consistency across the project
+- Git hash and URL links now conditionally displayed/linked based on availability
+
+## 🐛 Bug Fixes
+
+- Fixed unauthorized message issue by skipping queue and sending directly for non-important messages
 
 # v2.0.1
 
