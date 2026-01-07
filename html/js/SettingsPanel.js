@@ -9,6 +9,8 @@
     this.displayName = config.displayName || config.name || null;
     this.content = config.content !== undefined ? config.content : null;
     this.position = config.position !== undefined ? config.position : "last";
+    this.useTitle = config.useTitle !== undefined ? config.useTitle : true;
+    this.roundedBorder = config.roundedBorder !== undefined ? config.roundedBorder : true;
 
     this.openCallbacks = [];
     this.closeCallbacks = [];
@@ -67,9 +69,12 @@
       return null;
     }
 
-    // Create the content div
+    let extra_classes = "";
+    if (this.roundedBorder)
+      extra_classes += "p-3 border border-secondary rounded";
+
     var contentDiv = $( /* html */ `
-      <div id="${this.name}SettingsPanel" class="settingsContainer p-3 mb-3 border border-secondary rounded" style="display: none"></div>
+      <div id="${this.name}SettingsPanel" class="settingsContainer mb-3 ${extra_classes}" style="display: none"></div>
     `);
 
     // Append to main content area
@@ -177,7 +182,10 @@
     }
 
     if (contentDiv) {
-      contentDiv.html(`<h5>${this.displayName}</h5>${content}`);
+      if (this.useTitle)
+        contentDiv.html(`<h5>${this.displayName}</h5>${content}`);
+      else
+        contentDiv.html(content);
     }
   };
 

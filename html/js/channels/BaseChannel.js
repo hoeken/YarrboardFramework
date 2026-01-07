@@ -21,12 +21,13 @@
   };
 
   BaseChannel.prototype.generateEditContainer = function () {
-    return `
-      <div id="${this.channelType}Config" style="display:none" class="col-md-12">
-        <h4>${this.channelName} Configuration</h4>
-        <div id="${this.channelType}ConfigForm" class="row g-3"></div>
-      </div>
-    `;
+    return new YB.SettingsPanel({
+      name: this.channelType,
+      displayName: `${this.channelName} Channels`,
+      position: "general",
+      roundedBorder: false,
+      useTitle: false
+    });
   };
 
 

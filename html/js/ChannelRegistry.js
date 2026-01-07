@@ -118,12 +118,11 @@
 
         $(`#${ctype}ControlDiv`).hide();
         $(`#${ctype}Cards`).html("");
-        $(`#${ctype}Config`).hide();
-        $(`#${ctype}ConfigForm`).html("");
         $(`#${ctype}StatsDiv`).hide();
         $(`#${ctype}StatsTableBody`).html("");
 
         //handle each individual channels setup
+        let editContent = "";
         for (var channel_config of cfg[ctype]) {
           let ch = this.channelFromConfig(channel_config, ctype);
 
@@ -134,14 +133,21 @@
           ch.generateStatsUI();
           ch.setupStatsUI();
 
-          //we always want edit.
-          let edit_card = ch.generateEditUI();
-          $(`#${ctype}ConfigForm`).append(edit_card);
-          ch.setupEditUI();
+          editContent += ch.generateEditUI();
+        }
+
+        //build our edit UI.
+        let panel = YB.App.getSettingsPanel(ctype)
+        if (panel) {
+          panel.setContent(`<div class="row">${editContent}</div>`);
+          ``
+          for (var channel_config of cfg[ctype]) {
+            let ch = this.channelFromConfig(channel_config, ctype);
+            ch.setupEditUI();
+          }
         }
 
         //show our containers now.
-        $(`#${ctype}Config`).show();
         $(`#${ctype}StatsDiv`).show();
         $(`#${ctype}ControlDiv`).show();
       }
@@ -187,8 +193,13 @@
       if (!$(`#${ctype}ControlDiv`).length)
         $(`#homePage`).append(ch.generateControlContainer());
 
-      if (!$(`#${ctype}Config`).length)
-        $(`#ConfigForm`).append(ch.generateEditContainer());
+      console.log(`crate channel container ${ctype}`);
+      if (!YB.App.getSettingsPanel(ctype)) {
+        let panel = ch.generateEditContainer();
+        console.log(panel);
+        YB.App.addSettingsPanel(panel);
+        panel.setup(); //this is after DOM ready so need to call manually
+      }
 
       if (!$(`#${ctype}StatsDiv`).length)
         $(`#statsContainer`).append(ch.generateStatsContainer());
