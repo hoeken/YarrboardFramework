@@ -27,6 +27,11 @@
       this.addNavbarEntry();
 
     //setup our content div
+    var contentDiv = this.getContentDiv();
+    if (!contentDiv) {
+      contentDiv = this.addContentDiv();
+    }
+
     if (this.content)
       this.setContent(this.content);
   };
@@ -196,29 +201,22 @@
   // Set the content of the page
   YB.Page.prototype.setContent = function (content) {
     var contentDiv = this.getContentDiv();
-    if (!contentDiv) {
-      contentDiv = this.addContentDiv();
-    }
-
-    if (contentDiv) {
+    if (contentDiv)
       contentDiv.html(content);
-    }
   };
 
   // Show the page
   YB.Page.prototype.show = function () {
     var contentDiv = this.getContentDiv();
-    if (contentDiv) {
+    if (contentDiv)
       contentDiv.show();
-    }
   };
 
   // Hide the page
   YB.Page.prototype.hide = function () {
     var contentDiv = this.getContentDiv();
-    if (contentDiv) {
+    if (contentDiv)
       contentDiv.hide();
-    }
   };
 
   // Remove the page completely
