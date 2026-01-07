@@ -4,10 +4,6 @@
   * create addSettingsPanel() similar to addPage() but with settings content.
   * very basic - just name, title, and content
 
-* bug with reconnecting (eg ESP.restart not going down the hello path)
-  * all queued messages should wait until the connection is authenticated and ready
-  * get_stats / get_update should not jam the queue
-
 ## Long Term
 
 * currently we have a chance of collisions if http api + websockets requests happen simulataneously.

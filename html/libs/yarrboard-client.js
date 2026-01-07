@@ -166,11 +166,11 @@
 				if (requireConfirmation)
 					message["msgid"] = this.sentMessageCount;
 
-				//can we add it to the queue?
-				if (requireConfirmation || this.messageQueue.length <= 10)
+				//should we add it to the queue?
+				if (requireConfirmation)
 					this.messageQueue.push(message);
-				// else
-				// 	this.log(`Skipping, message queue full: ${this.messageQueue.length}`);
+				else
+					this.ws.send(JSON.stringify(message));
 			}
 
 			printMessageStats() {
