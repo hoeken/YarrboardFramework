@@ -45,8 +45,68 @@ customPage.onOpen(function () { console.log("Custom Page Opened.") });
 customPage.onClose(function () { console.log("Custom Page Closed.") });
 YB.App.addPage(customPage);
 
-// You can also remove pages.  We arent using config, so remove it.
-YB.App.removePage("config");
+// Create a custom page
+let customPanel = new YB.SettingsPanel({
+  name: 'custom',
+  displayName: 'Custom Settings',
+  position: "general",
+  content: `
+    <div class="form-floating mb-3">
+        <input id="custom_field" type="text" class="form-control">
+        <label for="custom_field">Custom Field</label>
+        <div class="invalid-feedback"></div>
+    </div>
+    <div class="text-center">
+        <button id="saveCustomSettings" type="button" class="btn btn-primary">
+            Save Custom Settings
+        </button>
+    </div>
+  `
+});
+YB.App.addSettingsPanel(customPanel);
+
+//click handlers and such need to be added after DOM is ready.
+YB.App.onStart(function () {
+  //click handler for our custom settings panel.
+  $("#saveCustomSettings").on("click", function () {
+    //pull our form data
+    const settings = {
+      custom_field: $("#custom_field").val().trim(),
+    };
+
+    //validate.js schema for our custom form data.
+    const schema = {
+      custom_field: {
+        presence: { allowEmpty: false },
+        length: { maximum: 31 },
+      }
+    }
+
+    //validate it.
+    const errors = validate(settings, schema);
+    YB.Util.showFormValidationResults(settings, errors);
+
+    //bail on fail.
+    if (errors) {
+      YB.Util.flashClass($("#customSettingsPanel"), "border-danger");
+      YB.Util.flashClass($("#customGeneralSettings"), "btn-danger");
+      return;
+    }
+
+    //log it for the user.
+    YB.log(settings.custom_field);
+
+    //flash whole form green.
+    YB.Util.flashClass($("#customSettingsPanel"), "border-success");
+    YB.Util.flashClass($("#customGeneralSettings"), "btn-success");
+
+    //okay, send it off.
+    YB.client.send({
+      "cmd": "test",
+      "foo": settings.custom_field
+    });
+  });
+});
 
 //Add some info text to the stats page.
 const statsMarkdown = `

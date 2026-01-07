@@ -1107,10 +1107,6 @@
       //we can check for new firmware now.
       YB.App.checkForUpdates();
 
-      //is it our first boot?
-      if (msg.first_boot && YB.App.currentPage != "network")
-        YB.App.showAlert(`Welcome to Yarrboard, head over to <a href="#network" onclick="YB.App.openPage('network')">Network</a> to setup your WiFi.`, "primary");
-
       //did we get a crash?
       if (msg.has_coredump)
         YB.App.showAdminAlert(/*html*/ `
@@ -1195,9 +1191,9 @@
       YB.Util.populateMelodySelector($("#startup_melody"));
 
       //ready!
-      let configPage = YB.App.getPage('config');
-      if (configPage)
-        configPage.ready = true;
+      let settingsPage = YB.App.getPage('settings');
+      if (settingsPage)
+        settingsPage.ready = true;
 
       if (!YB.App.currentPage)
         YB.App.openPage('home');
@@ -1403,10 +1399,6 @@
       $("#wifi_ssid").val(msg.wifi_ssid);
       $("#wifi_pass").val(msg.wifi_pass);
       $("#local_hostname").val(msg.local_hostname);
-
-      let networkPage = YB.App.getPage('network');
-      if (networkPage)
-        networkPage.ready = true;
     },
 
     handleAppConfigMessage: function (msg) {
@@ -1891,16 +1883,6 @@
   statsPage.onOpen(YB.App.startStatsPoller);
   statsPage.onClose(YB.App.stopStatsPoller);
   YB.App.addPage(statsPage);
-
-  let configPage = new YB.Page({
-    name: 'config',
-    displayName: 'Config',
-    permissionLevel: 'admin',
-    showInNavbar: true,
-    ready: false,
-    content: `<form class="row g-3" id="ConfigForm"></form>`
-  });
-  YB.App.addPage(configPage);
 
   let settingsPage = new YB.Page({
     name: 'settings',

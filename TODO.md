@@ -1,5 +1,8 @@
 ## v2.1
 
+* update TODO 
+* references to ConfigForm
+
 ## Long Term
 
 * currently we have a chance of collisions if http api + websockets requests happen simulataneously.
