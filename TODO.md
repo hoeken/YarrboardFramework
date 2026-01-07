@@ -1,8 +1,5 @@
 ## v2.1
 
-* get espwebtools integrated for first firmware upload
-  * test the "ask for erase" function.  add warning text if we can't safely overwrite.
-
 * consolidate config and settings
   * create addSettingsPanel() similar to addPage() but with settings content.
   * very basic - just name, title, and content
