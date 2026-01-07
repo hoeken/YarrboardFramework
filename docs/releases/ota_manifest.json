@@ -1,8 +1,8 @@
 [
     {
         "type": "REV_A_B_C",
-        "version": "2.0.1",
-        "url": "https://hoeken.github.io/YarrboardFramework/releases/REV_A_B_C/REV_A_B_C-2.0.1.bin",
-        "changelog": "# v2.0.1\n\n- Fixed a pathing issue with the gulp script on Windows."
+        "version": "2.1.0",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/REV_A_B_C/REV_A_B_C-2.1.0.bin",
+        "changelog": "# v2.1.0\n\n- Testing new firmware manifest"
     }
 ]

@@ -1,4 +1,4 @@
-# v2.0.2
+# v2.1.0
 
 - Testing new firmware manifest
 
