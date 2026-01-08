@@ -700,6 +700,12 @@ void BuzzerController::generateConfigHook(JsonVariant output)
   generateMelodyJSON(output);
 };
 
+void BuzzerController::generateCapabilitiesHook(JsonVariant config)
+{
+  config["buzzer"] = true;
+  config["buzzer_is_active"] = isActive;
+};
+
 void BuzzerController::generateMelodyJSON(JsonVariant output)
 {
   output["melodies"][0] = "NONE";

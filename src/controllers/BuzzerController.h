@@ -48,6 +48,7 @@ class BuzzerController : public BaseController
 
     bool setup() override;
     void generateConfigHook(JsonVariant output) override;
+    void generateCapabilitiesHook(JsonVariant config) override;
 
     bool playMelodyByName(const char* melody);
     void generateMelodyJSON(JsonVariant output);

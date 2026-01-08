@@ -55,6 +55,7 @@ class BaseController {
   virtual void loop();                                                                          // Main execution
   virtual bool loadConfigHook(JsonVariant config, char* error, size_t len);                    // Load configuration with error handling
   virtual void generateConfigHook(JsonVariant config);                                         // Serialize configuration
+  virtual void generateCapabilitiesHook(JsonVariant capabilities);                             // Report hardware capabilities
   virtual void generateUpdateHook(JsonVariant output);                                         // Real-time data updates
   virtual bool needsFastUpdate();                                                              // Check if fast update needed
   virtual void generateFastUpdateHook(JsonVariant output);                                     // Fast real-time updates

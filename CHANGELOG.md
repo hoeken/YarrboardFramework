@@ -1,5 +1,15 @@
 # v2.1.1
 
+## 🏗️ Controller System
+
+- Added `generateCapabilitiesHook()` to `BaseController` for reporting hardware capabilities
+  - Controllers can now populate a `capabilities` object in the board configuration
+  - Enables frontend to conditionally show/hide features based on available hardware
+  - Implemented in `BuzzerController` (reports `buzzer` and `buzzer_is_active`)
+  - Implemented in `RGBController` (reports `rgb` and `rgb_count`)
+
+## 🌐 Frontend & Web UI
+
 - Settings navigation menu layout is now responsive
   - Desktop/tablet (sm+): Left-aligned text, vertical layout
   - Mobile (xs): Centered text, collapsed layout

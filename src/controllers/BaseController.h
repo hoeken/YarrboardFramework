@@ -35,6 +35,7 @@ class BaseController
 
     virtual bool loadConfigHook(JsonVariant config, char* error, size_t len) { return true; };
     virtual void generateConfigHook(JsonVariant config) {};
+    virtual void generateCapabilitiesHook(JsonVariant config) {};
     virtual void generateUpdateHook(JsonVariant output) {};
     virtual bool needsFastUpdate() { return false; }
     virtual void generateFastUpdateHook(JsonVariant output) {};

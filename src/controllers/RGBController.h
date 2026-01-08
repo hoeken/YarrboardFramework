@@ -71,6 +71,12 @@ class RGBController : public RGBControllerInterface
       }
     }
 
+    void generateCapabilitiesHook(JsonVariant config) override
+    {
+      config["rgb"] = true;
+      config["rgb_count"] = _numLeds;
+    };
+
     void setStatusColor(uint8_t r, uint8_t g, uint8_t b) override { setPixelColor(0, r, g, b); }
     void setStatusColor(const CRGB& color) override { setPixelColor(0, color); }
 

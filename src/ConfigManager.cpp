@@ -175,6 +175,13 @@ void ConfigManager::generateBoardConfig(JsonVariant output)
   output["build_time"] = BUILD_TIME;
 #endif
 
+  // hook for our hardware capabilities
+  JsonObject capabilities = output["capabilities"].to<JsonObject>();
+  for (const auto& entry : _app.getControllers()) {
+    entry.controller->generateCapabilitiesHook(capabilities);
+  }
+
+  // hook for each controller
   for (const auto& entry : _app.getControllers()) {
     entry.controller->generateConfigHook(output);
   }
