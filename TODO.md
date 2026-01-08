@@ -1,5 +1,6 @@
 ## Long Term
 
+* add static ip address (yarrboard-firmware #11)
 * add compile targets for each board type to firmware releases
 * add minimum flash size (8mb) + talk about A/B partition for OTA
 
