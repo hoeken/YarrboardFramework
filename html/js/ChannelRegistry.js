@@ -193,10 +193,8 @@
       if (!$(`#${ctype}ControlDiv`).length)
         $(`#homePage`).append(ch.generateControlContainer());
 
-      console.log(`crate channel container ${ctype}`);
       if (!YB.App.getSettingsPanel(ctype)) {
         let panel = ch.generateEditContainer();
-        console.log(panel);
         YB.App.addSettingsPanel(panel);
         panel.setup(); //this is after DOM ready so need to call manually
       }
