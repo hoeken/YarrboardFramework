@@ -1,6 +1,8 @@
 # v2.1.1
 
-- Settings menu text align left
+- Settings navigation menu layout is now responsive
+  - Desktop/tablet (sm+): Left-aligned text, vertical layout
+  - Mobile (xs): Centered text, collapsed layout
 
 # v2.1.0
 

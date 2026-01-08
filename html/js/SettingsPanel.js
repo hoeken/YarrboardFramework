@@ -116,7 +116,7 @@
 
     // Create the navbar list item and link
     var navItem = $(`
-      <li id="${this.name}SettingsNav" class="nav-item nav-permission text-start">
+      <li id="${this.name}SettingsNav" class="nav-item nav-permission text-center text-sm-start">
         <a class="nav-link" onclick="YB.App.openSettingsPanel('${this.name}')">
           ${this.displayName}
         </a>
