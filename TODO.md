@@ -1,9 +1,7 @@
-## v2.1.1
+## Long Term
 
 * add compile targets for each board type to firmware releases
 * add minimum flash size (8mb) + talk about A/B partition for OTA
-
-## Long Term
 
 * currently we have a chance of collisions if http api + websockets requests happen simulataneously.
   * best to solve this as a mutex (but is this really needed?)
