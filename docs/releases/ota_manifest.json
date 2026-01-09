@@ -1,8 +1,8 @@
 [
     {
         "type": "REV_A_B_C",
-        "version": "2.2.0",
-        "url": "https://hoeken.github.io/YarrboardFramework/releases/REV_A_B_C/2.2.0.bin",
-        "changelog": "# v2.2.0\n\n## \ud83c\udfd7\ufe0f Controller System\n\n- Added `generateCapabilitiesHook()` to `BaseController` for reporting hardware capabilities\n  - Controllers can now populate a `capabilities` object in the board configuration\n  - Enables frontend to conditionally show/hide features based on available hardware\n  - Implemented in `BuzzerController` (reports `buzzer` and `buzzer_is_active`)\n  - Implemented in `RGBController` (reports `rgb` and `rgb_count`)\n\n## \ud83c\udf10 Frontend & Web UI\n\n- Settings navigation menu layout is now responsive\n  - Desktop/tablet (sm+): Left-aligned text, vertical layout\n  - Mobile (xs): Centered text, collapsed layout"
+        "version": "2.2.1",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/REV_A_B_C/2.2.1.bin",
+        "changelog": "# v2.2.1\n\n- Moved MQTT configuration handling from `ProtocolController` to `MQTTController` for better separation of concerns\n- Added MQTT connection status to stats hook via `generateStatsHook()` instead of embedding in protocol controller\n- Improved MQTT connection management with proper connect/disconnect lifecycle and connection retry handling\n- gulp is no longer minifying JS as it was causing problems."
     }
 ]

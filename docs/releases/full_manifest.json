@@ -5,6 +5,12 @@
     "description": "This is a test board for testing purposes.",
     "firmware": [
       {
+        "version": "2.2.1",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/REV_A_B_C/2.2.1.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/REV_A_B_C/2.2.1-espwebtools/manifest.json",
+        "changelog": "# v2.2.1\n\n- Moved MQTT configuration handling from `ProtocolController` to `MQTTController` for better separation of concerns\n- Added MQTT connection status to stats hook via `generateStatsHook()` instead of embedding in protocol controller\n- Improved MQTT connection management with proper connect/disconnect lifecycle and connection retry handling\n- gulp is no longer minifying JS as it was causing problems."
+      },
+      {
         "version": "2.2.0",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/REV_A_B_C/2.2.0.bin",
         "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/REV_A_B_C/2.2.0-espwebtools/manifest.json",
