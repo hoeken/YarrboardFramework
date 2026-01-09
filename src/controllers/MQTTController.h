@@ -15,6 +15,7 @@
 
 #include "YarrboardConfig.h"
 #include "controllers/BaseController.h"
+#include "controllers/ProtocolController.h"
 #include <ArduinoJson.h>
 #include <PsychicMqttClient.h>
 
@@ -29,6 +30,7 @@ class MQTTController : public BaseController
     bool setup() override;
     void loop() override;
 
+    bool connect();
     void disconnect();
     bool isConnected();
 
@@ -36,6 +38,9 @@ class MQTTController : public BaseController
     void onConnect(bool sessionPresent);
     void publish(const char* topic, const char* payload, bool use_prefix = true);
     void traverseJSON(JsonVariant node, const char* topic_prefix);
+
+    void handleSetMQTTConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void generateStatsHook(JsonVariant output) override;
 
   private:
     PsychicMqttClient mqttClient;

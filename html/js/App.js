@@ -211,7 +211,7 @@
     },
 
     openSettingsPanel: function (panel) {
-      YB.log(`opening settings ${panel}`);
+      // YB.log(`opening settings ${panel}`);
 
       //look up our object
       let panelObj = YB.App.getSettingsPanel(panel);
@@ -715,6 +715,9 @@
       // flash whole form green
       YB.Util.flashClass($("#mqttSettingsPanel"), "border-success");
       YB.Util.flashClass($("#saveMQTTSettings"), "btn-success");
+
+      //we dont need a full config refresh
+      YB.App.config.enable_mqtt = settings.app_enable_mqtt;
 
       // okay, send it off
       YB.client.send({

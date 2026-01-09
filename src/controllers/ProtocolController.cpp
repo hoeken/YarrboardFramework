@@ -14,7 +14,6 @@
 #include "ConfigManager.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
-#include "controllers/MQTTController.h"
 #include "controllers/OTAController.h"
 #include "utility.h"
 
@@ -43,7 +42,6 @@ bool ProtocolController::setup()
   registerCommand(ADMIN, "set_network_config", this, &ProtocolController::handleSetNetworkConfig);
   registerCommand(ADMIN, "set_authentication_config", this, &ProtocolController::handleSetAuthenticationConfig);
   registerCommand(ADMIN, "set_webserver_config", this, &ProtocolController::handleSetWebServerConfig);
-  registerCommand(ADMIN, "set_mqtt_config", this, &ProtocolController::handleSetMQTTConfig);
   registerCommand(ADMIN, "set_misc_config", this, &ProtocolController::handleSetMiscellaneousConfig);
   registerCommand(ADMIN, "restart", this, &ProtocolController::handleRestart);
   registerCommand(ADMIN, "factory_reset", this, &ProtocolController::handleFactoryReset);
@@ -233,8 +231,6 @@ void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant outp
   output["min_free_heap"] = ESP.getMinFreeHeap();
   output["max_alloc_heap"] = ESP.getMaxAllocHeap();
   output["rssi"] = WiFi.RSSI();
-  if (_cfg.app_enable_mqtt)
-    output["mqtt_connected"] = _app.mqtt.isConnected();
 
   // what is our IP address?
   if (!strcmp(_cfg.wifi_mode, "ap"))
@@ -476,30 +472,6 @@ void ProtocolController::handleSetWebServerConfig(JsonVariantConst input, JsonVa
   // restart the board.
   if (old_app_enable_ssl != _cfg.app_enable_ssl)
     ESP.restart();
-}
-
-void ProtocolController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
-{
-  _cfg.app_enable_mqtt = input["app_enable_mqtt"];
-  _cfg.app_enable_mqtt_protocol = input["app_enable_mqtt_protocol"];
-  _cfg.app_enable_ha_integration = input["app_enable_ha_integration"];
-  _cfg.app_use_hostname_as_mqtt_uuid = input["app_use_hostname_as_mqtt_uuid"];
-
-  strlcpy(_cfg.mqtt_server, input["mqtt_server"] | "", sizeof(_cfg.mqtt_server));
-  strlcpy(_cfg.mqtt_user, input["mqtt_user"] | "", sizeof(_cfg.mqtt_user));
-  strlcpy(_cfg.mqtt_pass, input["mqtt_pass"] | "", sizeof(_cfg.mqtt_pass));
-  _cfg.mqtt_cert = input["mqtt_cert"].as<String>();
-
-  // save it to file.
-  char error[128] = "Unknown";
-  if (!_cfg.saveConfig(error, sizeof(error)))
-    return generateErrorJSON(output, error);
-
-  // init our mqtt
-  if (_cfg.app_enable_mqtt)
-    _app.mqtt.setup();
-  else
-    _app.mqtt.disconnect();
 }
 
 void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)

@@ -1,3 +1,10 @@
+# v2.2.1
+
+- Moved MQTT configuration handling from `ProtocolController` to `MQTTController` for better separation of concerns
+- Added MQTT connection status to stats hook via `generateStatsHook()` instead of embedding in protocol controller
+- Improved MQTT connection management with proper connect/disconnect lifecycle and connection retry handling
+- gulp is no longer minifying JS as it was causing problems.
+
 # v2.2.0
 
 ## 🏗️ Controller System

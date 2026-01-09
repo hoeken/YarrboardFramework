@@ -128,7 +128,6 @@ class ProtocolController : public BaseController
     void handleSetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
-    void handleSetMQTTConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSaveConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleRestart(JsonVariantConst input, JsonVariant output, ProtocolContext context);

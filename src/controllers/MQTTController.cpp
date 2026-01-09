@@ -24,22 +24,14 @@ MQTTController::MQTTController(YarrboardApp& app) : BaseController(app, "mqtt")
 
 bool MQTTController::setup()
 {
-  _instance = this; // Capture the instance for callbacks
-
-  // are we enabled?
-  if (!_cfg.app_enable_mqtt)
-    return true;
-
   if (!WiFi.isConnected()) {
     YBP.println("WiFi not connected.");
     return false;
   }
 
-  mqttClient.setServer(_cfg.mqtt_server);
-  mqttClient.setCredentials(_cfg.mqtt_user, _cfg.mqtt_pass);
+  _app.protocol.registerCommand(ADMIN, "set_mqtt_config", this, &MQTTController::handleSetMQTTConfig);
 
-  if (_cfg.mqtt_cert.length())
-    mqttClient.setCACert(_cfg.mqtt_cert.c_str());
+  _instance = this; // Capture the instance for callbacks
 
   // on connect home hook
   mqttClient.onConnect(_onConnectStatic);
@@ -52,6 +44,21 @@ bool MQTTController::setup()
     });
   }
 
+  return connect();
+}
+
+bool MQTTController::connect()
+{
+  // are we enabled?
+  if (!_cfg.app_enable_mqtt)
+    return true;
+
+  mqttClient.setServer(_cfg.mqtt_server);
+  mqttClient.setCredentials(_cfg.mqtt_user, _cfg.mqtt_pass);
+
+  if (_cfg.mqtt_cert.length())
+    mqttClient.setCACert(_cfg.mqtt_cert.c_str());
+
   mqttClient.connect();
 
   /**
@@ -63,6 +70,7 @@ bool MQTTController::setup()
     tries++;
 
     if (tries > 20) {
+      mqttClient.disconnect();
       YBP.println("MQTT failed to connect.");
       return false;
     }
@@ -95,6 +103,37 @@ void MQTTController::loop()
 
     previousMQTTMillis = millis();
   }
+}
+
+void MQTTController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+{
+  _cfg.app_enable_mqtt = input["app_enable_mqtt"];
+  _cfg.app_enable_mqtt_protocol = input["app_enable_mqtt_protocol"];
+  _cfg.app_enable_ha_integration = input["app_enable_ha_integration"];
+  _cfg.app_use_hostname_as_mqtt_uuid = input["app_use_hostname_as_mqtt_uuid"];
+
+  strlcpy(_cfg.mqtt_server, input["mqtt_server"] | "", sizeof(_cfg.mqtt_server));
+  strlcpy(_cfg.mqtt_user, input["mqtt_user"] | "", sizeof(_cfg.mqtt_user));
+  strlcpy(_cfg.mqtt_pass, input["mqtt_pass"] | "", sizeof(_cfg.mqtt_pass));
+  _cfg.mqtt_cert = input["mqtt_cert"].as<String>();
+
+  // save it to file.
+  char error[128] = "Unknown";
+  if (!_cfg.saveConfig(error, sizeof(error)))
+    return _app.protocol.generateErrorJSON(output, error);
+
+  // init our mqtt
+  if (_cfg.app_enable_mqtt) {
+    disconnect(); // reset our connection.
+    if (!connect())
+      return _app.protocol.generateErrorJSON(output, "Error connecting to MQTT server.");
+  } else
+    disconnect();
+}
+
+void MQTTController::generateStatsHook(JsonVariant output)
+{
+  output["mqtt_connected"] = _app.mqtt.isConnected();
 }
 
 void MQTTController::disconnect()
