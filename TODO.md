@@ -1,11 +1,5 @@
 ## Long Term
 
-* mqtt
-  * add onError and onDisconnect callbacks
-  * add _firstConnection boolean - set on connect, cleared on successful connection
-  * onError - if first connection
-    * disconnect 
-    * send error message to ADMIN using _app.protocol.sendToAll
 * add static ip address support (yarrboard-firmware #11)
 * add compile targets for each board type to firmware releases
 * readme: add minimum flash size (8mb) + talk about A/B partition for OTA
