@@ -1,6 +1,33 @@
 import os
 import glob
+import subprocess
+import datetime
 Import("env")
+
+
+def get_git_hash():
+    """Return full commit hash, appending '-dirty' if repo has uncommitted changes."""
+    try:
+        # Full 40-character hash
+        commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"]
+        ).decode("utf-8").strip()
+
+        # Check if working tree is dirty
+        dirty = subprocess.call(
+            ["git", "diff", "--quiet", "HEAD"]
+        )
+
+        if dirty != 0:
+            commit += "-dirty"
+
+        return commit
+    except Exception:
+        return "unknown"
+
+def get_build_time():
+    """UTC timestamp in ISO 8601 format"""
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 #print("Packaging yarrboard-client from NPM")
@@ -43,7 +70,7 @@ try:
         # Final fallback: Check if we're running inside the YarrboardFramework repository itself
         # This happens when building examples within the framework repo
         project_dir = os.getcwd()
-        gulpfile_in_current = os.path.join(project_dir, "scripts", "gulpfile.mjs")
+        gulpfile_in_current = os.path.join(project_dir, "gulpfile.mjs")
 
         if os.path.isfile(gulpfile_in_current):
             framework_path = project_dir
@@ -98,10 +125,23 @@ else:
 
 os.environ["YARRBOARD_PROJECT_PATH"] = project_path
 
+# Add git version information to build flags
+git_hash = get_git_hash()
+build_time = get_build_time()
+
+print(f"Git build info - Hash: {git_hash}, Build time: {build_time}")
+
+hash_flag = "-D GIT_HASH=\\\"" + git_hash + "\\\""
+time_flag = "-D BUILD_TIME=\\\"" + build_time + "\\\""
+
+env.Append(
+    BUILD_FLAGS=[hash_flag, time_flag]
+)
+
 # Check if HTML minification should be enabled
-# Users can set this in their platformio.ini with: enable_minify_html = yes
+# Users can set this in their platformio.ini with: custom_enable_minify_html = yes
 try:
-    minify_html = env.GetProjectOption("enable_minify_html", "no")
+    minify_html = env.GetProjectOption("custom_enable_minify_html", "no")
     if minify_html.lower() in ["yes", "true", "1", "on"]:
         os.environ["YARRBOARD_ENABLE_MINIFY"] = "1"
         print("HTML minification: ENABLED")
@@ -113,7 +153,7 @@ except:
 
 print(f"Project path: {project_path}")
 print("Compressing web app into header")
-gulpfile_path = os.path.join(framework_path, "scripts", "gulpfile.mjs")
+gulpfile_path = os.path.join(framework_path, "gulpfile.mjs")
 result = env.Execute(f"gulp --gulpfile {gulpfile_path} --cwd .")
 if result != 0:
     print(f"ERROR: Gulp command failed with exit code {result}")

@@ -1,7 +1,7 @@
 # v2.2.2
 
-- Replaced `gulp-htmlmin` with `gulp-html-minifier-terser`
-- Made HTML minification optional via `enable_minify_html` flag
+- Consolidated build scripts into single `yarrboard_framework.py` (replaces `git_version.py`, `gulp.py`, `gulpfile.mjs`)
+- Added `custom_enable_minify_html` platformio.ini configuration option for HTML minification control
 
 # v2.2.1
 
