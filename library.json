@@ -1,6 +1,6 @@
 {
   "name": "YarrboardFramework",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Framework for esp32 with http, websockets, MQTT and more",
   "keywords": "network,http,https,tcp,ssl,tls,websocket,espasyncwebserver",
   "repository": {

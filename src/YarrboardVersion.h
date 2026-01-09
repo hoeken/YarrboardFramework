@@ -17,7 +17,7 @@
 /** Minor version number (x.X.x) */
 #define YARRBOARD_VERSION_MINOR 2
 /** Patch version number (x.x.X) */
-#define YARRBOARD_VERSION_PATCH 0
+#define YARRBOARD_VERSION_PATCH 1
 
 /**
  * Macro to convert Yarrboard Framework version number into an integer
