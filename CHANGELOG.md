@@ -1,3 +1,7 @@
+# v2.2.3
+
+- Forgot to include the gulpfile in its new location.
+
 # v2.2.2
 
 - Consolidated build scripts into single `yarrboard_framework.py` (replaces `git_version.py`, `gulp.py`, `gulpfile.mjs`)
