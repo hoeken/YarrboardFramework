@@ -50,6 +50,8 @@ class NetworkController : public BaseController
     ImprovWiFiBLE improvBLE;
 #endif
 
+    uint32_t lastHeartbeat = 0;
+
     // for making a captive portal
     //  The default android DNS
     const byte DNS_PORT = 53;

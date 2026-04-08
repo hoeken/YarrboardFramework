@@ -46,6 +46,12 @@ void NetworkController::loop()
   if (_cfg.is_first_boot) {
     improvSerial.handleSerial();
   }
+
+  // mdns heartbeat.  otherwise it can sometimes die with long uptimes.
+  if (millis() - lastHeartbeat > 1000 * 60 * 15) {
+    MDNS.addServiceTxt("http", "tcp", "uptime", String(millis() / 1000));
+    lastHeartbeat = millis();
+  }
 }
 
 void NetworkController::setupWifi()
@@ -145,7 +151,9 @@ bool NetworkController::connectToWifi(const char* ssid, const char* pass)
       dns2.fromString(strlen(_cfg.wifi_dns2) > 0 ? _cfg.wifi_dns2 : _cfg.wifi_gateway);
       WiFi.config(ip, gw, sn, dns1, dns2);
       YBP.printf("[WiFi] Static IP: %s / GW: %s / SN: %s / DNS1: %s / DNS2: %s\n",
-        _cfg.wifi_static_ip, _cfg.wifi_gateway, _cfg.wifi_subnet,
+        _cfg.wifi_static_ip,
+        _cfg.wifi_gateway,
+        _cfg.wifi_subnet,
         strlen(_cfg.wifi_dns1) > 0 ? _cfg.wifi_dns1 : _cfg.wifi_gateway,
         strlen(_cfg.wifi_dns2) > 0 ? _cfg.wifi_dns2 : _cfg.wifi_gateway);
     } else {
