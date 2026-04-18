@@ -1,1 +1,1 @@
-+ Visit [framework.yarrboard.com](https://framework.yarrboard.com) for the documentation.
+Visit [framework.yarrboard.com](https://framework.yarrboard.com) for the documentation.
