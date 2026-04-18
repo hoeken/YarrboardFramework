@@ -139,6 +139,8 @@
       });
 
       //event handlers for our settings forms
+      YB.App.addFullConfigHandlers();
+
       $("#saveGeneralSettings").on('click', YB.App.saveGeneralSettings);
       $("#saveAuthenticationSettings").on('click', YB.App.saveAuthenticationSettings);
       $("#saveWebServerSettings").on('click', YB.App.saveWebServerSettings);
@@ -309,6 +311,70 @@
       },
         750 //speed
       );
+    },
+
+    addFullConfigHandlers: function () {
+      //save handler
+      document.getElementById('configurationSave').addEventListener('click', () => {
+        const configText = document.getElementById('configurationTextarea').value;
+        const textarea = document.getElementById('configurationTextarea');
+
+        try {
+          const parsed = JSON.parse(configText);
+          const compact = JSON.stringify(parsed);
+
+          YB.client.send({
+            "cmd": "save_config",
+            "config": compact
+          }, true);
+
+          $("#saveIndicator").html("Saved!");
+
+        } catch (err) {
+          $("#invalidConfigurationJSON").show();
+          textarea.style.border = "2px solid red";
+          setTimeout(() => textarea.style.border = "", 2000);
+        }
+      });
+
+      //copy handler
+      document.getElementById('configurationCopy').addEventListener('click', () => {
+        const text = document.getElementById('configurationTextarea').value;
+        const textarea = document.getElementById('configurationTextarea');
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text)
+            .then(() => $("#copyIndicator").html("Copied!"))
+            .catch(err => console.error("Clipboard write failed:", err));
+        } else {
+          // Fallback for insecure contexts aka locally hosted non-secure esp32 pages... or old browsers
+          textarea.select();
+          try {
+            document.execCommand("copy");
+            $("#copyIndicator").html("Copied!");
+          } catch (err) {
+            console.error("Fallback copy failed:", err);
+          }
+        }
+      });
+
+      //download handler
+      document.getElementById('configurationDownload').addEventListener('click', () => {
+        const text = document.getElementById('configurationTextarea').value;
+        const blob = new Blob([text], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0];
+        a.download = `${YB.App.config.hostname}_${YB.App.config.uuid}_${dateStr}_config.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      YB.App.addConfigurationDragDropHandler();
     },
 
     addConfigurationDragDropHandler: function () {
@@ -1403,74 +1469,6 @@
       const textarea = document.getElementById('configurationTextarea');
       const prettyJSON = JSON.stringify(msg.config, null, 2); // 2-space indentation
       textarea.value = prettyJSON;
-
-      //save handler
-      document.getElementById('configurationSave').addEventListener('click', () => {
-        const configText = document.getElementById('configurationTextarea').value;
-
-        try {
-          // Try to parse the JSON
-          const parsed = JSON.parse(configText);
-
-          // Re-serialize it compactly (no whitespace)
-          const compact = JSON.stringify(parsed);
-
-          //send it off for saving.
-          YB.client.send({
-            "cmd": "save_config",
-            "config": compact
-          }, true);
-
-          //let them know.
-          $("#saveIndicator").html("Saved!");
-
-        } catch (err) {
-          //show an error
-          $("#invalidConfigurationJSON").show();
-
-          //highlight the textarea for feedback
-          textarea.style.border = "2px solid red";
-          setTimeout(() => textarea.style.border = "", 2000);
-        }
-      });
-
-      //copy handler
-      document.getElementById('configurationCopy').addEventListener('click', () => {
-        const text = document.getElementById('configurationTextarea').value;
-
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text)
-            .then(() => $("#copyIndicator").html("Copied!"))
-            .catch(err => console.error("Clipboard write failed:", err));
-        } else {
-          // Fallback for insecure contexts aka locally hosted non-secure esp32 pages... or old browsers
-          textarea.select();
-          try {
-            document.execCommand("copy");
-            $("#copyIndicator").html("Copied!");
-          } catch (err) {
-            console.error("Fallback copy failed:", err);
-          }
-        }
-      });
-
-      //download handler
-      document.getElementById('configurationDownload').addEventListener('click', () => {
-        const text = document.getElementById('configurationTextarea').value;
-        const blob = new Blob([text], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const today = new Date();
-        const dateStr = today.toISOString().split('T')[0];
-        a.download = `${YB.App.config.hostname}_${YB.App.config.uuid}_${dateStr}_config.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url); // cleanup
-      });
-
-      YB.App.addConfigurationDragDropHandler();
     },
 
     handleNetworkConfigMessage: function (msg) {
@@ -2043,7 +2041,11 @@
     showInNavbar: true,
     ready: true
   });
-  systemPage.onOpen(YB.App.loadConfigs);
+  systemPage.onOpen(function () {
+    if (YB.App.role == "admin") {
+      YB.client.send({ "cmd": "get_full_config" });
+    }
+  });
   YB.App.addPage(systemPage);
 
   let loginPage = new YB.Page({
