@@ -62,6 +62,7 @@ class NetworkController : public BaseController
     // We use a static instance pointer and static methods to bridge the gap.
     static NetworkController* _instance;
 
+    void startMDNS();
     void waitForBootPress();
 
     static void _onImprovErrorStatic(ImprovTypes::Error err);

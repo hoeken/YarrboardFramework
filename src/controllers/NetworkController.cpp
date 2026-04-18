@@ -47,9 +47,10 @@ void NetworkController::loop()
     improvSerial.handleSerial();
   }
 
-  // mdns heartbeat.  otherwise it can sometimes die with long uptimes.
-  if (millis() - lastHeartbeat > 1000 * 60 * 15) {
-    MDNS.addServiceTxt("http", "tcp", "uptime", String(millis() / 1000));
+  // Periodically restart mDNS as a backstop against the known ESP32 mDNS stack
+  // degradation bug where the responder silently stops answering queries.
+  if (millis() - lastHeartbeat > 1000UL * 60 * 30) {
+    startMDNS();
     lastHeartbeat = millis();
   }
 }
@@ -205,6 +206,16 @@ bool NetworkController::connectToWifi(const char* ssid, const char* pass)
   return false;
 }
 
+void NetworkController::startMDNS()
+{
+  MDNS.end();
+  if (!MDNS.begin(_cfg.local_hostname))
+    YBP.println("[mDNS] Error starting mDNS");
+  else
+    YBP.println("[mDNS] mDNS started");
+  MDNS.addService("http", "tcp", 80);
+}
+
 void NetworkController::startServices()
 {
   // some global config
@@ -214,10 +225,14 @@ void NetworkController::startServices()
   YBP.print(_cfg.local_hostname);
   YBP.println(".local");
 
-  // setup our local name.
-  if (!MDNS.begin(_cfg.local_hostname))
-    YBP.println("Error starting mDNS");
-  MDNS.addService("http", "tcp", 80);
+  // Restart mDNS whenever WiFi re-associates and gets an IP, so the .local
+  // hostname recovers automatically from connection drops.
+  WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
+    if (_instance)
+      _instance->startMDNS();
+  }, ARDUINO_EVENT_WIFI_STA_GOT_IP);
+
+  startMDNS();
 }
 
 void NetworkController::setupImprov()
