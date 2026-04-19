@@ -75,11 +75,11 @@
     //are we ready yet?
     if (this.ready) {
       $("#loading").hide();
-      contentDiv.show();
+      this.show();
     }
     else {
       $("#loading").show();
-      contentDiv.hide();
+      this.hide();
       setTimeout(() => this.openWhenReady(), 100);
     }
   };
