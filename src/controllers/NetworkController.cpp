@@ -47,12 +47,12 @@ void NetworkController::loop()
     improvSerial.handleSerial();
   }
 
-  // Periodically restart mDNS as a backstop against the known ESP32 mDNS stack
-  // degradation bug where the responder silently stops answering queries.
-  if (millis() - lastHeartbeat > 1000UL * 60 * 10) {
-    startMDNS();
-    lastHeartbeat = millis();
-  }
+  // // Periodically restart mDNS as a backstop against the known ESP32 mDNS stack
+  // // degradation bug where the responder silently stops answering queries.
+  // if (millis() - lastHeartbeat > 1000UL * 60 * 10) {
+  //   startMDNS();
+  //   lastHeartbeat = millis();
+  // }
 }
 
 void NetworkController::setupWifi()
@@ -235,7 +235,8 @@ void NetworkController::startServices()
     WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
       if (_instance)
         _instance->startMDNS();
-    }, ARDUINO_EVENT_WIFI_STA_GOT_IP);
+    },
+      ARDUINO_EVENT_WIFI_STA_GOT_IP);
     _mdnsEventRegistered = true;
   }
 
