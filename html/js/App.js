@@ -5,7 +5,7 @@
   const YarrboardClient = window.YarrboardClient;
 
   YB.App = {
-    config: {},
+    config: null,
     startCallbacks: [],
     messageCallbacks: {},
 
@@ -198,7 +198,8 @@
     },
 
     openPage: function (page) {
-      //YB.log(`opening ${page}`);
+      // YB.log(`opening ${page}`);
+      // console.trace();
 
       //look up our object
       let pageObj = YB.App.getPage(page);
@@ -253,8 +254,10 @@
       </div>`,
 
     loadConfigs: function () {
-      if (YB.App.role == "nobody")
+      if (YB.App.role == "nobody") {
+        YB.App.config = {}; // empty config so our login page loads.
         return;
+      }
 
       YB.client.getConfig();
 
@@ -1129,6 +1132,12 @@
     },
 
     openDefaultPage: function () {
+      //wait for our config.
+      if (!YB.App.config || typeof YB.App.config !== 'object') {
+        setTimeout(YB.App.openDefaultPage, 50);
+        return;
+      }
+
       if (YB.App.role != 'nobody') {
         //check to see if we want a certain page
         if (window.location.hash) {
@@ -1342,9 +1351,6 @@
       let settingsPage = YB.App.getPage('settings');
       if (settingsPage)
         settingsPage.ready = true;
-
-      if (!YB.App.currentPage)
-        YB.App.openPage('home');
     },
 
     handleUpdateMessage: function (msg) {
