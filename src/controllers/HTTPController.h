@@ -47,6 +47,7 @@ class HTTPController : public BaseController
     void sendToAllWebsockets(const char* jsonString, UserRole auth_level);
     void registerGulpedFile(const GulpedFile* file, const char* path = nullptr);
     void registerGulpedFiles(const GulpedFile* files[], int count);
+    PsychicHttpServer* getServer() { return server; }
 
     const GulpedFile* index = nullptr;
     const GulpedFile* logo = nullptr;
