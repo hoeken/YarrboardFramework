@@ -94,8 +94,6 @@ class YarrboardApp
 
     unsigned int framerate;
 
-    static constexpr size_t MAX_CONTROLLERS = 16;
-
     // Register a controller instance (non-owning).
     // Returns false if full or name duplicate.
     // Controllers are sorted by order (lower values run first).
@@ -132,6 +130,7 @@ class YarrboardApp
     etl::vector<ControllerEntry, YB_MAX_CONTROLLERS> _controllers;
 
     void _handleImprov();
+    BaseController* _findController(const char* name);
 };
 
 #endif /* YarrboardApp_h */

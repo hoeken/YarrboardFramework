@@ -14,6 +14,14 @@
 #pragma once
 #include <Arduino.h>
 
+#ifndef RA_DEFAULT_SIZE
+  #define RA_DEFAULT_SIZE 50
+#endif
+
+#ifndef RA_DEFAULT_WINDOW
+  #define RA_DEFAULT_WINDOW 1000
+#endif
+
 /**
  * @brief RollingAverage maintains a running average of recent samples
  *        collected within a given time window (in milliseconds).

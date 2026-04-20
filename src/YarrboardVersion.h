@@ -24,7 +24,7 @@
  *
  * To be used in comparisons, such as YARRBOARD_VERSION >= YARRBOARD_VERSION_VAL(2, 0, 0)
  */
-#define YARRBOARD_VERSION_VAL(major, minor, patch) ((major << 16) | (minor << 8) | (patch))
+#define YARRBOARD_VERSION_VAL(major, minor, patch) (((major) << 16) | ((minor) << 8) | (patch))
 
 /**
  * Current Yarrboard Framework version, as an integer
@@ -36,10 +36,10 @@
 /**
  * Current Yarrboard Framework version, as string
  */
-#ifndef YARRBOARD_df2xstr
-  #define YARRBOARD_df2xstr(s) #s
+#ifndef YARRBOARD_YB_XSTR_
+  #define YARRBOARD_YB_XSTR_(s) #s
 #endif
-#ifndef YARRBOARD_df2str
-  #define YARRBOARD_df2str(s) YARRBOARD_df2xstr(s)
+#ifndef YARRBOARD_YB_STR_
+  #define YARRBOARD_YB_STR_(s) YARRBOARD_YB_XSTR_(s)
 #endif
-#define YARRBOARD_VERSION_STR YARRBOARD_df2str(YARRBOARD_VERSION_MAJOR) "." YARRBOARD_df2str(YARRBOARD_VERSION_MINOR) "." YARRBOARD_df2str(YARRBOARD_VERSION_PATCH)
+#define YARRBOARD_VERSION_STR YARRBOARD_YB_STR_(YARRBOARD_VERSION_MAJOR) "." YARRBOARD_YB_STR_(YARRBOARD_VERSION_MINOR) "." YARRBOARD_YB_STR_(YARRBOARD_VERSION_PATCH)

@@ -10,14 +10,13 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-#ifndef YARR_DEBUG_H
-#define YARR_DEBUG_H
+#pragma once
 
 #include "controllers/ProtocolController.h"
 #include "etl/vector.h"
 #include <Arduino.h>
-#include <LittleFS.h>
 
+// Sets ArduinoTrace output to YBP so TRACE() macros go through the fan-out printer.
 #define ARDUINOTRACE_SERIAL YBP
 #include <ArduinoTrace.h>
 
@@ -69,11 +68,13 @@ class StringPrint : public Print
       if (_pos < sizeof(_buf) - 1) {
         _buf[_pos++] = (char)b;
         _buf[_pos] = '\0';
+        return 1;
       }
-      return 1;
+      return 0; // buffer full
     }
 
     const char* c_str() const { return _buf; }
+    void reset() { _pos = 0; _buf[0] = '\0'; }
 
   private:
     static constexpr size_t BUF_SIZE = 2048;
@@ -97,8 +98,9 @@ class WebsocketPrint : public Print
       } else {
         if (_pos < sizeof(_buf) - 1) {
           _buf[_pos++] = (char)b;
+          return 1;
         }
-        // else drop chars on overflow (optional)
+        return 0; // buffer full
       }
       return 1;
     }
@@ -112,5 +114,3 @@ class WebsocketPrint : public Print
 
 extern YarrboardPrint YBP;
 extern StringPrint startupLogger;
-
-#endif /* !YARR_PREFS_H */

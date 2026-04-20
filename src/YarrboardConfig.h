@@ -10,11 +10,11 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-#include "YarrboardVersion.h"
-#include <Arduino.h>
-
 #ifndef YB_FRAMEWORK_CONFIG_H
   #define YB_FRAMEWORK_CONFIG_H
+
+  #include "YarrboardVersion.h"
+  #include <Arduino.h>
 
   // basic board defines.
   #ifndef YB_IS_DEVELOPMENT
@@ -80,14 +80,6 @@
     #define BUILD_TIME "???"
   #endif
 
-  #ifndef RA_DEFAULT_SIZE
-    #define RA_DEFAULT_SIZE 50
-  #endif
-
-  #ifndef RA_DEFAULT_WINDOW
-    #define RA_DEFAULT_WINDOW 1000
-  #endif
-
   #ifndef YB_INPUT_DEBOUNCE_RATE_MS
     #define YB_INPUT_DEBOUNCE_RATE_MS 20
   #endif
@@ -109,4 +101,4 @@
     #define YB_PROTOCOL_MAX_COMMANDS 50
   #endif
 
-#endif // YARR_CONFIG_H
+#endif // YB_FRAMEWORK_CONFIG_H

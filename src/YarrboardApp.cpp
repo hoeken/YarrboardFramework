@@ -109,8 +109,9 @@ void YarrboardApp::loop()
   }
 
   // calculate our framerate
-  unsigned long loopDelta = micros() - lastLoopMicros;
-  lastLoopMicros = micros();
+  unsigned long now = micros();
+  unsigned long loopDelta = now - lastLoopMicros;
+  lastLoopMicros = now;
   loopSpeed.add(loopDelta);
   unsigned long framerate_now = 1000000 / loopSpeed.average();
 
@@ -154,8 +155,7 @@ bool YarrboardApp::registerController(BaseController& controller, uint8_t order)
   return true;
 }
 
-// Lookup by name (nullptr if not found)
-BaseController* YarrboardApp::getController(const char* name)
+BaseController* YarrboardApp::_findController(const char* name)
 {
   if (!name || !*name)
     return nullptr;
@@ -168,9 +168,15 @@ BaseController* YarrboardApp::getController(const char* name)
   return nullptr;
 }
 
+// Lookup by name (nullptr if not found)
+BaseController* YarrboardApp::getController(const char* name)
+{
+  return _findController(name);
+}
+
 const BaseController* YarrboardApp::getController(const char* name) const
 {
-  return const_cast<YarrboardApp*>(this)->getController(name);
+  return const_cast<YarrboardApp*>(this)->_findController(name);
 }
 
 // Remove by name (returns true if removed)
@@ -191,21 +197,21 @@ bool YarrboardApp::removeController(const char* name)
 
 void YarrboardApp::setStatusColor(uint8_t r, uint8_t g, uint8_t b)
 {
-  RGBControllerInterface* rgb = (RGBControllerInterface*)getController("rgb");
+  RGBControllerInterface* rgb = static_cast<RGBControllerInterface*>(getController("rgb"));
   if (rgb)
     rgb->setStatusColor(r, g, b);
 }
 
 void YarrboardApp::setStatusColor(const CRGB& color)
 {
-  RGBControllerInterface* rgb = (RGBControllerInterface*)getController("rgb");
+  RGBControllerInterface* rgb = static_cast<RGBControllerInterface*>(getController("rgb"));
   if (rgb)
     rgb->setStatusColor(color);
 }
 
 void YarrboardApp::playMelody(const char* melody)
 {
-  BuzzerController* buzzer = (BuzzerController*)getController("buzzer");
+  BuzzerController* buzzer = static_cast<BuzzerController*>(getController("buzzer"));
   if (buzzer)
     buzzer->playMelodyByName(melody);
 }
