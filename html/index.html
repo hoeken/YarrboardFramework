@@ -76,7 +76,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="table-group-divider">
-                                    <tr class="uptime expandable" onclick="$('#last_reboot').toggle()">
+                                    <tr id="uptime_row" class="uptime expandable">
                                         <th scope="row">Uptime</th>
                                         <td id="uptime" class="text-end"></td>
                                     </tr>
@@ -128,7 +128,7 @@
                                         <th scope="row">MQTT Server</th>
                                         <td id="mqtt_status" class="text-end"></td>
                                     </tr>
-                                    <tr class="expandable" onclick="$('#other_versions').toggle()">
+                                    <tr id="firmware_version_row" class="expandable">
                                         <th scope="row">Firmware Version</th>
                                         <td id="firmware_version" class="text-end"></td>
                                     </tr>
@@ -195,7 +195,7 @@
                                         <th scope="row">Fan RPMs</th>
                                         <td id="fan_rpm" class="text-end"></td>
                                     </tr>
-                                    <tr class="expandable" onclick="$('#loop_speed').toggle()">
+                                    <tr id="loop_speed_row" class="expandable">
                                         <th scope="row">Loop Speed</th>
                                         <td id="fps" class="text-end"></td>
                                     </tr>
@@ -215,7 +215,7 @@
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr class="expandable" onclick="$('#message_stats').toggle()">
+                                    <tr id="messages_row" class="expandable">
                                         <th scope="row">Messages</th>
                                         <td id="sent_message_total_main" class="text-end"></td>
                                     </tr>
@@ -261,7 +261,7 @@
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr class="expandable" onclick="$('#memory_stats').toggle()">
+                                    <tr id="memory_usage_row" class="expandable">
                                         <th scope="row">Memory Usage</th>
                                         <td class="align-middle">
                                             <div id="memory_usage" class="progress" role="progressbar"
@@ -335,8 +335,7 @@
                                         <h1>Changelog</h1>
                                         <div id="firmware_changelog_content"></div>
                                     </div>
-                                    <button id="btn_update_firmware" type="button" class="btn btn-primary"
-                                        onclick="YB.App.updateFirmware()">Update
+                                    <button id="btn_update_firmware" type="button" class="btn btn-primary">Update
                                         Firmware</button>
                                     <br />
                                     <div id="progress_wrapper" style="display: none" class="mt-4">
@@ -422,13 +421,13 @@
                             </div>
                             <div class="row mt-3">
                                 <h5 class="mb-3">Danger Zone</h5>
-                                <div class="d-flex justify-content-between">
-                                    <button class="btn btn-primary btn-lg w-50 me-2" type="button"
-                                        onclick="YB.App.restartBoard()">
+                                <div id="dangerZone" class="d-flex justify-content-between">
+                                    <button id="restartBoardButton" class="btn btn-primary btn-lg w-50 me-2"
+                                        type="button">
                                         Restart Board
                                     </button>
-                                    <button class="btn btn-danger btn-lg w-50 ms-2" type="button"
-                                        onclick="YB.App.resetToFactory()">
+                                    <button id="resetToFactoryButton" class="btn btn-danger btn-lg w-50 ms-2"
+                                        type="button">
                                         Reset to Factory Defaults
                                     </button>
                                 </div>
@@ -495,7 +494,7 @@
                 </div>
                 <div id="copyright">
                     <a id="projectName" href="https://github.com/hoeken/yarrboard">Yarrboard</a> &copy; <span
-                        class="expandable" onclick="$('#debug_log').toggle()" id="year">2025</span><br>
+                        class="expandable" id="year">2025</span><br>
                 </div>
             </div>
             <div id="debug_log" style="display: none">

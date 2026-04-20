@@ -87,6 +87,21 @@
     },
 
     start: function () {
+      // Stats page expandable row toggles
+      $('#uptime_row').on('click', function () { $('#last_reboot').toggle(); });
+      $('#firmware_version_row').on('click', function () { $('#other_versions').toggle(); });
+      $('#loop_speed_row').on('click', function () { $('#loop_speed').toggle(); });
+      $('#messages_row').on('click', function () { $('#message_stats').toggle(); });
+      $('#memory_usage_row').on('click', function () { $('#memory_stats').toggle(); });
+
+      // System page buttons
+      $('#btn_update_firmware').on('click', YB.App.updateFirmware);
+      $('#restartBoardButton').on('click', YB.App.restartBoard);
+      $('#resetToFactoryButton').on('click', YB.App.resetToFactory);
+
+      // Footer year toggle for debug log
+      $('#year').on('click', function () { $('#debug_log').toggle(); });
+
       // Setup all pages now that DOM is ready
       for (let page of Object.values(YB.App.pages))
         page.setup();
