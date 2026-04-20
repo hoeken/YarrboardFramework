@@ -45,7 +45,7 @@ class IntervalTimer
     };
 
     // Constructor now accepts a Print object, defaulting to Serial
-    IntervalTimer(Print& printer = Serial) : _printer(&printer), _last_us(0) {}
+    IntervalTimer(Print& printer = Serial) : _printer(&printer), _last_us(micros()) {}
 
     // Allow changing the printer at runtime if needed
     void setPrinter(Print& printer) { _printer = &printer; }
@@ -78,7 +78,7 @@ class IntervalTimer
     }
 
     // Print averages for each label.
-    void print(uint32_t interval_ms = 0)
+    void print()
     {
       if (_entries.empty())
         return;

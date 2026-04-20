@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/hoeken/github/YarrboardFramework log --all --oneline -- src/utility.cpp src/utility.h)",
+      "Bash(git -C /Users/hoeken/github/YarrboardFramework log --all --format=\"%h %s\" -- src/utility.cpp src/utility.h)"
+    ]
+  }
+}

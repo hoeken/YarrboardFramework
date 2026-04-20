@@ -263,7 +263,6 @@ bool ConfigManager::loadConfigFromFile(const char* file, char* error, size_t len
   if (!buf) {
     snprintf(error, len, "Memory allocation failed for %u bytes", (unsigned int)size);
     configFile.close();
-    free(buf);
     return false;
   }
 
