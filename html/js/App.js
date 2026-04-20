@@ -2053,6 +2053,14 @@
     showInNavbar: true,
     ready: false
   });
+
+  // //force reload of settings page on every open.
+  // settingsPage.onOpen(function () {
+  //   let settingsPage = YB.App.getPage('settings');
+  //   settingsPage.ready = false;
+  //   YB.App.loadConfigs();
+  // });
+
   YB.App.addPage(settingsPage);
 
   let systemPage = new YB.Page({
