@@ -5,6 +5,7 @@
   // Page constructor function
   YB.Page = function (config) {
     // Initialize properties with defaults
+    this._config = config;
     this.name = config.name || null;
     this.displayName = config.displayName || config.name || null;
     this.permissionLevel = config.permissionLevel || "admin";
@@ -22,6 +23,7 @@
   };
 
   YB.Page.prototype.setup = function () {
+
     //add navbar entry
     if (this.showInNavbar)
       this.addNavbarEntry();
@@ -34,6 +36,10 @@
 
     if (this.content)
       this.setContent(this.content);
+  };
+
+  YB.Page.prototype.reset = function () {
+    this.ready = this._config.ready;
   };
 
   YB.Page.prototype.onOpen = function (callback) {

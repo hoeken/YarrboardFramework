@@ -1245,6 +1245,15 @@
           YB.App.setTheme(msg.theme);
       }
 
+      //all pages reset to default status.
+      for (let page of Object.values(YB.App.pages))
+        page.reset();
+
+      //close the old page to reset to a known state.
+      let currentPage = YB.App.getPage(YB.App.currentPage);
+      if (currentPage)
+        currentPage.close();
+
       //auto login?
       if (Cookies.get("username") && Cookies.get("password")) {
         YB.client.login(Cookies.get("username"), Cookies.get("password"));
