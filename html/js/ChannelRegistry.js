@@ -41,10 +41,10 @@
     },
 
     addChannel(instance) {
-      if (typeof instance.channelType !== "string" || !instance.channelType.length)
-        throw new Error("Invalid channel type.");
       if (!instance)
         throw new Error("Channel instance is required.");
+      if (typeof instance.channelType !== "string" || !instance.channelType.length)
+        throw new Error("Invalid channel type.");
 
       // Ensure array exists
       if (!this.channels.hasOwnProperty(instance.channelType))
@@ -140,7 +140,6 @@
         let panel = YB.App.getSettingsPanel(ctype)
         if (panel) {
           panel.setContent(`<div class="row">${editContent}</div>`);
-          ``
           for (var channel_config of cfg[ctype]) {
             let ch = this.getChannelById(channel_config.id, ctype);
             ch.setupEditUI();
@@ -158,8 +157,9 @@
         if (!update.hasOwnProperty(ctype))
           continue;
 
-        for (chdata of update[ctype]) {
+        for (let chdata of update[ctype]) {
           let ch = this.getChannelById(chdata.id, ctype);
+          if (!ch) continue;
           ch.loadData(chdata);
 
           if (ch.updateControlUI)
@@ -177,8 +177,9 @@
         let ch = new ctor();
         ch.resetStats();
 
-        for (chdata of update[ctype]) {
+        for (let chdata of update[ctype]) {
           let ch = this.getChannelById(chdata.id, ctype);
+          if (!ch) continue;
           ch.updateStatsUI(chdata);
         }
       }

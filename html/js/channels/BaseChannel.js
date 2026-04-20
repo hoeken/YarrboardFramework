@@ -247,7 +247,7 @@
   };
   BaseChannel.prototype.setupStatsUI = function () {
     if (!this.enabled)
-      $(`${this.channelType}Stats${this.id}`).hide();
+      $(`#${this.channelType}Stats${this.id}`).hide();
   };
 
   YB.BaseChannel = BaseChannel;

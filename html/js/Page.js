@@ -43,7 +43,7 @@
   YB.Page.prototype.open = function () {
 
     if (!this.allowed(YB.App.role)) {
-      YB.log(`${page} not allowed for ${YB.App.role}`);
+      YB.log(`${this.name} not allowed for ${YB.App.role}`);
       return;
     }
 
@@ -66,7 +66,7 @@
     this.closeCallbacks.push(callback);
   };
 
-  YB.Page.prototype.close = function (callback) {
+  YB.Page.prototype.close = function () {
     for (let cb of this.closeCallbacks)
       cb(this);
   };

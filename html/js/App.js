@@ -254,10 +254,17 @@
     },
 
     isMFD: function () {
-      if (YB.Util.getQueryVariable("mfd_name") !== null)
-        return true;
+      return YB.Util.getQueryVariable("mfd_name") !== null;
+    },
 
-      return false;
+    applyMFDVisibility: function () {
+      if (YB.App.isMFD()) {
+        $(".mfdShow").show();
+        $(".mfdHide").hide();
+      } else {
+        $(".mfdShow").hide();
+        $(".mfdHide").show();
+      }
     },
 
     AlertBox: (message, type) => `
@@ -1051,7 +1058,7 @@
     checkForUpdatesCallback: function (jdata) {
       //did we get anything?
       let data;
-      for (firmware of jdata)
+      for (let firmware of jdata)
         if (firmware.type == YB.App.config.hardware_version)
           data = firmware;
 
@@ -1171,24 +1178,24 @@
 
     openDefaultSettingsPanel: function () { YB.App.openSettingsPanel("general"); },
 
-    getStoredTheme: function () { localStorage.getItem('theme'); },
-    setStoredTheme: function () { localStorage.setItem('theme', theme); },
+    getStoredTheme: function () { return localStorage.getItem('theme'); },
+    setStoredTheme: function (theme) { localStorage.setItem('theme', theme); },
 
     getPreferredTheme: function () {
 
-      // if browser supports prefers-color-scheme
+      //do we have stored one? user's explicit choice takes top priority.
+      const storedTheme = YB.App.getStoredTheme();
+      // YB.log(`stored: ${storedTheme}`);
+      if (storedTheme)
+        return storedTheme;
+
+      // fall back to OS preference
       if (window.matchMedia('(prefers-color-scheme: dark)').media !== 'not all') {
         if (window.matchMedia('(prefers-color-scheme: dark)').matches)
           return "dark";
         if (window.matchMedia('(prefers-color-scheme: light)').matches)
           return "light";
       }
-
-      //do we have stored one?
-      const storedTheme = YB.App.getStoredTheme();
-      // YB.log(`stored: ${storedTheme}`);
-      if (storedTheme)
-        return storedTheme;
 
       //did we get one passed in? b&g, etc pass in like this.
       let mode = YB.Util.getQueryVariable("mode");
@@ -1283,7 +1290,7 @@
       if (msg.has_coredump)
         YB.App.showAdminAlert(/*html*/ `
           <p>Oops, looks like Yarrboard crashed.</p>
-          <p>Please download the <a href="/coredump.bin" target="_blank">coredump</a> and report it to our <a href="{msg.git_url}/issues">Github Issue Tracker</a> along with the following information:</p>
+          <p>Please download the <a href="/coredump.bin" target="_blank">coredump</a> and report it to our <a href="${msg.git_url}/issues">Github Issue Tracker</a> along with the following information:</p>
           <ul><li>Firmware: ${msg.firmware_version}</li><li>Hardware: ${msg.hardware_version}</li></ul>
         `, "danger");
 
@@ -1323,7 +1330,7 @@
 
       //various other component versions
       $("#build_time").html(msg.build_time);
-      if (msg.hardware_url.length)
+      if (msg.hardware_url && msg.hardware_url.length)
         $("#hardware_version").html(`<a href="${msg.hardware_url}">${msg.hardware_version}</a>`);
       else
         $("#hardware_version").html(msg.hardware_version);
@@ -1351,14 +1358,7 @@
       if (msg.brightness && !YB.App.currentlyPickingBrightness)
         $('#brightnessSlider').val(Math.round(msg.brightness * 100));
 
-      if (YB.App.isMFD()) {
-        $(".mfdShow").show()
-        $(".mfdHide").hide()
-      }
-      else {
-        $(".mfdShow").hide()
-        $(".mfdHide").show()
-      }
+      YB.App.applyMFDVisibility();
 
       YB.Util.populateMelodySelector($("#startup_melody"));
 
@@ -1378,14 +1378,7 @@
 
       YB.ChannelRegistry.updateAllChannels(msg);
 
-      if (YB.App.isMFD()) {
-        $(".mfdShow").show()
-        $(".mfdHide").hide()
-      }
-      else {
-        $(".mfdShow").hide()
-        $(".mfdHide").show()
-      }
+      YB.App.applyMFDVisibility();
 
       let homePage = YB.App.getPage('home');
       if (homePage)
@@ -1540,7 +1533,7 @@
       $("#guest_pass").val(msg.guest_pass);
       $("#app_update_interval").val(msg.app_update_interval);
       $("#default_role").val(msg.default_role);
-      $("#default_role").change(function () { YB.App.toggleRolePasswords($(this).val()) });
+      $("#default_role").off("change").change(function () { YB.App.toggleRolePasswords($(this).val()) });
       $("#app_enable_mfd").prop("checked", msg.app_enable_mfd);
       $("#app_enable_api").prop("checked", msg.app_enable_api);
       $("#app_enable_serial").prop("checked", msg.app_enable_serial);
@@ -1558,7 +1551,7 @@
       }
 
       //make it dynamic too
-      $("#app_enable_ssl").change(function () {
+      $("#app_enable_ssl").off("change").change(function () {
         if ($("#app_enable_ssl").prop("checked")) {
           $("#server_cert_container").show();
           $("#server_key_container").show();
@@ -1585,7 +1578,7 @@
       }
 
       //make it dynamic too
-      $("#app_enable_mqtt").change(function () {
+      $("#app_enable_mqtt").off("change").change(function () {
         if ($("#app_enable_mqtt").prop("checked")) {
           $(".mqtt_field").show();
         }

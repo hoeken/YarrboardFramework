@@ -53,7 +53,7 @@
     this.closeCallbacks.push(callback);
   };
 
-  YB.SettingsPanel.prototype.close = function (callback) {
+  YB.SettingsPanel.prototype.close = function () {
     for (let cb of this.closeCallbacks)
       cb(this);
   };
@@ -114,14 +114,13 @@
       return null;
     }
 
-    // Create the navbar list item and link
     var navItem = $(`
       <li id="${this.name}SettingsNav" class="nav-item nav-permission text-center text-sm-start">
-        <a class="nav-link" onclick="YB.App.openSettingsPanel('${this.name}')">
-          ${this.displayName}
-        </a>
+        <a class="nav-link">${this.displayName}</a>
       </li>
     `);
+
+    navItem.find('a').on('click', () => YB.App.openSettingsPanel(this.name));
 
     this._navbarEntry = navItem;
     return navItem;
