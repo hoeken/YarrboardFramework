@@ -103,3 +103,14 @@ span.expandable:hover {
         width: auto;
     }
 }
+
+#dangerZone {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+#dangerZone button {
+    font-size: 1.25rem;
+    padding: 0.75rem 1rem;
+}
