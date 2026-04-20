@@ -52,6 +52,7 @@ class NetworkController : public BaseController
 
     uint32_t lastHeartbeat = 0;
     bool _mdnsEventRegistered = false;
+    bool _mdnsStarted = false;
 
     // for making a captive portal
     //  The default android DNS

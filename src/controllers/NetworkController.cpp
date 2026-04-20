@@ -213,8 +213,11 @@ void NetworkController::startMDNS()
     YBP.println("[mDNS] Skipping restart - WiFi not connected");
     return;
   }
-  MDNS.end();
-  delay(100);
+  if (_mdnsStarted) {
+    MDNS.end();
+    delay(100);
+  }
+  _mdnsStarted = true;
   if (!MDNS.begin(_cfg.local_hostname)) {
     YBP.println("[mDNS] Error starting mDNS");
   } else {
