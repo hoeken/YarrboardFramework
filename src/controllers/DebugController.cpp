@@ -20,6 +20,7 @@
 #include <esp_partition.h>
 #include <esp_system.h>
 
+#ifdef YARR_DEBUG_HEARTBEAT
 static void heartbeatTask(void* pv)
 {
   while (1) {
@@ -32,9 +33,7 @@ void IRAM_ATTR core0_tick_cb(void)
 {
   static uint32_t n = 0;
   if ((n++ & 0xFFF) == 0) {
-    // In ISR context – keep it very light.
-    // For pure debugging you *can* do Serial.println, but it's not ideal.
-    ets_printf("tick 0\n"); // ISR-safe ROM printf
+    ets_printf("tick 0\n");
   }
 }
 
@@ -42,11 +41,10 @@ void IRAM_ATTR core1_tick_cb(void)
 {
   static uint32_t n = 0;
   if ((n++ & 0xFFF) == 0) {
-    // In ISR context – keep it very light.
-    // For pure debugging you *can* do Serial.println, but it's not ideal.
-    ets_printf("tick 1\n"); // ISR-safe ROM printf
+    ets_printf("tick 1\n");
   }
 }
+#endif
 
 DebugController::DebugController(YarrboardApp& app) : BaseController(app, "debug"), it(YBP)
 {
@@ -54,8 +52,9 @@ DebugController::DebugController(YarrboardApp& app) : BaseController(app, "debug
 
 bool DebugController::setup()
 {
-  // ONLY UNCOMMENT THIS IF YOU NEED TO TEST COREDUMP STUFF
-  // registerCommand(ADMIN, "crashme", this, &DebugController::handleCrashMe);
+#ifdef YARR_DEBUG_CRASHME
+  registerCommand(ADMIN, "crashme", this, &DebugController::handleCrashMe);
+#endif
 
   // startup our serial
   Serial.begin(115200);
@@ -63,12 +62,12 @@ bool DebugController::setup()
   YBP.addPrinter(Serial);
 
   // native usb serial too
-  if (ARDUINO_USB_CDC_ON_BOOT) {
-    // usb serial takes over the Serial object, but we want to print on both.
-    // Serial0 is the regular uart output
-    Serial0.begin(115200);
-    YBP.addPrinter(Serial0);
-  }
+#if ARDUINO_USB_CDC_ON_BOOT
+  // usb serial takes over the Serial object, but we want to print on both.
+  // Serial0 is the regular uart output
+  Serial0.begin(115200);
+  YBP.addPrinter(Serial0);
+#endif
 
   // startup log logs to a string for getting later
   YBP.addPrinter(startupLogger);
@@ -98,18 +97,19 @@ bool DebugController::setup()
     saveCoreDumpToFile("/coredump.bin");
   }
 
-  // esp_register_freertos_tick_hook_for_cpu(core0_tick_cb, 0);
-  // esp_register_freertos_tick_hook_for_cpu(core1_tick_cb, 1);
+#ifdef YARR_DEBUG_HEARTBEAT
+  esp_register_freertos_tick_hook_for_cpu(core0_tick_cb, 0);
+  esp_register_freertos_tick_hook_for_cpu(core1_tick_cb, 1);
 
-  // xTaskCreatePinnedToCore(
-  //   heartbeatTask,
-  //   "heartbeat",
-  //   4096,
-  //   NULL,
-  //   1,
-  //   NULL,
-  //   1 // Core 1 (loopTask usually runs on core 1)
-  // );
+  xTaskCreatePinnedToCore(
+    heartbeatTask,
+    "heartbeat",
+    4096,
+    NULL,
+    1,
+    NULL,
+    1);
+#endif
 
   return true;
 }
@@ -178,19 +178,13 @@ String DebugController::getResetReason()
 
 bool DebugController::checkCoreDump()
 {
-  size_t size = 0;
-  size_t address = 0;
-  if (esp_core_dump_image_get(&address, &size) == ESP_OK) {
-    YBP.print("coredump size: ");
-    YBP.println(size);
-    const esp_partition_t* pt = NULL;
-    pt = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, "coredump");
-    if (pt != NULL)
-      return true;
-    else
-      return false;
-  } else
+  size_t size = 0, address = 0;
+  if (esp_core_dump_image_get(&address, &size) != ESP_OK)
     return false;
+
+  YBP.printf("coredump size: %u\n", size);
+  const esp_partition_t* pt = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, "coredump");
+  return pt != NULL;
 }
 
 bool DebugController::saveCoreDumpToFile(const char* path)
@@ -217,8 +211,10 @@ bool DebugController::saveCoreDumpToFile(const char* path)
   for (size_t off = 0; off < size; off += sizeof(buf)) {
     size_t toRead = std::min<size_t>(sizeof(buf), size - off);
 
-    if (esp_partition_read(pt, off, buf, toRead) != ESP_OK)
+    if (esp_partition_read(pt, off, buf, toRead) != ESP_OK) {
+      file.close();
       return false;
+    }
 
     file.write(buf, toRead);
   }
@@ -229,11 +225,11 @@ bool DebugController::saveCoreDumpToFile(const char* path)
 
 bool DebugController::deleteCoreDump()
 {
-  has_coredump = false;
-  if (esp_core_dump_image_erase() == ESP_OK)
+  if (esp_core_dump_image_erase() == ESP_OK) {
+    has_coredump = false;
     return true;
-  else
-    return false;
+  }
+  return false;
 }
 
 void DebugController::crashMeHard()
@@ -252,6 +248,9 @@ int DebugController::vprintf(const char* fmt, va_list args)
 
   if (len > 0)
     YBP.print(buf);
+
+  if (len >= (int)sizeof(buf))
+    YBP.print("[truncated]\n");
 
   return len;
 }

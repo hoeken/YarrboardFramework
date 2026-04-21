@@ -24,7 +24,7 @@ class DebugController : public BaseController
   public:
     DebugController(YarrboardApp& app);
 
-    IntervalTimer it;
+    IntervalTimer it; // intentionally public: other controllers call it.time() for loop profiling
 
     bool setup() override;
     void loop() override;
