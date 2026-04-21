@@ -30,7 +30,7 @@ bool ConfigManager::setup()
 
   app_enable_mfd = _app.enable_mfd;
   app_enable_api = _app.enable_http_api;
-  app_enable_serial = _app.enable_serial_api;
+
   app_enable_ota = _app.enable_arduino_ota;
   app_enable_ssl = _app.enable_ssl;
   // our temporary preferences too.
@@ -182,7 +182,7 @@ void ConfigManager::generateAppConfig(JsonVariant output)
   output["app_update_interval"] = app_update_interval;
   output["app_enable_mfd"] = app_enable_mfd;
   output["app_enable_api"] = app_enable_api;
-  output["app_enable_serial"] = app_enable_serial;
+  _app.protocol.generateSerialConfig(output);
   output["app_enable_ota"] = app_enable_ota;
   output["app_enable_ssl"] = app_enable_ssl;
   _app.mqtt.generateMQTTConfig(output);
@@ -319,7 +319,7 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
 
   app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
   app_enable_api = config["app_enable_api"] | _app.enable_http_api;
-  app_enable_serial = config["app_enable_serial"] | _app.enable_serial_api;
+  _app.protocol.loadSerialConfig(config);
   app_enable_ota = config["app_enable_ota"] | _app.enable_arduino_ota;
   app_enable_ssl = config["app_enable_ssl"] | _app.enable_ssl;
   _app.mqtt.loadMQTTConfig(config, error, len);

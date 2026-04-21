@@ -84,7 +84,11 @@ class ProtocolController : public BaseController
 
     void incrementSentMessages();
 
+    void generateSerialConfig(JsonVariant output);
+    void loadSerialConfig(JsonVariantConst config);
+
   private:
+    bool _enable_serial;
     unsigned long previousMessageMillis = 0;
     unsigned int receivedMessages = 0;
     unsigned int receivedMessagesPerSecond = 0;

@@ -19,6 +19,7 @@
 
 ProtocolController::ProtocolController(YarrboardApp& app) : BaseController(app, "protocol")
 {
+  _enable_serial = app.enable_serial_api;
 }
 
 bool ProtocolController::setup()
@@ -72,7 +73,7 @@ void ProtocolController::loop()
     sendFastUpdate();
 
   // any serial port customers?
-  if (_cfg.app_enable_serial) {
+  if (_enable_serial) {
     if (Serial.available() > 0)
       handleSerialJson();
   }
@@ -311,7 +312,7 @@ void ProtocolController::handleSetWebServerConfig(JsonVariantConst input, JsonVa
 
 void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
-  _cfg.app_enable_serial = input["app_enable_serial"] | _app.enable_serial_api;
+  _enable_serial = input["app_enable_serial"] | _app.enable_serial_api;
   _cfg.app_enable_ota = input["app_enable_ota"] | _app.enable_arduino_ota;
 
   // save it to file.
@@ -414,6 +415,16 @@ void ProtocolController::handleSetBrightness(JsonVariantConst input, JsonVariant
     sendBrightnessUpdate();
   } else
     return generateErrorJSON(output, "'brightness' is a required parameter.");
+}
+
+void ProtocolController::generateSerialConfig(JsonVariant output)
+{
+  output["app_enable_serial"] = _enable_serial;
+}
+
+void ProtocolController::loadSerialConfig(JsonVariantConst config)
+{
+  _enable_serial = config["app_enable_serial"] | _app.enable_serial_api;
 }
 
 void ProtocolController::generateConfigMessage(JsonVariant output)
@@ -527,6 +538,6 @@ void ProtocolController::sendToAll(const char* jsonString, UserRole auth_level)
 {
   _app.http.sendToAllWebsockets(jsonString, auth_level);
 
-  if (_cfg.app_enable_serial && _app.auth.getSerialRole() >= auth_level)
+  if (_enable_serial && _app.auth.getSerialRole() >= auth_level)
     Serial.println(jsonString);
 }

@@ -35,7 +35,7 @@ class ConfigManager : public BaseController
     unsigned int app_update_interval;
     bool app_enable_mfd;
     bool app_enable_api;
-    bool app_enable_serial;
+
     bool app_enable_ota;
     bool app_enable_ssl;
 
