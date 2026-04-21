@@ -46,16 +46,6 @@ class YarrboardApp
         bool operator<(const ControllerEntry& other) const { return order < other.order; }
     };
 
-    ConfigManager config;
-    DebugController debug;
-    NetworkController network;
-    HTTPController http;
-    ProtocolController protocol;
-    AuthController auth;
-    MQTTController mqtt;
-    OTAController ota;
-    NTPController ntp;
-
     const char* board_name = "Yarrboard";
     const char* firmware_version = "Unknown";
     const char* hardware_version = "Unknown";
@@ -86,6 +76,16 @@ class YarrboardApp
 
     UserRole default_role = NOBODY;
     const char* default_melody = "STARTUP";
+
+    ConfigManager config;
+    DebugController debug;
+    NetworkController network;
+    HTTPController http;
+    ProtocolController protocol;
+    AuthController auth;
+    MQTTController mqtt;
+    OTAController ota;
+    NTPController ntp;
 
     YarrboardApp();
 

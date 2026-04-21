@@ -25,8 +25,6 @@ bool ProtocolController::setup()
 {
   registerCommand(NOBODY, "ping", this, &ProtocolController::handlePing);
   registerCommand(NOBODY, "hello", this, &ProtocolController::handleHello);
-  registerCommand(NOBODY, "login", this, &ProtocolController::handleLogin);
-  registerCommand(NOBODY, "logout", this, &ProtocolController::handleLogout);
 
   registerCommand(GUEST, "get_config", this, &ProtocolController::handleGetConfig);
   registerCommand(GUEST, "get_stats", this, &ProtocolController::handleGetStats);
@@ -38,7 +36,6 @@ bool ProtocolController::setup()
   registerCommand(ADMIN, "save_config", this, &ProtocolController::handleSaveConfig);
   registerCommand(ADMIN, "get_full_config", this, &ProtocolController::handleGetFullConfig);
   registerCommand(ADMIN, "get_app_config", this, &ProtocolController::handleGetAppConfig);
-  registerCommand(ADMIN, "set_authentication_config", this, &ProtocolController::handleSetAuthenticationConfig);
   registerCommand(ADMIN, "set_webserver_config", this, &ProtocolController::handleSetWebServerConfig);
   registerCommand(ADMIN, "set_misc_config", this, &ProtocolController::handleSetMiscellaneousConfig);
   registerCommand(ADMIN, "restart", this, &ProtocolController::handleRestart);
@@ -200,7 +197,7 @@ void ProtocolController::handleHello(JsonVariantConst input, JsonVariant output,
 {
   output["msg"] = "hello";
   output["role"] = _app.auth.getRoleText(context.role);
-  output["default_role"] = _app.auth.getRoleText(_cfg.app_default_role);
+  output["default_role"] = _app.auth.getRoleText(_app.auth.getDefaultRole());
   output["name"] = _cfg.board_name;
   output["brightness"] = _cfg.globalBrightness;
   output["firmware_version"] = _app.firmware_version;
@@ -292,68 +289,6 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
   generateConfigMessage(output);
 }
 
-void ProtocolController::handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
-{
-  if (!input["admin_user"].is<String>())
-    return generateErrorJSON(output, "'admin_user' is a required parameter");
-  if (!input["admin_pass"].is<String>())
-    return generateErrorJSON(output, "'admin_pass' is a required parameter");
-  if (!input["guest_user"].is<String>())
-    return generateErrorJSON(output, "'guest_user' is a required parameter");
-  if (!input["guest_pass"].is<String>())
-    return generateErrorJSON(output, "'guest_pass' is a required parameter");
-  if (!input["default_role"].is<String>())
-    return generateErrorJSON(output, "'default_role' is a required parameter");
-
-  // username length checker
-  if (strlen(input["admin_user"]) > YB_USERNAME_LENGTH - 1) {
-    char error[60];
-    sprintf(error, "Maximum admin username length is %s characters.", YB_USERNAME_LENGTH - 1);
-    return generateErrorJSON(output, error);
-  }
-
-  // password length checker
-  if (strlen(input["admin_pass"]) > YB_PASSWORD_LENGTH - 1) {
-    char error[60];
-    sprintf(error, "Maximum admin password length is %s characters.", YB_PASSWORD_LENGTH - 1);
-    return generateErrorJSON(output, error);
-  }
-
-  // username length checker
-  if (strlen(input["guest_user"]) > YB_USERNAME_LENGTH - 1) {
-    char error[60];
-    sprintf(error, "Maximum guest username length is %s characters.", YB_USERNAME_LENGTH - 1);
-    return generateErrorJSON(output, error);
-  }
-
-  // password length checker
-  if (strlen(input["guest_pass"]) > YB_PASSWORD_LENGTH - 1) {
-    char error[60];
-    sprintf(error, "Maximum guest password length is %s characters.", YB_PASSWORD_LENGTH - 1);
-    return generateErrorJSON(output, error);
-  }
-
-  // get our data
-  strlcpy(_cfg.admin_user, input["admin_user"] | _app.default_admin_user, sizeof(_cfg.admin_user));
-  strlcpy(_cfg.admin_pass, input["admin_pass"] | _app.default_admin_pass, sizeof(_cfg.admin_pass));
-  strlcpy(_cfg.guest_user, input["guest_user"] | _app.default_guest_user, sizeof(_cfg.guest_user));
-  strlcpy(_cfg.guest_pass, input["guest_pass"] | _app.default_guest_pass, sizeof(_cfg.guest_pass));
-
-  if (input["default_role"]) {
-    if (!strcmp(input["default_role"], "admin"))
-      _cfg.app_default_role = ADMIN;
-    else if (!strcmp(input["default_role"], "guest"))
-      _cfg.app_default_role = GUEST;
-    else
-      _cfg.app_default_role = NOBODY;
-  }
-
-  // save it to file.
-  char error[128] = "Unknown";
-  if (!_cfg.saveConfig(error, sizeof(error)))
-    return generateErrorJSON(output, error);
-}
-
 void ProtocolController::handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   bool old_app_enable_ssl = _cfg.app_enable_ssl;
@@ -419,70 +354,6 @@ void ProtocolController::handleSaveConfig(JsonVariantConst input, JsonVariant ou
 
   // restart the board.
   ESP.restart();
-}
-
-void ProtocolController::handleLogin(JsonVariantConst input, JsonVariant output, ProtocolContext context)
-{
-  if (!input["user"].is<String>())
-    return generateErrorJSON(output, "'user' is a required parameter");
-
-  if (!input["pass"].is<String>())
-    return generateErrorJSON(output, "'pass' is a required parameter");
-
-  // init
-  char myuser[YB_USERNAME_LENGTH];
-  char mypass[YB_PASSWORD_LENGTH];
-  strlcpy(myuser, input["user"] | "", sizeof(myuser));
-  strlcpy(mypass, input["pass"] | "", sizeof(mypass));
-
-  // check their credentials
-  bool is_authenticated = false;
-  UserRole role = _cfg.app_default_role;
-
-  if (!strcmp(_cfg.admin_user, myuser) && !strcmp(_cfg.admin_pass, mypass)) {
-    is_authenticated = true;
-    role = ADMIN;
-    output["role"] = "admin";
-  }
-
-  if (!strcmp(_cfg.guest_user, myuser) && !strcmp(_cfg.guest_pass, mypass)) {
-    is_authenticated = true;
-    role = GUEST;
-    output["role"] = "guest";
-  }
-
-  // okay, are we in?
-  if (is_authenticated) {
-    // check to see if there's room for us.
-    if (context.mode == YBP_MODE_WEBSOCKET) {
-      if (!_app.auth.logClientIn(context.clientId, role))
-        return generateErrorJSON(output, "Too many connections.");
-    } else if (context.mode == YBP_MODE_SERIAL) {
-      _app.auth.logSerialClientIn(role);
-    }
-
-    output["msg"] = "login";
-    output["role"] = _app.auth.getRoleText(role);
-    output["message"] = "Login successful.";
-
-    return;
-  }
-
-  // gtfo.
-  return generateErrorJSON(output, "Wrong username/password.");
-}
-
-void ProtocolController::handleLogout(JsonVariantConst input, JsonVariant output, ProtocolContext context)
-{
-  if (!_app.auth.isLoggedIn(input, context.mode, context.clientId))
-    return generateErrorJSON(output, "You are not logged in.");
-
-  // what type of client are you?
-  if (context.mode == YBP_MODE_WEBSOCKET) {
-    _app.auth.removeClientFromAuthList(context.clientId);
-  } else if (context.mode == YBP_MODE_SERIAL) {
-    _app.auth.logSerialClientOut();
-  }
 }
 
 void ProtocolController::handleRestart(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -553,7 +424,7 @@ void ProtocolController::generateConfigMessage(JsonVariant output)
   output["use_ssl"] = _cfg.app_enable_ssl;
   output["enable_ota"] = _cfg.app_enable_ota;
   output["enable_mqtt"] = _cfg.app_enable_mqtt;
-  output["default_role"] = _app.auth.getRoleText(_cfg.app_default_role);
+  output["default_role"] = _app.auth.getRoleText(_app.auth.getDefaultRole());
   output["brightness"] = _cfg.globalBrightness;
   output["git_hash"] = GIT_HASH;
   output["build_time"] = BUILD_TIME;
@@ -656,6 +527,6 @@ void ProtocolController::sendToAll(const char* jsonString, UserRole auth_level)
 {
   _app.http.sendToAllWebsockets(jsonString, auth_level);
 
-  if (_cfg.app_enable_serial && _cfg.serial_role >= auth_level)
+  if (_cfg.app_enable_serial && _app.auth.getSerialRole() >= auth_level)
     Serial.println(jsonString);
 }

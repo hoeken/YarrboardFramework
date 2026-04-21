@@ -12,6 +12,7 @@
 
 #include "controllers/NTPController.h"
 #include "YarrboardDebug.h"
+#include <WiFi.h>
 
 NTPController* NTPController::_instance = nullptr;
 

@@ -14,15 +14,25 @@
 #include "ConfigManager.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
+#include "controllers/ProtocolController.h"
 
 AuthController::AuthController(YarrboardApp& app) : BaseController(app, "auth")
 {
+  strlcpy(admin_user, _app.default_admin_user, sizeof(admin_user));
+  strlcpy(admin_pass, _app.default_admin_pass, sizeof(admin_pass));
+  strlcpy(guest_user, _app.default_guest_user, sizeof(guest_user));
+  strlcpy(guest_pass, _app.default_guest_pass, sizeof(guest_pass));
+  app_default_role = serial_role = api_role = _app.default_role;
 }
 
 bool AuthController::setup()
 {
-  // init our authentication stuff
   authenticatedClients.clear();
+
+  _app.protocol.registerCommand(NOBODY, "login", this, &AuthController::handleLogin);
+  _app.protocol.registerCommand(NOBODY, "logout", this, &AuthController::handleLogout);
+  _app.protocol.registerCommand(ADMIN, "set_authentication_config", this, &AuthController::handleSetAuthenticationConfig);
+
   return true;
 }
 
@@ -44,13 +54,13 @@ bool AuthController::logClientIn(int socket, UserRole role)
 void AuthController::logSerialClientIn(UserRole role)
 {
   is_serial_authenticated = true;
-  _cfg.serial_role = role;
+  serial_role = role;
 }
 
 void AuthController::logSerialClientOut()
 {
   is_serial_authenticated = false;
-  _cfg.serial_role = _cfg.app_default_role;
+  serial_role = app_default_role;
 }
 
 bool AuthController::isLoggedIn(JsonVariantConst input, byte mode, int socket)
@@ -72,15 +82,15 @@ UserRole AuthController::getUserRole(JsonVariantConst input, byte mode, int sock
   if (mode == YBP_MODE_WEBSOCKET)
     return getWebsocketRole(input, socket);
   else if (mode == YBP_MODE_HTTP)
-    return _cfg.api_role;
+    return api_role;
   else if (mode == YBP_MODE_SERIAL)
-    return _cfg.serial_role;
+    return serial_role;
   else if (mode == YBP_MODE_MQTT) {
-    UserRole role = _cfg.app_default_role;
+    UserRole role = app_default_role;
     this->checkLoginCredentials(input, role);
     return role;
   } else
-    return _cfg.app_default_role;
+    return app_default_role;
 }
 
 bool AuthController::isWebsocketClientLoggedIn(JsonVariantConst doc, int socket)
@@ -100,7 +110,7 @@ UserRole AuthController::getWebsocketRole(JsonVariantConst doc, int socket)
     if (authClient.socket == socket)
       return authClient.role;
 
-  return _cfg.app_default_role;
+  return app_default_role;
 }
 
 bool AuthController::checkLoginCredentials(JsonVariantConst doc, UserRole& role)
@@ -117,18 +127,18 @@ bool AuthController::checkLoginCredentials(JsonVariantConst doc, UserRole& role)
   strlcpy(mypass, doc["pass"] | "", sizeof(myuser));
 
   // morpheus... i'm in.
-  if (!strcmp(_cfg.admin_user, myuser) && !strcmp(_cfg.admin_pass, mypass)) {
+  if (!strcmp(admin_user, myuser) && !strcmp(admin_pass, mypass)) {
     role = ADMIN;
     return true;
   }
 
-  if (!strcmp(_cfg.guest_user, myuser) && !strcmp(_cfg.guest_pass, mypass)) {
+  if (!strcmp(guest_user, myuser) && !strcmp(guest_pass, mypass)) {
     role = GUEST;
     return true;
   }
 
   // default to fail then.
-  role = _cfg.app_default_role;
+  role = app_default_role;
   return false;
 }
 
@@ -137,12 +147,12 @@ bool AuthController::isSerialClientLoggedIn(JsonVariantConst doc)
   if (isSerialAuthenticated())
     return true;
   else
-    return checkLoginCredentials(doc, _cfg.serial_role);
+    return checkLoginCredentials(doc, serial_role);
 }
 
 bool AuthController::isApiClientLoggedIn(JsonVariantConst doc)
 {
-  return checkLoginCredentials(doc, _cfg.api_role);
+  return checkLoginCredentials(doc, api_role);
 }
 
 bool AuthController::addClientToAuthList(int socket, UserRole role)
@@ -210,4 +220,141 @@ const char* AuthController::getRoleText(UserRole role)
     return "nobody";
   else
     return "unknown";
+}
+
+const char* AuthController::getAdminPass() const
+{
+  return admin_pass;
+}
+
+UserRole AuthController::getDefaultRole() const
+{
+  return app_default_role;
+}
+
+UserRole AuthController::getSerialRole() const
+{
+  return serial_role;
+}
+
+void AuthController::handleLogin(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+{
+  if (!input["user"].is<String>())
+    return ProtocolController::generateErrorJSON(output, "'user' is a required parameter");
+  if (!input["pass"].is<String>())
+    return ProtocolController::generateErrorJSON(output, "'pass' is a required parameter");
+
+  UserRole role;
+  if (checkLoginCredentials(input, role)) {
+    if (context.mode == YBP_MODE_WEBSOCKET) {
+      if (!logClientIn(context.clientId, role))
+        return ProtocolController::generateErrorJSON(output, "Too many connections.");
+    } else if (context.mode == YBP_MODE_SERIAL) {
+      logSerialClientIn(role);
+    }
+    output["msg"] = "login";
+    output["role"] = getRoleText(role);
+    output["message"] = "Login successful.";
+    return;
+  }
+
+  ProtocolController::generateErrorJSON(output, "Wrong username/password.");
+}
+
+void AuthController::handleLogout(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+{
+  if (!_app.auth.isLoggedIn(input, context.mode, context.clientId))
+    return _app.protocol.generateErrorJSON(output, "You are not logged in.");
+
+  // what type of client are you?
+  if (context.mode == YBP_MODE_WEBSOCKET) {
+    _app.auth.removeClientFromAuthList(context.clientId);
+  } else if (context.mode == YBP_MODE_SERIAL) {
+    _app.auth.logSerialClientOut();
+  }
+}
+
+void AuthController::handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+{
+  if (!input["admin_user"].is<String>())
+    return ProtocolController::generateErrorJSON(output, "'admin_user' is a required parameter");
+  if (!input["admin_pass"].is<String>())
+    return ProtocolController::generateErrorJSON(output, "'admin_pass' is a required parameter");
+  if (!input["guest_user"].is<String>())
+    return ProtocolController::generateErrorJSON(output, "'guest_user' is a required parameter");
+  if (!input["guest_pass"].is<String>())
+    return ProtocolController::generateErrorJSON(output, "'guest_pass' is a required parameter");
+  if (!input["default_role"].is<String>())
+    return ProtocolController::generateErrorJSON(output, "'default_role' is a required parameter");
+
+  if (strlen(input["admin_user"]) > YB_USERNAME_LENGTH - 1) {
+    char error[60];
+    sprintf(error, "Maximum admin username length is %d characters.", YB_USERNAME_LENGTH - 1);
+    return ProtocolController::generateErrorJSON(output, error);
+  }
+
+  if (strlen(input["admin_pass"]) > YB_PASSWORD_LENGTH - 1) {
+    char error[60];
+    sprintf(error, "Maximum admin password length is %d characters.", YB_PASSWORD_LENGTH - 1);
+    return ProtocolController::generateErrorJSON(output, error);
+  }
+
+  if (strlen(input["guest_user"]) > YB_USERNAME_LENGTH - 1) {
+    char error[60];
+    sprintf(error, "Maximum guest username length is %d characters.", YB_USERNAME_LENGTH - 1);
+    return ProtocolController::generateErrorJSON(output, error);
+  }
+
+  if (strlen(input["guest_pass"]) > YB_PASSWORD_LENGTH - 1) {
+    char error[60];
+    sprintf(error, "Maximum guest password length is %d characters.", YB_PASSWORD_LENGTH - 1);
+    return ProtocolController::generateErrorJSON(output, error);
+  }
+
+  strlcpy(admin_user, input["admin_user"] | _app.default_admin_user, sizeof(admin_user));
+  strlcpy(admin_pass, input["admin_pass"] | _app.default_admin_pass, sizeof(admin_pass));
+  strlcpy(guest_user, input["guest_user"] | _app.default_guest_user, sizeof(guest_user));
+  strlcpy(guest_pass, input["guest_pass"] | _app.default_guest_pass, sizeof(guest_pass));
+
+  if (input["default_role"]) {
+    if (!strcmp(input["default_role"], "admin"))
+      app_default_role = ADMIN;
+    else if (!strcmp(input["default_role"], "guest"))
+      app_default_role = GUEST;
+    else
+      app_default_role = NOBODY;
+  }
+
+  char error[128] = "Unknown";
+  if (!_app.config.saveConfig(error, sizeof(error)))
+    ProtocolController::generateErrorJSON(output, error);
+}
+
+void AuthController::generateAuthConfig(JsonVariant output)
+{
+  output["default_role"] = getRoleText(app_default_role);
+  output["admin_user"] = admin_user;
+  output["admin_pass"] = admin_pass;
+  output["guest_user"] = guest_user;
+  output["guest_pass"] = guest_pass;
+}
+
+void AuthController::loadAuthConfig(JsonVariant config)
+{
+  strlcpy(admin_user, config["admin_user"] | _app.default_admin_user, sizeof(admin_user));
+  strlcpy(admin_pass, config["admin_pass"] | _app.default_admin_pass, sizeof(admin_pass));
+  strlcpy(guest_user, config["guest_user"] | _app.default_guest_user, sizeof(guest_user));
+  strlcpy(guest_pass, config["guest_pass"] | _app.default_guest_pass, sizeof(guest_pass));
+
+  app_default_role = _app.default_role;
+  if (config["default_role"]) {
+    const char* v = config["default_role"];
+    if (!strcmp(v, "nobody"))
+      app_default_role = NOBODY;
+    else if (!strcmp(v, "admin"))
+      app_default_role = ADMIN;
+    else if (!strcmp(v, "guest"))
+      app_default_role = GUEST;
+  }
+  serial_role = api_role = app_default_role;
 }

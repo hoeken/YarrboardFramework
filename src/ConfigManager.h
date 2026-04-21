@@ -32,10 +32,6 @@ class ConfigManager : public BaseController
 
     char board_name[YB_BOARD_NAME_LENGTH];
     char startup_melody[YB_BOARD_NAME_LENGTH];
-    char admin_user[YB_USERNAME_LENGTH];
-    char admin_pass[YB_PASSWORD_LENGTH];
-    char guest_user[YB_USERNAME_LENGTH];
-    char guest_pass[YB_PASSWORD_LENGTH];
     char mqtt_server[YB_MQTT_SERVER_LENGTH] = "";
     char mqtt_user[YB_USERNAME_LENGTH] = "";
     char mqtt_pass[YB_PASSWORD_LENGTH] = "";
@@ -50,9 +46,6 @@ class ConfigManager : public BaseController
     bool app_enable_mqtt_protocol;
     bool app_enable_ha_integration;
     bool app_use_hostname_as_mqtt_uuid;
-    UserRole app_default_role;
-    UserRole serial_role;
-    UserRole api_role;
     String app_theme = "light";    // runtime-only, not persisted
     float globalBrightness = 1.0; // runtime-only, not persisted
 

@@ -24,10 +24,6 @@ bool ConfigManager::setup()
 {
   // setup some defaults
   strlcpy(board_name, _app.board_name, sizeof(board_name));
-  strlcpy(admin_user, _app.default_admin_user, sizeof(admin_user));
-  strlcpy(admin_pass, _app.default_admin_pass, sizeof(admin_pass));
-  strlcpy(guest_user, _app.default_guest_user, sizeof(guest_user));
-  strlcpy(guest_pass, _app.default_guest_pass, sizeof(guest_pass));
   strlcpy(startup_melody, _app.default_melody, sizeof(startup_melody));
 
   app_update_interval = _app.update_interval;
@@ -41,10 +37,6 @@ bool ConfigManager::setup()
   app_enable_mqtt_protocol = _app.enable_mqtt_protocol;
   app_enable_ha_integration = _app.enable_ha_integration;
   app_use_hostname_as_mqtt_uuid = _app.use_hostname_as_mqtt_uuid;
-
-  app_default_role = _app.default_role;
-  serial_role = _app.default_role;
-  api_role = _app.default_role;
 
   // our temporary preferences too.
   preferences.end(); // begin() returns false if already open.
@@ -191,11 +183,7 @@ void ConfigManager::generateAppConfig(JsonVariant output)
   // our identifying info
   output["is_first_boot"] = is_first_boot;
   output["startup_melody"] = startup_melody;
-  output["default_role"] = _app.auth.getRoleText(app_default_role);
-  output["admin_user"] = admin_user;
-  output["admin_pass"] = admin_pass;
-  output["guest_user"] = guest_user;
-  output["guest_pass"] = guest_pass;
+  _app.auth.generateAuthConfig(output);
   output["app_update_interval"] = app_update_interval;
   output["app_enable_mfd"] = app_enable_mfd;
   output["app_enable_api"] = app_enable_api;
@@ -333,22 +321,6 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
   v = config["startup_melody"] | _app.default_melody;
   strlcpy(startup_melody, v, sizeof(startup_melody));
 
-  // admin_user
-  v = config["admin_user"] | _app.default_admin_user;
-  strlcpy(admin_user, v, sizeof(admin_user));
-
-  // admin_pass
-  v = config["admin_pass"] | _app.default_admin_pass;
-  strlcpy(admin_pass, v, sizeof(admin_pass));
-
-  // guest_user
-  v = config["guest_user"] | _app.default_guest_user;
-  strlcpy(guest_user, v, sizeof(guest_user));
-
-  // guest_pass
-  v = config["guest_pass"] | _app.default_guest_pass;
-  strlcpy(guest_pass, v, sizeof(guest_pass));
-
   // MQTT fields
   v = config["mqtt_server"] | "";
   strlcpy(mqtt_server, v, sizeof(mqtt_server));
@@ -366,18 +338,7 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
     app_update_interval = min(10000u, app_update_interval);
   }
 
-  app_default_role = _app.default_role;
-  if (config["default_role"]) {
-    v = config["default_role"];
-    if (!strcmp(v, "nobody"))
-      app_default_role = NOBODY;
-    else if (!strcmp(v, "admin"))
-      app_default_role = ADMIN;
-    else if (!strcmp(v, "guest"))
-      app_default_role = GUEST;
-  }
-  serial_role = app_default_role;
-  api_role = app_default_role;
+  _app.auth.loadAuthConfig(config);
 
   app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
   app_enable_api = config["app_enable_api"] | _app.enable_http_api;

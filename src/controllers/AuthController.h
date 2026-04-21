@@ -14,7 +14,9 @@
 #define YARR_AUTH_H
 
 #include "YarrboardConfig.h"
+#include "controllers/AuthTypes.h"
 #include "controllers/BaseController.h"
+#include "controllers/ProtocolController.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
@@ -22,17 +24,6 @@
 
 class YarrboardApp;
 class ConfigManager;
-
-typedef enum {
-  NOBODY,
-  GUEST,
-  ADMIN
-} UserRole;
-
-typedef struct {
-    int socket;
-    UserRole role;
-} AuthenticatedClient;
 
 class AuthController : public BaseController
 {
@@ -56,8 +47,29 @@ class AuthController : public BaseController
     void removeClientFromAuthList(int socket);
     bool isApiClientLoggedIn(JsonVariantConst doc);
 
+    // Getters for external callers
+    const char* getAdminPass() const;
+    UserRole getDefaultRole() const;
+    UserRole getSerialRole() const;
+
+    void handleLogin(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleLogout(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+
+    // Config hooks (delegated from ConfigManager)
+    void generateAuthConfig(JsonVariant output);
+    void loadAuthConfig(JsonVariant config);
+
   private:
     bool is_serial_authenticated = false;
+
+    char admin_user[YB_USERNAME_LENGTH];
+    char admin_pass[YB_PASSWORD_LENGTH];
+    char guest_user[YB_USERNAME_LENGTH];
+    char guest_pass[YB_PASSWORD_LENGTH];
+    UserRole app_default_role;
+    UserRole serial_role;
+    UserRole api_role;
 
     bool addClientToAuthList(int socket, UserRole role);
     bool isWebsocketClientLoggedIn(JsonVariantConst input, int socket);

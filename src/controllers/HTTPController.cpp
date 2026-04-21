@@ -236,7 +236,7 @@ void HTTPController::sendToAllWebsockets(const char* jsonString, UserRole auth_l
   }
 
   // make sure we're allowed to see the message
-  if (auth_level > _cfg.app_default_role) {
+  if (auth_level > _app.auth.getDefaultRole()) {
     for (byte i = 0; i < YB_CLIENT_LIMIT; i++) {
       if (_app.auth.authenticatedClients[i].socket) {
         // make sure its a valid client

@@ -14,7 +14,7 @@
 #define YARR_PROTOCOL_H
 
 #include "YarrboardConfig.h"
-#include "controllers/AuthController.h"
+#include "controllers/AuthTypes.h"
 #include "controllers/BaseController.h"
 #include "utility.h"
 #include <Arduino.h>
@@ -115,8 +115,6 @@ class ProtocolController : public BaseController
     void handleSerialJson();
 
     void handleHello(JsonVariantConst input, JsonVariant output, ProtocolContext context);
-    void handleLogin(JsonVariantConst input, JsonVariant output, ProtocolContext context);
-    void handleLogout(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handlePing(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleGetConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleGetStats(JsonVariantConst input, JsonVariant output, ProtocolContext context);
@@ -124,7 +122,6 @@ class ProtocolController : public BaseController
     void handleGetFullConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleGetAppConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetGeneralConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
-    void handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSaveConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
