@@ -33,11 +33,6 @@ bool ConfigManager::setup()
   app_enable_serial = _app.enable_serial_api;
   app_enable_ota = _app.enable_arduino_ota;
   app_enable_ssl = _app.enable_ssl;
-  app_enable_mqtt = _app.enable_mqtt;
-  app_enable_mqtt_protocol = _app.enable_mqtt_protocol;
-  app_enable_ha_integration = _app.enable_ha_integration;
-  app_use_hostname_as_mqtt_uuid = _app.use_hostname_as_mqtt_uuid;
-
   // our temporary preferences too.
   preferences.end(); // begin() returns false if already open.
   if (preferences.begin("yarrboard", false)) {
@@ -190,14 +185,7 @@ void ConfigManager::generateAppConfig(JsonVariant output)
   output["app_enable_serial"] = app_enable_serial;
   output["app_enable_ota"] = app_enable_ota;
   output["app_enable_ssl"] = app_enable_ssl;
-  output["app_enable_mqtt"] = app_enable_mqtt;
-  output["app_enable_mqtt_protocol"] = app_enable_mqtt_protocol;
-  output["app_enable_ha_integration"] = app_enable_ha_integration;
-  output["app_use_hostname_as_mqtt_uuid"] = app_use_hostname_as_mqtt_uuid;
-  output["mqtt_server"] = mqtt_server;
-  output["mqtt_user"] = mqtt_user;
-  output["mqtt_pass"] = mqtt_pass;
-  output["mqtt_cert"] = mqtt_cert;
+  _app.mqtt.generateMQTTConfig(output);
   output["server_cert"] = server_cert;
   output["server_key"] = server_key;
 }
@@ -321,17 +309,6 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
   v = config["startup_melody"] | _app.default_melody;
   strlcpy(startup_melody, v, sizeof(startup_melody));
 
-  // MQTT fields
-  v = config["mqtt_server"] | "";
-  strlcpy(mqtt_server, v, sizeof(mqtt_server));
-
-  v = config["mqtt_user"] | "";
-  strlcpy(mqtt_user, v, sizeof(mqtt_user));
-
-  v = config["mqtt_pass"] | "";
-  strlcpy(mqtt_pass, v, sizeof(mqtt_pass));
-  mqtt_cert = config["mqtt_cert"] | "";
-
   if (config["app_update_interval"]) {
     app_update_interval = config["app_update_interval"] | _app.update_interval;
     app_update_interval = max(100u, app_update_interval);
@@ -345,10 +322,7 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
   app_enable_serial = config["app_enable_serial"] | _app.enable_serial_api;
   app_enable_ota = config["app_enable_ota"] | _app.enable_arduino_ota;
   app_enable_ssl = config["app_enable_ssl"] | _app.enable_ssl;
-  app_enable_mqtt = config["app_enable_mqtt"] | _app.enable_mqtt;
-  app_enable_mqtt_protocol = config["app_enable_mqtt_protocol"] | _app.enable_mqtt_protocol;
-  app_enable_ha_integration = config["app_enable_ha_integration"] | _app.enable_ha_integration;
-  app_use_hostname_as_mqtt_uuid = config["app_use_hostname_as_mqtt_uuid"] | _app.use_hostname_as_mqtt_uuid;
+  _app.mqtt.loadMQTTConfig(config, error, len);
 
   server_cert = config["server_cert"] | "";
   server_key = config["server_key"] | "";

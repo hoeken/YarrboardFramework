@@ -31,20 +31,14 @@ class ConfigManager : public BaseController
 
     char board_name[YB_BOARD_NAME_LENGTH];
     char startup_melody[YB_BOARD_NAME_LENGTH];
-    char mqtt_server[YB_MQTT_SERVER_LENGTH] = "";
-    char mqtt_user[YB_USERNAME_LENGTH] = "";
-    char mqtt_pass[YB_PASSWORD_LENGTH] = "";
-    String mqtt_cert = "";
+
     unsigned int app_update_interval;
     bool app_enable_mfd;
     bool app_enable_api;
     bool app_enable_serial;
     bool app_enable_ota;
     bool app_enable_ssl;
-    bool app_enable_mqtt;
-    bool app_enable_mqtt_protocol;
-    bool app_enable_ha_integration;
-    bool app_use_hostname_as_mqtt_uuid;
+
     String app_theme = "light";    // runtime-only, not persisted
     float globalBrightness = 1.0; // runtime-only, not persisted
 

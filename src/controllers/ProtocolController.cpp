@@ -423,7 +423,7 @@ void ProtocolController::generateConfigMessage(JsonVariant output)
   output["hostname"] = _app.network.getLocalHostname();
   output["use_ssl"] = _cfg.app_enable_ssl;
   output["enable_ota"] = _cfg.app_enable_ota;
-  output["enable_mqtt"] = _cfg.app_enable_mqtt;
+  output["enable_mqtt"] = _app.mqtt.isEnabled();
   output["default_role"] = _app.auth.getRoleText(_app.auth.getDefaultRole());
   output["brightness"] = _cfg.globalBrightness;
   output["git_hash"] = GIT_HASH;

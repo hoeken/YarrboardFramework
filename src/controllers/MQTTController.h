@@ -43,12 +43,27 @@ class MQTTController : public BaseController
     void handleSetMQTTConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void generateStatsHook(JsonVariant output) override;
 
+    bool loadMQTTConfig(JsonVariant config, char* error, size_t len);
+    void generateMQTTConfig(JsonVariant output);
+
+    bool isEnabled() const { return _enable_mqtt; }
+
   private:
     PsychicMqttClient mqttClient;
     unsigned long previousMQTTMillis = 0;
     bool _firstConnection = true;
     bool _pendingHaDiscovery = false;
     bool _commandTopicRegistered = false;
+
+    bool _enable_mqtt = false;
+    bool _enable_mqtt_protocol = false;
+    bool _enable_ha_integration = false;
+    bool _use_hostname_as_mqtt_uuid = true;
+
+    char _mqtt_server[YB_MQTT_SERVER_LENGTH] = "";
+    char _mqtt_user[YB_USERNAME_LENGTH] = "";
+    char _mqtt_pass[YB_PASSWORD_LENGTH] = "";
+    String _mqtt_cert = "";
 
     void haDiscovery();
     void receiveMessage(const char* topic, const char* payload, int retain, int qos, bool dup);
