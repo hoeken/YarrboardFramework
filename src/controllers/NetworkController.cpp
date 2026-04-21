@@ -19,7 +19,7 @@ NetworkController* NetworkController::_instance = nullptr;
 
 NetworkController::NetworkController(YarrboardApp& app) : BaseController(app, "network"),
                                                           improvSerial(&Serial),
-                                                          apIP(8, 8, 4, 4)
+                                                          apIP(192, 168, 4, 1)
 {
 }
 
@@ -49,13 +49,6 @@ void NetworkController::loop()
   if (_cfg.isFirstBoot()) {
     improvSerial.handleSerial();
   }
-
-  // // Periodically restart mDNS as a backstop against the known ESP32 mDNS stack
-  // // degradation bug where the responder silently stops answering queries.
-  // if (millis() - lastHeartbeat > 1000UL * 60 * 10) {
-  //   startMDNS();
-  //   lastHeartbeat = millis();
-  // }
 }
 
 bool NetworkController::loadNetworkConfig(JsonVariant config, char* error, size_t len)
@@ -364,7 +357,7 @@ bool NetworkController::_onImprovCustomConnectWiFiStatic(const char* ssid, const
 
 void NetworkController::_handleImprovError(ImprovTypes::Error err)
 {
-  YBP.printf("[improv] WiFi failed to connect.\n", err);
+  YBP.printf("[improv] WiFi failed to connect (err=%d).\n", err);
 
   _app.setStatusColor(CRGB::Red);
 
@@ -414,17 +407,17 @@ void NetworkController::handleSetNetworkConfig(JsonVariantConst input, JsonVaria
     return _app.protocol.generateErrorJSON(output, "'local_hostname' is a required parameter");
 
   if (strlen(input["wifi_ssid"]) > YB_WIFI_SSID_LENGTH - 1) {
-    sprintf(error, "Maximum wifi ssid length is %s characters.", YB_WIFI_SSID_LENGTH - 1);
+    sprintf(error, "Maximum wifi ssid length is %d characters.", YB_WIFI_SSID_LENGTH - 1);
     return _app.protocol.generateErrorJSON(output, error);
   }
 
   if (strlen(input["wifi_pass"]) > YB_WIFI_PASSWORD_LENGTH - 1) {
-    sprintf(error, "Maximum wifi password length is %s characters.", YB_WIFI_PASSWORD_LENGTH - 1);
+    sprintf(error, "Maximum wifi password length is %d characters.", YB_WIFI_PASSWORD_LENGTH - 1);
     return _app.protocol.generateErrorJSON(output, error);
   }
 
   if (strlen(input["local_hostname"]) > YB_HOSTNAME_LENGTH - 1) {
-    sprintf(error, "Maximum hostname length is %s characters.", YB_HOSTNAME_LENGTH - 1);
+    sprintf(error, "Maximum hostname length is %d characters.", YB_HOSTNAME_LENGTH - 1);
     return _app.protocol.generateErrorJSON(output, error);
   }
 
@@ -461,8 +454,23 @@ void NetworkController::handleSetNetworkConfig(JsonVariantConst input, JsonVaria
   strlcpy(new_wifi_mode, input["wifi_mode"] | YB_DEFAULT_AP_MODE, sizeof(new_wifi_mode));
   strlcpy(new_wifi_ssid, input["wifi_ssid"] | YB_DEFAULT_AP_SSID, sizeof(new_wifi_ssid));
   strlcpy(new_wifi_pass, input["wifi_pass"] | YB_DEFAULT_AP_PASS, sizeof(new_wifi_pass));
-  strlcpy(_local_hostname, input["local_hostname"] | _app.default_hostname, sizeof(_local_hostname));
 
+  // Snapshot current state so we can roll back if the new wifi connection fails
+  char old_hostname[YB_HOSTNAME_LENGTH];
+  bool old_use_static_ip = _wifi_use_static_ip;
+  char old_static_ip[YB_IP_ADDRESS_LENGTH];
+  char old_gateway[YB_IP_ADDRESS_LENGTH];
+  char old_subnet[YB_IP_ADDRESS_LENGTH];
+  char old_dns1[YB_IP_ADDRESS_LENGTH];
+  char old_dns2[YB_IP_ADDRESS_LENGTH];
+  strlcpy(old_hostname, _local_hostname, sizeof(old_hostname));
+  strlcpy(old_static_ip, _wifi_static_ip, sizeof(old_static_ip));
+  strlcpy(old_gateway, _wifi_gateway, sizeof(old_gateway));
+  strlcpy(old_subnet, _wifi_subnet, sizeof(old_subnet));
+  strlcpy(old_dns1, _wifi_dns1, sizeof(old_dns1));
+  strlcpy(old_dns2, _wifi_dns2, sizeof(old_dns2));
+
+  strlcpy(_local_hostname, input["local_hostname"] | _app.default_hostname, sizeof(_local_hostname));
   _wifi_use_static_ip = new_use_static_ip;
   strlcpy(_wifi_static_ip, input["wifi_static_ip"] | "", sizeof(_wifi_static_ip));
   strlcpy(_wifi_gateway, input["wifi_gateway"] | "", sizeof(_wifi_gateway));
@@ -484,6 +492,13 @@ void NetworkController::handleSetNetworkConfig(JsonVariantConst input, JsonVaria
         if (!_cfg.saveConfig(error, sizeof(error)))
           return _app.protocol.generateErrorJSON(output, error);
       } else {
+        strlcpy(_local_hostname, old_hostname, sizeof(_local_hostname));
+        _wifi_use_static_ip = old_use_static_ip;
+        strlcpy(_wifi_static_ip, old_static_ip, sizeof(_wifi_static_ip));
+        strlcpy(_wifi_gateway, old_gateway, sizeof(_wifi_gateway));
+        strlcpy(_wifi_subnet, old_subnet, sizeof(_wifi_subnet));
+        strlcpy(_wifi_dns1, old_dns1, sizeof(_wifi_dns1));
+        strlcpy(_wifi_dns2, old_dns2, sizeof(_wifi_dns2));
         connectToWifi(getWifiSSID(), getWifiPass());
         startServices();
         return _app.protocol.generateErrorJSON(output, "Can't connect to new WiFi.");

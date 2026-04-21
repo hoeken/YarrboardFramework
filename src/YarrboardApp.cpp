@@ -62,13 +62,13 @@ void YarrboardApp::_handleImprov()
 {
   // First boot mode?  That means we're doing ImprovWifi
   // we need to check improvDone because of race conditions.
-  if (config.isFirstBoot() && !network.improvDone) {
+  if (config.isFirstBoot() && !network.isImprovDone()) {
     network.loop(); // Handle Improv serial communication
     return;
   }
 
   // after first boot is done, start the failed controllers
-  if (network.improvDone) {
+  if (network.isImprovDone()) {
     // start our services now!
     network.startServices();
 
@@ -87,7 +87,7 @@ void YarrboardApp::_handleImprov()
     }
 
     // we're totally done now.
-    network.improvDone = false;
+    network.setImprovDone(false);
     YBP.println("First Boot Setup Complete.");
   }
 }
@@ -95,7 +95,7 @@ void YarrboardApp::_handleImprov()
 void YarrboardApp::loop()
 {
   // for first boot.
-  if (config.isFirstBoot() || network.improvDone) {
+  if (config.isFirstBoot() || network.isImprovDone()) {
     _handleImprov();
     return;
   }

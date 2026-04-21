@@ -229,7 +229,7 @@ void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant outp
 
   // what is our IP address?
   if (!strcmp(_app.network.getWifiMode(), "ap"))
-    output["ip_address"] = _app.network.apIP;
+    output["ip_address"] = _app.network.getApIP();
   else
     output["ip_address"] = WiFi.localIP();
 

@@ -41,9 +41,6 @@ class NetworkController : public BaseController
     bool connectToWifi(const char* ssid, const char* pass);
     void startServices();
 
-    IPAddress apIP;
-    bool improvDone = false;
-
     const char* getUUID() const { return _uuid; }
 
     const char* getWifiSSID() const { return _wifi_ssid; }
@@ -56,6 +53,10 @@ class NetworkController : public BaseController
     const char* getWifiSubnet() const { return _wifi_subnet; }
     const char* getWifiDNS1() const { return _wifi_dns1; }
     const char* getWifiDNS2() const { return _wifi_dns2; }
+
+    bool isImprovDone() const { return improvDone; }
+    void setImprovDone(bool v) { improvDone = v; }
+    const IPAddress& getApIP() const { return apIP; }
 
     bool loadNetworkConfig(JsonVariant config, char* error, size_t len);
     void generateNetworkConfig(JsonVariant output);
@@ -75,13 +76,15 @@ class NetworkController : public BaseController
     char _wifi_subnet[YB_IP_ADDRESS_LENGTH] = {};
     char _wifi_dns1[YB_IP_ADDRESS_LENGTH] = {};
     char _wifi_dns2[YB_IP_ADDRESS_LENGTH] = {};
+    IPAddress apIP;
+    bool improvDone = false;
+
     ImprovWiFi improvSerial;
 
 #ifdef IMPROV_WIFI_BLE_ENABLED
     ImprovWiFiBLE improvBLE;
 #endif
 
-    uint32_t lastHeartbeat = 0;
     bool _mdnsEventRegistered = false;
     bool _mdnsStarted = false;
 
