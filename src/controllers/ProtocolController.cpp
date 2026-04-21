@@ -217,8 +217,8 @@ void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant outp
   output["received_message_mps"] = receivedMessagesPerSecond;
   output["sent_message_total"] = totalSentMessages;
   output["sent_message_mps"] = sentMessagesPerSecond;
-  output["websocket_client_count"] = _app.http.websocketClientCount;
-  output["http_client_count"] = _app.http.httpClientCount - _app.http.websocketClientCount;
+  output["websocket_client_count"] = _app.http.websocketClientCount.load();
+  output["http_client_count"] = _app.http.httpClientCount.load() - _app.http.websocketClientCount.load();
   output["fps"] = (int)_app.framerate;
   output["uptime"] = esp_timer_get_time();
   output["heap_size"] = ESP.getHeapSize();

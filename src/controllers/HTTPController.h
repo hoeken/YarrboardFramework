@@ -10,8 +10,8 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-#ifndef YARR_SERVER_H
-#define YARR_SERVER_H
+#ifndef YARR_HTTP_CONTROLLER_H
+#define YARR_HTTP_CONTROLLER_H
 
 #include "YarrboardConfig.h"
 
@@ -23,6 +23,7 @@
 #include <ArduinoJson.h>
 #include <PsychicHttp.h>
 #include <PsychicHttpsServer.h>
+#include <atomic>
 #include <freertos/queue.h>
 #include <etl/map.h>
 
@@ -55,11 +56,8 @@ class HTTPController : public BaseController
     bool isSSLEnabled() const { return _app_enable_ssl; }
     bool isAPIEnabled() const { return _app_enable_api; }
 
-    const GulpedFile* index = nullptr;
-    const GulpedFile* logo = nullptr;
-
-    unsigned int websocketClientCount = 0;
-    unsigned int httpClientCount = 0;
+    std::atomic<unsigned int> websocketClientCount{0};
+    std::atomic<unsigned int> httpClientCount{0};
 
   private:
     bool _app_enable_api = false;
@@ -67,7 +65,7 @@ class HTTPController : public BaseController
     String _server_cert;
     String _server_key;
 
-    PsychicHttpServer* server;
+    PsychicHttpServer* server = nullptr;
     PsychicWebSocketHandler websocketHandler;
     char last_modified[50];
     QueueHandle_t wsRequests;
@@ -82,9 +80,10 @@ class HTTPController : public BaseController
 
     void handleWebsocketMessageLoop(WebsocketRequest* request);
     esp_err_t handleWebServerRequest(JsonVariant input, PsychicRequest* request, PsychicResponse* response);
+    esp_err_t sendJsonResponse(PsychicResponse* response, JsonDocument& doc, const char* contentType = "application/json");
     void handleWebSocketMessage(PsychicWebSocketRequest* request, uint8_t* data, size_t len);
     esp_err_t handleGulpedFile(PsychicRequest* request, PsychicResponse* response);
     void handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
 };
 
-#endif /* !YARR_SERVER_H */
+#endif /* !YARR_HTTP_CONTROLLER_H */

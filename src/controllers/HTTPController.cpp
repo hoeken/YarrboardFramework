@@ -36,6 +36,23 @@ void HTTPController::loadHTTPConfig(JsonVariantConst config)
   _server_key = config["server_key"] | "";
 }
 
+esp_err_t HTTPController::sendJsonResponse(PsychicResponse* response, JsonDocument& doc, const char* contentType)
+{
+  size_t jsonSize = measureJson(doc);
+  char* jsonBuffer = (char*)malloc(jsonSize + 1);
+  if (jsonBuffer == NULL) {
+    YBP.println("Error allocating JSON buffer");
+    return response->send(503, contentType, "{}");
+  }
+  serializeJson(doc, jsonBuffer, jsonSize + 1);
+  jsonBuffer[jsonSize] = '\0';
+  response->setContentType(contentType);
+  response->setContent(jsonBuffer);
+  esp_err_t err = response->send();
+  free(jsonBuffer);
+  return err;
+}
+
 void HTTPController::registerGulpedFile(const GulpedFile* file, const char* path /* = nullptr */)
 {
   if (file != nullptr && file->filename != nullptr) {
@@ -102,14 +119,11 @@ bool HTTPController::setup()
   });
 
   server->on("/site.webmanifest", HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
-    esp_err_t err = ESP_OK;
     JsonDocument doc;
 
-    // Root values
     doc["short_name"] = _cfg.getBoardName();
     doc["name"] = _cfg.getBoardName();
 
-    // icons array
     JsonArray icons = doc["icons"].to<JsonArray>();
     JsonObject icon = icons.add<JsonObject>();
     icon["src"] = "logo.png";
@@ -121,31 +135,7 @@ bool HTTPController::setup()
     doc["theme_color"] = "#000000";
     doc["background_color"] = "#ffffff";
 
-    // we can have empty messages
-    if (doc.size()) {
-      // allocate memory for this output
-      size_t jsonSize = measureJson(doc);
-      char* jsonBuffer = (char*)malloc(jsonSize + 1);
-
-      // did we get anything?
-      if (jsonBuffer != NULL) {
-        jsonBuffer[jsonSize] = '\0'; // null terminate
-        response->setContentType("application/manifest+json");
-        serializeJson(doc.as<JsonObject>(), jsonBuffer, jsonSize + 1);
-        response->setContent(jsonBuffer);
-        err = response->send();
-
-        // no leaks!
-        free(jsonBuffer);
-      }
-      // send overloaded response
-      else {
-        YBP.println("Error allocating in web.manifest");
-        err = response->send(503, "application/manifest+json", "{}");
-      }
-    }
-
-    return err;
+    return sendJsonResponse(response, doc, "application/manifest+json");
   });
 
   // Our websocket handler
@@ -175,15 +165,14 @@ bool HTTPController::setup()
     JsonDocument json;
 
     String body = request->body();
-    DeserializationError err = deserializeJson(json, body);
+    if (deserializeJson(json, body))
+      return response->send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
 
-    handleWebServerRequest(json, request, response);
-
-    return ESP_OK;
+    return handleWebServerRequest(json, request, response);
   });
 
   // send config json
-  server->on("/api/config", HTTP_ANY, [this](PsychicRequest* request, PsychicResponse* response) {
+  server->on("/api/config", HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
     JsonDocument json;
     json["cmd"] = "get_config";
 
@@ -193,7 +182,7 @@ bool HTTPController::setup()
   });
 
   // send stats json
-  server->on("/api/stats", HTTP_ANY, [this](PsychicRequest* request, PsychicResponse* response) {
+  server->on("/api/stats", HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
     JsonDocument json;
     json["cmd"] = "get_stats";
 
@@ -203,7 +192,7 @@ bool HTTPController::setup()
   });
 
   // send update json
-  server->on("/api/update", HTTP_ANY, [this](PsychicRequest* request, PsychicResponse* response) {
+  server->on("/api/update", HTTP_GET, [this](PsychicRequest* request, PsychicResponse* response) {
     JsonDocument json;
     json["cmd"] = "get_update";
 
@@ -241,8 +230,8 @@ void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVarian
   _cfg.setAppMfdEnabled(input["app_enable_mfd"] | _app.enable_mfd);
   _app_enable_api = input["app_enable_api"] | _app.enable_http_api;
   _app_enable_ssl = input["app_enable_ssl"] | _app_enable_ssl;
-  _server_cert = input["server_cert"] | "";
-  _server_key = input["server_key"] | "";
+  _server_cert = input["server_cert"] | _server_cert.c_str();
+  _server_key = input["server_key"] | _server_key.c_str();
 
   // save it to file.
   char error[128] = "Unknown";
@@ -309,7 +298,6 @@ void HTTPController::sendToAllWebsockets(const char* jsonString, UserRole auth_l
 
 esp_err_t HTTPController::handleWebServerRequest(JsonVariant input, PsychicRequest* request, PsychicResponse* response)
 {
-  esp_err_t err = ESP_OK;
   JsonDocument output;
 
   if (request->hasParam("user"))
@@ -328,34 +316,10 @@ esp_err_t HTTPController::handleWebServerRequest(JsonVariant input, PsychicReque
   } else
     _app.protocol.generateErrorJSON(output, "Web API is disabled.");
 
-  // we can have empty messages
-  if (output.size()) {
-    // allocate memory for this output
-    size_t jsonSize = measureJson(output);
-    char* jsonBuffer = (char*)malloc(jsonSize + 1);
+  if (output.size())
+    return sendJsonResponse(response, output);
 
-    // did we get anything?
-    if (jsonBuffer != NULL) {
-      jsonBuffer[jsonSize] = '\0'; // null terminate
-      response->setContentType("application/json");
-      serializeJson(output.as<JsonObject>(), jsonBuffer, jsonSize + 1);
-      response->setContent(jsonBuffer);
-      err = response->send();
-    }
-    // send overloaded response
-    else {
-      YBP.println("Error allocating in handleWebServerRequest()");
-      err = response->send(503, "application/json", "{}");
-    }
-
-    // no leaks!
-    free(jsonBuffer);
-  }
-  // give them valid json at least
-  else
-    err = response->send(200, "application/json", "{}");
-
-  return err;
+  return response->send(200, "application/json", "{}");
 }
 
 void HTTPController::handleWebSocketMessage(PsychicWebSocketRequest* request, uint8_t* data,
@@ -375,7 +339,8 @@ void HTTPController::handleWebSocketMessage(PsychicWebSocketRequest* request, ui
   }
 
   // okay, copy it over
-  memcpy(wr.buffer, data, len + 1);
+  memcpy(wr.buffer, data, len);
+  wr.buffer[len] = '\0';
 
   // throw it in our queue
   if (xQueueSend(wsRequests, &wr, 1) != pdTRUE) {
@@ -463,7 +428,7 @@ esp_err_t HTTPController::handleGulpedFile(PsychicRequest* request, PsychicRespo
 
   // Check if the client already has the same version and respond with a 304
   // (Not modified)
-  if (request->header("If-Modified-Since").indexOf(last_modified) > 0)
+  if (request->header("If-Modified-Since").indexOf(last_modified) >= 0)
     return response->send(304);
   // What about our ETag?
   else if (request->header("If-None-Match").equals(file->sha256))
