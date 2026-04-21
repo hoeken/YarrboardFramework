@@ -37,7 +37,6 @@ bool ProtocolController::setup()
   registerCommand(ADMIN, "save_config", this, &ProtocolController::handleSaveConfig);
   registerCommand(ADMIN, "get_full_config", this, &ProtocolController::handleGetFullConfig);
   registerCommand(ADMIN, "get_app_config", this, &ProtocolController::handleGetAppConfig);
-  registerCommand(ADMIN, "set_webserver_config", this, &ProtocolController::handleSetWebServerConfig);
   registerCommand(ADMIN, "set_misc_config", this, &ProtocolController::handleSetMiscellaneousConfig);
   registerCommand(ADMIN, "restart", this, &ProtocolController::handleRestart);
   registerCommand(ADMIN, "factory_reset", this, &ProtocolController::handleFactoryReset);
@@ -290,26 +289,6 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
   generateConfigMessage(output);
 }
 
-void ProtocolController::handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
-{
-  bool old_app_enable_ssl = _cfg.app_enable_ssl;
-
-  _cfg.app_enable_mfd = input["app_enable_mfd"] | _app.enable_mfd;
-  _cfg.app_enable_api = input["app_enable_api"] | _app.enable_http_api;
-  _cfg.app_enable_ssl = input["app_enable_ssl"] | _cfg.app_enable_ssl;
-  _cfg.server_cert = input["server_cert"] | "";
-  _cfg.server_key = input["server_key"] | "";
-
-  // save it to file.
-  char error[128] = "Unknown";
-  if (!_cfg.saveConfig(error, sizeof(error)))
-    return generateErrorJSON(output, error);
-
-  // restart the board.
-  if (old_app_enable_ssl != _cfg.app_enable_ssl)
-    ESP.restart();
-}
-
 void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   _enable_serial = input["app_enable_serial"] | _app.enable_serial_api;
@@ -432,7 +411,7 @@ void ProtocolController::generateConfigMessage(JsonVariant output)
   // extra info
   output["msg"] = "config";
   output["hostname"] = _app.network.getLocalHostname();
-  output["use_ssl"] = _cfg.app_enable_ssl;
+  output["use_ssl"] = _app.http.isSSLEnabled();
   output["enable_ota"] = _cfg.app_enable_ota;
   output["enable_mqtt"] = _app.mqtt.isEnabled();
   output["default_role"] = _app.auth.getRoleText(_app.auth.getDefaultRole());

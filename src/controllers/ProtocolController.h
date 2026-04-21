@@ -126,7 +126,6 @@ class ProtocolController : public BaseController
     void handleGetFullConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleGetAppConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetGeneralConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
-    void handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSaveConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleRestart(JsonVariantConst input, JsonVariant output, ProtocolContext context);

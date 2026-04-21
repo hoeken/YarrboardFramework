@@ -20,6 +20,22 @@ HTTPController::HTTPController(YarrboardApp& app) : BaseController(app, "http")
 {
 }
 
+void HTTPController::generateHTTPConfig(JsonVariant output)
+{
+  output["app_enable_api"] = _app_enable_api;
+  output["app_enable_ssl"] = _app_enable_ssl;
+  output["server_cert"] = _server_cert;
+  output["server_key"] = _server_key;
+}
+
+void HTTPController::loadHTTPConfig(JsonVariantConst config)
+{
+  _app_enable_api = config["app_enable_api"] | _app.enable_http_api;
+  _app_enable_ssl = config["app_enable_ssl"] | _app.enable_ssl;
+  _server_cert = config["server_cert"] | "";
+  _server_key = config["server_key"] | "";
+}
+
 void HTTPController::registerGulpedFile(const GulpedFile* file, const char* path /* = nullptr */)
 {
   if (file != nullptr && file->filename != nullptr) {
@@ -56,9 +72,9 @@ bool HTTPController::setup()
   }
 
   // do we want secure or not?
-  if (_cfg.app_enable_ssl && _cfg.server_cert.length() && _cfg.server_key.length()) {
+  if (_app_enable_ssl && _server_cert.length() && _server_key.length()) {
     server = new PsychicHttpsServer(443);
-    server->setCertificate(_cfg.server_cert.c_str(), _cfg.server_key.c_str());
+    server->setCertificate(_server_cert.c_str(), _server_key.c_str());
     // YBP.println("SSL enabled");
   } else {
     server = new PsychicHttpServer(80);
@@ -211,9 +227,31 @@ bool HTTPController::setup()
     return fileResponse.send();
   });
 
+  _app.protocol.registerCommand(ADMIN, "set_webserver_config", this, &HTTPController::handleSetWebServerConfig);
+
   server->start();
 
   return true;
+}
+
+void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+{
+  bool old_app_enable_ssl = _app_enable_ssl;
+
+  _cfg.app_enable_mfd = input["app_enable_mfd"] | _app.enable_mfd;
+  _app_enable_api = input["app_enable_api"] | _app.enable_http_api;
+  _app_enable_ssl = input["app_enable_ssl"] | _app_enable_ssl;
+  _server_cert = input["server_cert"] | "";
+  _server_key = input["server_key"] | "";
+
+  // save it to file.
+  char error[128] = "Unknown";
+  if (!_cfg.saveConfig(error, sizeof(error)))
+    return _app.protocol.generateErrorJSON(output, error);
+
+  // restart the board.
+  if (old_app_enable_ssl != _app_enable_ssl)
+    ESP.restart();
 }
 
 void HTTPController::loop()
@@ -279,7 +317,7 @@ esp_err_t HTTPController::handleWebServerRequest(JsonVariant input, PsychicReque
   if (request->hasParam("pass"))
     input["pass"] = request->getParam("pass")->value();
 
-  if (_cfg.app_enable_api) {
+  if (_app_enable_api) {
     _app.auth.isApiClientLoggedIn(input);
 
     ProtocolContext context;

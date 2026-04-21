@@ -29,10 +29,8 @@ bool ConfigManager::setup()
   app_update_interval = _app.update_interval;
 
   app_enable_mfd = _app.enable_mfd;
-  app_enable_api = _app.enable_http_api;
 
   app_enable_ota = _app.enable_arduino_ota;
-  app_enable_ssl = _app.enable_ssl;
   // our temporary preferences too.
   preferences.end(); // begin() returns false if already open.
   if (preferences.begin("yarrboard", false)) {
@@ -178,16 +176,13 @@ void ConfigManager::generateAppConfig(JsonVariant output)
   // our identifying info
   output["is_first_boot"] = _is_first_boot;
   output["startup_melody"] = startup_melody;
-  _app.auth.generateAuthConfig(output);
   output["app_update_interval"] = app_update_interval;
   output["app_enable_mfd"] = app_enable_mfd;
-  output["app_enable_api"] = app_enable_api;
-  _app.protocol.generateSerialConfig(output);
   output["app_enable_ota"] = app_enable_ota;
-  output["app_enable_ssl"] = app_enable_ssl;
+  _app.auth.generateAuthConfig(output);
+  _app.http.generateHTTPConfig(output);
+  _app.protocol.generateSerialConfig(output);
   _app.mqtt.generateMQTTConfig(output);
-  output["server_cert"] = server_cert;
-  output["server_key"] = server_key;
 }
 
 void ConfigManager::generateNetworkConfig(JsonVariant output)
@@ -315,17 +310,13 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
     app_update_interval = min(10000u, app_update_interval);
   }
 
-  _app.auth.loadAuthConfig(config);
-
   app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
-  app_enable_api = config["app_enable_api"] | _app.enable_http_api;
-  _app.protocol.loadSerialConfig(config);
   app_enable_ota = config["app_enable_ota"] | _app.enable_arduino_ota;
-  app_enable_ssl = config["app_enable_ssl"] | _app.enable_ssl;
-  _app.mqtt.loadMQTTConfig(config, error, len);
 
-  server_cert = config["server_cert"] | "";
-  server_key = config["server_key"] | "";
+  _app.auth.loadAuthConfig(config);
+  _app.http.loadHTTPConfig(config);
+  _app.protocol.loadSerialConfig(config);
+  _app.mqtt.loadMQTTConfig(config, error, len);
 
   return true;
 }

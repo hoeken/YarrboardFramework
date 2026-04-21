@@ -18,6 +18,7 @@
 #include "GulpedFile.h"
 #include "controllers/AuthController.h"
 #include "controllers/BaseController.h"
+#include "controllers/ProtocolController.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <PsychicHttp.h>
@@ -44,10 +45,15 @@ class HTTPController : public BaseController
     bool setup() override;
     void loop() override;
 
+    void generateHTTPConfig(JsonVariant output);
+    void loadHTTPConfig(JsonVariantConst config);
+
     void sendToAllWebsockets(const char* jsonString, UserRole auth_level);
     void registerGulpedFile(const GulpedFile* file, const char* path = nullptr);
     void registerGulpedFiles(const GulpedFile* files[], int count);
     PsychicHttpServer* getServer() { return server; }
+    bool isSSLEnabled() const { return _app_enable_ssl; }
+    bool isAPIEnabled() const { return _app_enable_api; }
 
     const GulpedFile* index = nullptr;
     const GulpedFile* logo = nullptr;
@@ -56,6 +62,11 @@ class HTTPController : public BaseController
     unsigned int httpClientCount = 0;
 
   private:
+    bool _app_enable_api = false;
+    bool _app_enable_ssl = false;
+    String _server_cert;
+    String _server_key;
+
     PsychicHttpServer* server;
     PsychicWebSocketHandler websocketHandler;
     char last_modified[50];
@@ -73,6 +84,7 @@ class HTTPController : public BaseController
     esp_err_t handleWebServerRequest(JsonVariant input, PsychicRequest* request, PsychicResponse* response);
     void handleWebSocketMessage(PsychicWebSocketRequest* request, uint8_t* data, size_t len);
     esp_err_t handleGulpedFile(PsychicRequest* request, PsychicResponse* response);
+    void handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
 };
 
 #endif /* !YARR_SERVER_H */

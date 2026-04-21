@@ -12,6 +12,7 @@
 
 #include "controllers/NavicoController.h"
 #include "ConfigManager.h"
+#include "YarrboardApp.h"
 #include "YarrboardDebug.h"
 
 NavicoController::NavicoController(YarrboardApp& app) : BaseController(app, "navico"),
@@ -36,7 +37,7 @@ void NavicoController::loop()
 
     char urlBuf[48];
     IPAddress ip = WiFi.localIP();
-    snprintf(urlBuf, sizeof(urlBuf), _cfg.app_enable_ssl ? "https://%u.%u.%u.%u:443" : "http://%u.%u.%u.%u:80", ip[0], ip[1], ip[2], ip[3]);
+    snprintf(urlBuf, sizeof(urlBuf), _app.http.isSSLEnabled() ? "https://%u.%u.%u.%u:443" : "http://%u.%u.%u.%u:80", ip[0], ip[1], ip[2], ip[3]);
     url = urlBuf; // assign once
 
     // generate our config JSON

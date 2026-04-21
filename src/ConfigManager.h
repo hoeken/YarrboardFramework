@@ -34,16 +34,10 @@ class ConfigManager : public BaseController
 
     unsigned int app_update_interval;
     bool app_enable_mfd;
-    bool app_enable_api;
-
     bool app_enable_ota;
-    bool app_enable_ssl;
 
-    String app_theme = "light";    // runtime-only, not persisted
+    String app_theme = "light";   // runtime-only, not persisted
     float globalBrightness = 1.0; // runtime-only, not persisted
-
-    String server_cert;
-    String server_key;
 
     ConfigManager(YarrboardApp& app);
 
