@@ -31,12 +31,11 @@ class ConfigManager : public BaseController
 
     char board_name[YB_BOARD_NAME_LENGTH];
     char startup_melody[YB_BOARD_NAME_LENGTH];
-
     unsigned int app_update_interval;
-    bool app_enable_mfd;
-
     String app_theme = "light";   // runtime-only, not persisted
     float globalBrightness = 1.0; // runtime-only, not persisted
+
+    bool app_enable_mfd;
 
     ConfigManager(YarrboardApp& app);
 

@@ -292,7 +292,7 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
 void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   _enable_serial = input["app_enable_serial"] | _app.enable_serial_api;
-  _cfg.app_enable_ota = input["app_enable_ota"] | _app.enable_arduino_ota;
+  _app.ota.loadOTAConfig(input);
 
   // save it to file.
   char error[128] = "Unknown";
@@ -300,7 +300,7 @@ void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, Js
     return generateErrorJSON(output, error);
 
   // init our ota.
-  if (_cfg.app_enable_ota)
+  if (_app.ota.isEnabled())
     _app.ota.setup();
   else
     _app.ota.end();
@@ -412,7 +412,7 @@ void ProtocolController::generateConfigMessage(JsonVariant output)
   output["msg"] = "config";
   output["hostname"] = _app.network.getLocalHostname();
   output["use_ssl"] = _app.http.isSSLEnabled();
-  output["enable_ota"] = _cfg.app_enable_ota;
+  output["enable_ota"] = _app.ota.isEnabled();
   output["enable_mqtt"] = _app.mqtt.isEnabled();
   output["default_role"] = _app.auth.getRoleText(_app.auth.getDefaultRole());
   output["brightness"] = _cfg.globalBrightness;

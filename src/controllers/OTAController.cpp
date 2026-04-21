@@ -97,7 +97,7 @@ void OTAController::startOTA()
   doOTAUpdate = true;
 }
 
-void OTAController::loadOTAConfig(JsonVariant config)
+void OTAController::loadOTAConfig(JsonVariantConst config)
 {
   _enable_ota = config["app_enable_ota"] | _app.enable_arduino_ota;
 }

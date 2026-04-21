@@ -40,8 +40,9 @@ class OTAController : public BaseController
     bool validate_firmware = true;
     const char* public_key = "";
 
-    void loadOTAConfig(JsonVariant config);
+    void loadOTAConfig(JsonVariantConst config);
     void generateOTAConfig(JsonVariant output);
+    bool isEnabled() const { return _enable_ota; }
 
   private:
     bool _enable_ota = false;
