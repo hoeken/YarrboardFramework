@@ -16,45 +16,44 @@
 #include "YarrboardDebug.h"
 
 NavicoController::NavicoController(YarrboardApp& app) : BaseController(app, "navico"),
-                                                        MULTICAST_GROUP_IP(239, 2, 1, 1)
+                                                        _multicastGroupIp(239, 2, 1, 1)
 {
 }
 
-// This code borrowed from the SignalK project:
-// https://github.com/SignalK/signalk-server/blob/master/src/interfaces/mfd_webapp.ts
 void NavicoController::loop()
 {
-  // must be enabled.
   if (!_cfg.isAppMfdEnabled())
     return;
 
-  String url = "http://xxx.xxx.xxx.xxx:yy";
-
-  if (millis() - lastNavicoPublishMillis > 10000) {
+  if (millis() - _lastPublishMillis > 10000) {
 
     if (!WiFi.isConnected())
       return;
 
-    char urlBuf[48];
     IPAddress ip = WiFi.localIP();
+    char urlBuf[48];
     snprintf(urlBuf, sizeof(urlBuf), _app.http.isSSLEnabled() ? "https://%u.%u.%u.%u:443" : "http://%u.%u.%u.%u:80", ip[0], ip[1], ip[2], ip[3]);
-    url = urlBuf; // assign once
 
-    // generate our config JSON
+    char iconUrl[64];
+    char webUrl[64];
+    snprintf(iconUrl, sizeof(iconUrl), "%s/logo.png", urlBuf);
+    snprintf(webUrl, sizeof(webUrl), "%s/", urlBuf);
+
     JsonDocument doc;
 
     doc["Version"] = "1";
     doc["Source"] = _cfg.getBoardName();
     doc["IP"] = WiFi.localIP();
-    doc["FeatureName"] = String(_cfg.getBoardName()) + " Webapp";
+    doc["FeatureName"] = _cfg.getBoardName();
 
     JsonObject Text_0 = doc["Text"].add<JsonObject>();
     Text_0["Language"] = "en";
     Text_0["Name"] = _cfg.getBoardName();
-    Text_0["Description"] = String(_cfg.getBoardName()) + " Webapp";
-    doc["Icon"] = url + "/logo.png";
-    doc["URL"] = url + "/";
-    doc["OnlyShowOnClientIP"] = "true";
+    Text_0["Description"] = _cfg.getBoardName();
+
+    doc["Icon"] = iconUrl;
+    doc["URL"] = webUrl;
+    doc["OnlyShowOnClientIP"] = true;
 
     JsonObject BrowserPanel = doc["BrowserPanel"].to<JsonObject>();
     BrowserPanel["Enable"] = true;
@@ -64,38 +63,19 @@ void NavicoController::loop()
     BrowserPanel_MenuText_0["Language"] = "en";
     BrowserPanel_MenuText_0["Name"] = "Home";
 
-    // make our dynamic buffer for the output
-    size_t jsonSize = measureJson(doc);
-    char* jsonBuffer = (char*)malloc(jsonSize + 1);
-    if (!jsonBuffer) {
-      YBP.println("Navico malloc failed!");
-      return;
-    }
-
-    jsonBuffer[jsonSize] = '\0'; // null terminate
-
-    // did we get anything?
-    serializeJson(doc, jsonBuffer, jsonSize + 1);
-
-    if (Udp.beginPacket(MULTICAST_GROUP_IP, PUBLISH_PORT)) {
-      Udp.write((const uint8_t*)jsonBuffer, jsonSize);
+    if (Udp.beginPacket(_multicastGroupIp, kPublishPort)) {
+      serializeJson(doc, Udp);
       Udp.endPacket();
     } else {
       YBP.println("UDP beginPacket failed");
     }
 
-    free(jsonBuffer);
-
-    lastNavicoPublishMillis = millis();
+    _lastPublishMillis = millis();
   }
 }
 
 bool NavicoController::setup()
 {
-  if (!WiFi.isConnected()) {
-    YBP.println("WiFi not connected.");
-    return false;
-  }
-
+  Udp.begin(0);
   return true;
 }

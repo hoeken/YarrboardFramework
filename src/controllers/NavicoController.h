@@ -13,6 +13,7 @@
 #ifndef YARR_NAVICO_H
 #define YARR_NAVICO_H
 
+// Protocol reference: https://github.com/SignalK/signalk-server/blob/master/src/interfaces/mfd_webapp.ts
 #include "controllers/BaseController.h"
 #include <Arduino.h>
 #include <WiFi.h>
@@ -29,9 +30,9 @@ class NavicoController : public BaseController
     bool setup() override;
 
   private:
-    unsigned long lastNavicoPublishMillis = 0;
-    const int PUBLISH_PORT = 2053;
-    IPAddress MULTICAST_GROUP_IP;
+    unsigned long _lastPublishMillis = 0;
+    static constexpr int kPublishPort = 2053;
+    IPAddress _multicastGroupIp;
     WiFiUDP Udp;
 };
 
