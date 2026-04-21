@@ -18,7 +18,6 @@
 
 // our global note buffer
 static Note g_noteBuffer[YB_MAX_MELODY_LENGTH];
-static size_t g_noteCount = 0;
 static TaskHandle_t buzzerTaskHandle = nullptr;
 static const Note* g_seq = nullptr;
 static size_t g_len = 0;
@@ -807,9 +806,6 @@ bool BuzzerController::playMelodyByName(const char* melody)
   if (!strcmp(melody, "NONE"))
     return true;
 
-  const Note* seq = nullptr;
-  size_t len = 0;
-
   for (size_t i = 0; i < _melodyCount; i++) {
     if (!strcmp(melody, _melodyTable[i].name)) {
       playMelody(_melodyTable[i].seq, _melodyTable[i].len);
@@ -819,8 +815,7 @@ bool BuzzerController::playMelodyByName(const char* melody)
   return false;
 }
 
-// Signal the task to start (or restart) a melody.
-// Safe to call from loop/ISRs (but here we use regular context).
+// Signal the task to start (or restart) a melody. Must be called from task context, not ISR.
 void BuzzerController::playMelody(const Note* seq, size_t len)
 {
   // wait until we're done playing.
@@ -883,6 +878,8 @@ void BuzzerController::handlePlaySound(JsonVariantConst input, JsonVariant outpu
 
   // Allocate dynamic Note sequence
   Note* seq = new Note[count];
+  if (!seq)
+    return _app.protocol.generateErrorJSON(output, "Out of memory");
   size_t idx = 0;
 
   for (JsonVariantConst nv : notes) {

@@ -55,13 +55,18 @@ class BuzzerController : public BaseController
 
     void handlePlaySound(JsonVariantConst input, JsonVariant output, ProtocolContext context);
 
+    byte getBuzzerPin() const { return buzzerPin; }
+    bool getIsActive() const { return isActive; }
+    void setBuzzerPin(byte pin) { buzzerPin = pin; }
+    void setIsActive(bool active) { isActive = active; }
+
     // Make the task a friend so it can access private static members
     friend void BuzzerTask(void* pv);
 
+  private:
     byte buzzerPin = 0;
     bool isActive = false;
 
-  private:
     const Melody* _melodyTable = nullptr;
     size_t _melodyCount = 0;
 
