@@ -24,16 +24,24 @@ bool NTPController::setup()
 {
   _instance = this; // Capture the instance for callbacks
 
-  if (!WiFi.isConnected()) {
-    YBP.println("WiFi not connected.");
-    return false;
-  }
-
-  // Setup our NTP to get the current time.
   sntp_set_time_sync_notification_cb(_timeAvailableCallbackStatic);
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2);
+
+  if (WiFi.isConnected())
+    _startNTP();
 
   return true;
+}
+
+void NTPController::loop()
+{
+  if (!_ntpStarted && WiFi.isConnected())
+    _startNTP();
+}
+
+void NTPController::_startNTP()
+{
+  configTime(_gmt_offset_sec, _daylight_offset_sec, _ntp_server1, _ntp_server2);
+  _ntpStarted = true;
 }
 
 void NTPController::_timeAvailableCallbackStatic(struct timeval* t)
@@ -42,10 +50,10 @@ void NTPController::_timeAvailableCallbackStatic(struct timeval* t)
     _instance->timeAvailableCallback(t);
 }
 
-// Callback function (get's called when time adjusts via NTP)
 void NTPController::timeAvailableCallback(struct timeval* t)
 {
   ntp_is_ready = true;
+  _last_sync_time = (int64_t)t->tv_sec;
 }
 
 void NTPController::printLocalTime()
@@ -66,8 +74,31 @@ int64_t NTPController::getTime()
 {
   time_t now;
   time(&now);
-
-  int64_t seconds = (int64_t)now;
-
   return (int64_t)now;
+}
+
+void NTPController::generateStatsHook(JsonVariant output)
+{
+  output["ntp_is_ready"] = ntp_is_ready;
+  output["ntp_last_sync"] = _last_sync_time;
+  output["ntp_time"] = getTime();
+}
+
+void NTPController::loadNTPConfig(JsonVariantConst config)
+{
+  const char* v;
+  v = config["ntp_server1"] | "pool.ntp.org";
+  strlcpy(_ntp_server1, v, sizeof(_ntp_server1));
+  v = config["ntp_server2"] | "time.nist.gov";
+  strlcpy(_ntp_server2, v, sizeof(_ntp_server2));
+  _gmt_offset_sec = config["gmt_offset_sec"] | 0L;
+  _daylight_offset_sec = config["daylight_offset_sec"] | 0;
+}
+
+void NTPController::generateNTPConfig(JsonVariant output)
+{
+  output["ntp_server1"] = _ntp_server1;
+  output["ntp_server2"] = _ntp_server2;
+  output["gmt_offset_sec"] = _gmt_offset_sec;
+  output["daylight_offset_sec"] = _daylight_offset_sec;
 }

@@ -176,6 +176,7 @@ void ConfigManager::generateAppConfig(JsonVariant output)
   output["is_first_boot"] = _is_first_boot;
   output["startup_melody"] = _startup_melody;
   output["app_enable_mfd"] = _app_enable_mfd;
+  _app.ntp.generateNTPConfig(output);
   _app.ota.generateOTAConfig(output);
   _app.auth.generateAuthConfig(output);
   _app.http.generateHTTPConfig(output);
@@ -306,6 +307,7 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
 
   _app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
 
+  _app.ntp.loadNTPConfig(config);
   _app.ota.loadOTAConfig(config);
   _app.auth.loadAuthConfig(config);
   _app.http.loadHTTPConfig(config);

@@ -13,10 +13,12 @@
 #ifndef YARR_NTP_H
 #define YARR_NTP_H
 
+#include "YarrboardConfig.h"
 #include "controllers/BaseController.h"
 #include "esp_sntp.h"
 #include "time.h"
 #include <Arduino.h>
+#include <ArduinoJson.h>
 
 class YarrboardApp;
 class ConfigManager;
@@ -27,16 +29,28 @@ class NTPController : public BaseController
     NTPController(YarrboardApp& app);
 
     bool setup() override;
+    void loop() override;
+
     bool isReady() { return ntp_is_ready; }
     int64_t getTime();
     void printLocalTime();
 
+    void generateStatsHook(JsonVariant output) override;
+
+    void loadNTPConfig(JsonVariantConst config);
+    void generateNTPConfig(JsonVariant output);
+
   private:
-    const char* ntpServer1 = "pool.ntp.org";
-    const char* ntpServer2 = "time.nist.gov";
-    const long gmtOffset_sec = 0;
-    const int daylightOffset_sec = 0;
+    char _ntp_server1[YB_NTP_SERVER_LENGTH] = "pool.ntp.org";
+    char _ntp_server2[YB_NTP_SERVER_LENGTH] = "time.nist.gov";
+    long _gmt_offset_sec = 0;
+    int _daylight_offset_sec = 0;
+
     bool ntp_is_ready = false;
+    bool _ntpStarted = false;
+    int64_t _last_sync_time = 0;
+
+    void _startNTP();
 
     // --- THE CALLBACK TRAP ---
     // Libraries expecting C-style function pointers cannot take normal member functions.
