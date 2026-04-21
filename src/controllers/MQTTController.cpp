@@ -184,7 +184,7 @@ void MQTTController::publish(const char* topic, const char* payload, bool use_pr
   // prefix it with yarrboard or nah?
   if (use_prefix) {
     char mqtt_path[256];
-    sprintf(mqtt_path, "yarrboard/%s/%s", _cfg.local_hostname, topic);
+    sprintf(mqtt_path, "yarrboard/%s/%s", _app.network.getLocalHostname(), topic);
     ret = mqttClient.publish(mqtt_path, 0, 0, payload, strlen(payload), false);
     if (ret == -1)
       YBP.printf("[mqtt] Error publishing prefix path %s\n", mqtt_path);
@@ -257,7 +257,7 @@ void MQTTController::onConnect(bool sessionPresent)
   // on reconnect so there is no need to add a duplicate entry every reconnect.
   if (!_commandTopicRegistered) {
     char mqtt_path[128];
-    sprintf(mqtt_path, "yarrboard/%s/command", _cfg.local_hostname);
+    sprintf(mqtt_path, "yarrboard/%s/command", _app.network.getLocalHostname());
     mqttClient.onTopic(mqtt_path, 0, _receiveMessageStatic);
     _commandTopicRegistered = true;
   }
@@ -312,7 +312,7 @@ void MQTTController::_onErrorStatic(esp_mqtt_error_codes_t error)
 const char* MQTTController::getBoardKey()
 {
   if (_cfg.app_use_hostname_as_mqtt_uuid)
-    return _cfg.local_hostname;
+    return _app.network.getLocalHostname();
   else
     return _app.network.getUUID();
 }
@@ -339,7 +339,7 @@ void MQTTController::haDiscovery()
   device["sw"] = _app.firmware_version;
   device["sn"] = _app.network.getUUID();
   char config_url[128];
-  sprintf(config_url, "http://%s.local", _cfg.local_hostname);
+  sprintf(config_url, "http://%s.local", _app.network.getLocalHostname());
   device["configuration_url"] = config_url;
 
   // our origin to let HA know where it came from.

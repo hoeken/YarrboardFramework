@@ -28,7 +28,7 @@ bool OTAController::setup()
   _app.protocol.registerCommand(ADMIN, "ota_start", this, &OTAController::handleOTAStart);
 
   if (_cfg.app_enable_ota) {
-    ArduinoOTA.setHostname(_cfg.local_hostname);
+    ArduinoOTA.setHostname(_app.network.getLocalHostname());
     ArduinoOTA.setPort(3232);
     ArduinoOTA.setPassword(_cfg.admin_pass);
     ArduinoOTA.begin();

@@ -24,7 +24,6 @@ bool ConfigManager::setup()
 {
   // setup some defaults
   strlcpy(board_name, _app.board_name, sizeof(board_name));
-  strlcpy(local_hostname, _app.default_hostname, sizeof(local_hostname));
   strlcpy(admin_user, _app.default_admin_user, sizeof(admin_user));
   strlcpy(admin_pass, _app.default_admin_pass, sizeof(admin_pass));
   strlcpy(guest_user, _app.default_guest_user, sizeof(guest_user));
@@ -217,17 +216,7 @@ void ConfigManager::generateAppConfig(JsonVariant output)
 
 void ConfigManager::generateNetworkConfig(JsonVariant output)
 {
-  // our identifying info
-  output["wifi_mode"] = wifi_mode;
-  output["wifi_ssid"] = wifi_ssid;
-  output["wifi_pass"] = wifi_pass;
-  output["local_hostname"] = local_hostname;
-  output["wifi_use_static_ip"] = wifi_use_static_ip;
-  output["wifi_static_ip"] = wifi_static_ip;
-  output["wifi_gateway"] = wifi_gateway;
-  output["wifi_subnet"] = wifi_subnet;
-  output["wifi_dns1"] = wifi_dns1;
-  output["wifi_dns2"] = wifi_dns2;
+  _app.network.generateNetworkConfig(output);
 }
 
 bool ConfigManager::loadConfigFromFile(const char* file, char* error, size_t len)
@@ -330,43 +319,7 @@ bool ConfigManager::loadConfigFromJSON(JsonVariant config, char* error, size_t l
 
 bool ConfigManager::loadNetworkConfigFromJSON(JsonVariant config, char* error, size_t len)
 {
-  const char* v;
-
-  // local_hostname
-  v = config["local_hostname"] | _app.default_hostname;
-  strlcpy(local_hostname, v, sizeof(local_hostname));
-
-  // wifi_ssid
-  v = config["wifi_ssid"] | YB_DEFAULT_AP_SSID;
-  strlcpy(wifi_ssid, v, sizeof(wifi_ssid));
-
-  // wifi_pass
-  v = config["wifi_pass"] | YB_DEFAULT_AP_PASS;
-  strlcpy(wifi_pass, v, sizeof(wifi_pass));
-
-  // wifi_mode
-  v = config["wifi_mode"] | YB_DEFAULT_AP_MODE;
-  strlcpy(wifi_mode, v, sizeof(wifi_mode));
-
-  // static IP settings (all optional, default to DHCP)
-  wifi_use_static_ip = config["wifi_use_static_ip"] | false;
-
-  v = config["wifi_static_ip"] | "";
-  strlcpy(wifi_static_ip, v, sizeof(wifi_static_ip));
-
-  v = config["wifi_gateway"] | "";
-  strlcpy(wifi_gateway, v, sizeof(wifi_gateway));
-
-  v = config["wifi_subnet"] | "";
-  strlcpy(wifi_subnet, v, sizeof(wifi_subnet));
-
-  v = config["wifi_dns1"] | "";
-  strlcpy(wifi_dns1, v, sizeof(wifi_dns1));
-
-  v = config["wifi_dns2"] | "";
-  strlcpy(wifi_dns2, v, sizeof(wifi_dns2));
-
-  return true;
+  return _app.network.loadNetworkConfig(config, error, len);
 }
 
 bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_t len)

@@ -37,9 +37,7 @@ bool ProtocolController::setup()
   registerCommand(ADMIN, "set_general_config", this, &ProtocolController::handleSetGeneralConfig);
   registerCommand(ADMIN, "save_config", this, &ProtocolController::handleSaveConfig);
   registerCommand(ADMIN, "get_full_config", this, &ProtocolController::handleGetFullConfig);
-  registerCommand(ADMIN, "get_network_config", this, &ProtocolController::handleGetNetworkConfig);
   registerCommand(ADMIN, "get_app_config", this, &ProtocolController::handleGetAppConfig);
-  registerCommand(ADMIN, "set_network_config", this, &ProtocolController::handleSetNetworkConfig);
   registerCommand(ADMIN, "set_authentication_config", this, &ProtocolController::handleSetAuthenticationConfig);
   registerCommand(ADMIN, "set_webserver_config", this, &ProtocolController::handleSetWebServerConfig);
   registerCommand(ADMIN, "set_misc_config", this, &ProtocolController::handleSetMiscellaneousConfig);
@@ -233,7 +231,7 @@ void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant outp
   output["rssi"] = WiFi.RSSI();
 
   // what is our IP address?
-  if (!strcmp(_cfg.wifi_mode, "ap"))
+  if (!strcmp(_app.network.getWifiMode(), "ap"))
     output["ip_address"] = _app.network.apIP;
   else
     output["ip_address"] = WiFi.localIP();
@@ -261,12 +259,6 @@ void ProtocolController::handleGetFullConfig(JsonVariantConst input, JsonVariant
 
   // separate call to make a clean config.
   _cfg.generateFullConfig(cfg);
-}
-
-void ProtocolController::handleGetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
-{
-  output["msg"] = "network_config";
-  _cfg.generateNetworkConfig(output);
 }
 
 void ProtocolController::handleGetAppConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -298,133 +290,6 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
 
   // give them the updated config
   generateConfigMessage(output);
-}
-
-void ProtocolController::handleSetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
-{
-  // clear our first boot flag since they submitted the network page.
-  _cfg.is_first_boot = false;
-
-  char error[128];
-
-  // error checking
-  if (!input["wifi_mode"].is<String>())
-    return generateErrorJSON(output, "'wifi_mode' is a required parameter");
-  if (!input["wifi_ssid"].is<String>())
-    return generateErrorJSON(output, "'wifi_ssid' is a required parameter");
-  if (!input["wifi_pass"].is<String>())
-    return generateErrorJSON(output, "'wifi_pass' is a required parameter");
-  if (!input["local_hostname"].is<String>())
-    return generateErrorJSON(output, "'local_hostname' is a required parameter");
-
-  // is it too long?
-  if (strlen(input["wifi_ssid"]) > YB_WIFI_SSID_LENGTH - 1) {
-    sprintf(error, "Maximum wifi ssid length is %s characters.", YB_WIFI_SSID_LENGTH - 1);
-    return generateErrorJSON(output, error);
-  }
-
-  if (strlen(input["wifi_pass"]) > YB_WIFI_PASSWORD_LENGTH - 1) {
-    sprintf(error, "Maximum wifi password length is %s characters.", YB_WIFI_PASSWORD_LENGTH - 1);
-    return generateErrorJSON(output, error);
-  }
-
-  if (strlen(input["local_hostname"]) > YB_HOSTNAME_LENGTH - 1) {
-    sprintf(error, "Maximum hostname length is %s characters.", YB_HOSTNAME_LENGTH - 1);
-    return generateErrorJSON(output, error);
-  }
-
-  // validate static IP fields when static IP is requested
-  bool new_use_static_ip = input["wifi_use_static_ip"] | false;
-  if (new_use_static_ip) {
-    if (!input["wifi_static_ip"].is<String>() || strlen(input["wifi_static_ip"]) == 0)
-      return generateErrorJSON(output, "'wifi_static_ip' is required when wifi_use_static_ip is true");
-    if (!input["wifi_gateway"].is<String>() || strlen(input["wifi_gateway"]) == 0)
-      return generateErrorJSON(output, "'wifi_gateway' is required when wifi_use_static_ip is true");
-    if (!input["wifi_subnet"].is<String>() || strlen(input["wifi_subnet"]) == 0)
-      return generateErrorJSON(output, "'wifi_subnet' is required when wifi_use_static_ip is true");
-
-    IPAddress testIP;
-    if (!testIP.fromString(input["wifi_static_ip"] | ""))
-      return generateErrorJSON(output, "'wifi_static_ip' is not a valid IP address");
-    if (!testIP.fromString(input["wifi_gateway"] | ""))
-      return generateErrorJSON(output, "'wifi_gateway' is not a valid IP address");
-    if (!testIP.fromString(input["wifi_subnet"] | ""))
-      return generateErrorJSON(output, "'wifi_subnet' is not a valid IP address");
-    if (input["wifi_dns1"].is<String>() && strlen(input["wifi_dns1"]) > 0) {
-      if (!testIP.fromString(input["wifi_dns1"] | ""))
-        return generateErrorJSON(output, "'wifi_dns1' is not a valid IP address");
-    }
-    if (input["wifi_dns2"].is<String>() && strlen(input["wifi_dns2"]) > 0) {
-      if (!testIP.fromString(input["wifi_dns2"] | ""))
-        return generateErrorJSON(output, "'wifi_dns2' is not a valid IP address");
-    }
-  }
-
-  // get our data
-  char new_wifi_mode[16];
-  char new_wifi_ssid[YB_WIFI_SSID_LENGTH];
-  char new_wifi_pass[YB_WIFI_PASSWORD_LENGTH];
-
-  strlcpy(new_wifi_mode, input["wifi_mode"] | YB_DEFAULT_AP_MODE, sizeof(new_wifi_mode));
-  strlcpy(new_wifi_ssid, input["wifi_ssid"] | YB_DEFAULT_AP_SSID, sizeof(new_wifi_ssid));
-  strlcpy(new_wifi_pass, input["wifi_pass"] | YB_DEFAULT_AP_PASS, sizeof(new_wifi_pass));
-  strlcpy(_cfg.local_hostname, input["local_hostname"] | _app.default_hostname, sizeof(_cfg.local_hostname));
-
-  // static IP fields
-  _cfg.wifi_use_static_ip = new_use_static_ip;
-  strlcpy(_cfg.wifi_static_ip, input["wifi_static_ip"] | "", sizeof(_cfg.wifi_static_ip));
-  strlcpy(_cfg.wifi_gateway, input["wifi_gateway"] | "", sizeof(_cfg.wifi_gateway));
-  strlcpy(_cfg.wifi_subnet, input["wifi_subnet"] | "", sizeof(_cfg.wifi_subnet));
-  strlcpy(_cfg.wifi_dns1, input["wifi_dns1"] | "", sizeof(_cfg.wifi_dns1));
-  strlcpy(_cfg.wifi_dns2, input["wifi_dns2"] | "", sizeof(_cfg.wifi_dns2));
-
-  // make sure we can connect before we save
-  if (!strcmp(new_wifi_mode, "client")) {
-    // did we change username/password?
-    if (strcmp(new_wifi_ssid, _cfg.wifi_ssid) || strcmp(new_wifi_pass, _cfg.wifi_pass)) {
-      // try connecting.
-      YBP.printf("Trying new wifi %s / %s\n", new_wifi_ssid, new_wifi_pass);
-      if (_app.network.connectToWifi(new_wifi_ssid, new_wifi_pass)) {
-        // changing modes?
-        if (!strcmp(_cfg.wifi_mode, "ap"))
-          WiFi.softAPdisconnect();
-
-        // save for local use
-        strlcpy(_cfg.wifi_mode, new_wifi_mode, sizeof(_cfg.wifi_mode));
-        strlcpy(_cfg.wifi_ssid, new_wifi_ssid, sizeof(_cfg.wifi_ssid));
-        strlcpy(_cfg.wifi_pass, new_wifi_pass, sizeof(_cfg.wifi_pass));
-
-        // save it to file.
-        if (!_cfg.saveConfig(error, sizeof(error)))
-          return generateErrorJSON(output, error);
-      }
-      // nope, setup our wifi back to default.
-      else {
-        _app.network.connectToWifi(_cfg.wifi_ssid, _cfg.wifi_pass); // go back to our old wifi.
-        _app.network.startServices();
-        return generateErrorJSON(output, "Can't connect to new WiFi.");
-      }
-    } else {
-      // save it to file.
-      if (!_cfg.saveConfig(error, sizeof(error)))
-        return generateErrorJSON(output, error);
-    }
-  }
-  // okay, AP mode is easier
-  else {
-    // save for local use.
-    strlcpy(_cfg.wifi_mode, new_wifi_mode, sizeof(_cfg.wifi_mode));
-    strlcpy(_cfg.wifi_ssid, new_wifi_ssid, sizeof(_cfg.wifi_ssid));
-    strlcpy(_cfg.wifi_pass, new_wifi_pass, sizeof(_cfg.wifi_pass));
-
-    // switch us into AP mode
-    _app.network.setupWifi();
-
-    if (!_cfg.saveConfig(error, sizeof(error)))
-      return generateErrorJSON(output, error);
-
-    return generateSuccessJSON(output, "AP mode successful, please connect to new network.");
-  }
 }
 
 void ProtocolController::handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -684,7 +549,7 @@ void ProtocolController::generateConfigMessage(JsonVariant output)
 {
   // extra info
   output["msg"] = "config";
-  output["hostname"] = _cfg.local_hostname;
+  output["hostname"] = _app.network.getLocalHostname();
   output["use_ssl"] = _cfg.app_enable_ssl;
   output["enable_ota"] = _cfg.app_enable_ota;
   output["enable_mqtt"] = _cfg.app_enable_mqtt;
