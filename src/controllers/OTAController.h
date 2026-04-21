@@ -28,6 +28,7 @@ class OTAController : public BaseController
 {
   public:
     OTAController(YarrboardApp& app);
+    ~OTAController();
 
     bool setup() override;
     void loop() override;
@@ -46,8 +47,8 @@ class OTAController : public BaseController
 
   private:
     bool _enable_ota = false;
-    esp32FOTA* FOTA;
-    CryptoMemAsset* MyPubKey;
+    esp32FOTA* FOTA = nullptr;
+    CryptoMemAsset* MyPubKey = nullptr;
     bool doOTAUpdate = false;
     unsigned long ota_last_message = 0;
 
@@ -63,6 +64,8 @@ class OTAController : public BaseController
     void _updateBeginFailCallback(int partition);
     void _progressCallback(size_t progress, size_t size);
     void _updateEndCallback(int partition);
+    // error_code: -1 = partition not found
+    //             -2 = signature check failed
     void _updateCheckFailCallback(int partition, int error_code);
 
     void handleOTAStart(JsonVariantConst input, JsonVariant output, ProtocolContext context);

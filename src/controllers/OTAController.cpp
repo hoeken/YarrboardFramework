@@ -21,6 +21,12 @@ OTAController::OTAController(YarrboardApp& app) : BaseController(app, "ota")
 {
 }
 
+OTAController::~OTAController()
+{
+  delete FOTA;
+  delete MyPubKey;
+}
+
 bool OTAController::setup()
 {
   _instance = this; // Capture the instance for callbacks
@@ -34,13 +40,12 @@ bool OTAController::setup()
     ArduinoOTA.begin();
   }
 
-  FOTA = new esp32FOTA(_app.hardware_version, _app.firmware_version, validate_firmware);
-
   if (!strlen(firmware_manifest_url)) {
     YBP.println("⚠️ No ota.firmware_manifest_url set, disabling OTA firmware downloading.");
     return false;
   }
 
+  FOTA = new esp32FOTA(_app.hardware_version, _app.firmware_version, validate_firmware);
   FOTA->setManifestURL(firmware_manifest_url);
 
   if (strlen(public_key)) {
@@ -60,7 +65,7 @@ bool OTAController::setup()
 
 void OTAController::loop()
 {
-  if (doOTAUpdate) {
+  if (doOTAUpdate && FOTA) {
     FOTA->handle();
     doOTAUpdate = false;
   }
@@ -80,6 +85,7 @@ void OTAController::handleOTAStart(JsonVariantConst input, JsonVariant output, P
 
 void OTAController::end()
 {
+  // called after config disables OTA, so _enable_ota is already false here
   if (!_enable_ota)
     ArduinoOTA.end();
 }
@@ -135,9 +141,6 @@ void OTAController::_updateEndCallback(int partition)
 void OTAController::_updateCheckFailCallback(int partition, int error_code)
 {
   YBP.printf("[ota] Update could not validate %s partition (error %d)\n", partition == U_SPIFFS ? "spiffs" : "firmware", error_code);
-  // error codes:
-  //  -1 : partition not found
-  //  -2 : validation (signature check) failed
 }
 
 void OTAController::_updateBeginFailCallbackStatic(int partition)
