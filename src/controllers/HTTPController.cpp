@@ -106,8 +106,8 @@ bool HTTPController::setup()
     JsonDocument doc;
 
     // Root values
-    doc["short_name"] = _cfg.board_name;
-    doc["name"] = _cfg.board_name;
+    doc["short_name"] = _cfg.getBoardName();
+    doc["name"] = _cfg.getBoardName();
 
     // icons array
     JsonArray icons = doc["icons"].to<JsonArray>();
@@ -238,7 +238,7 @@ void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVarian
 {
   bool old_app_enable_ssl = _app_enable_ssl;
 
-  _cfg.app_enable_mfd = input["app_enable_mfd"] | _app.enable_mfd;
+  _cfg.setAppMfdEnabled(input["app_enable_mfd"] | _app.enable_mfd);
   _app_enable_api = input["app_enable_api"] | _app.enable_http_api;
   _app_enable_ssl = input["app_enable_ssl"] | _app_enable_ssl;
   _server_cert = input["server_cert"] | "";

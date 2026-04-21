@@ -368,7 +368,7 @@ void MQTTController::haDiscovery()
   JsonDocument doc;
   JsonObject device = doc["dev"].to<JsonObject>();
   device["ids"] = ha_dev_uuid;
-  device["name"] = _cfg.board_name;
+  device["name"] = _cfg.getBoardName();
   device["mf"] = _app.manufacturer;
   device["mdl"] = _app.hardware_version;
   device["sw"] = _app.firmware_version;

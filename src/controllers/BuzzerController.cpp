@@ -779,7 +779,7 @@ bool BuzzerController::setup()
     1, // low priority is fine
     &buzzerTaskHandle);
 
-  playMelodyByName(_cfg.startup_melody);
+  playMelodyByName(_cfg.getStartupMelody());
 
   return true;
 }

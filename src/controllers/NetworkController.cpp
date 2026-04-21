@@ -313,9 +313,9 @@ void NetworkController::setupImprov()
 
   // Serial Configuration
   improvSerial.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32,
-    _cfg.board_name,
+    _cfg.getBoardName(),
     _app.firmware_version,
-    _cfg.board_name,
+    _cfg.getBoardName(),
     device_url.c_str());
 
   improvSerial.onImprovError(_onImprovErrorStatic);
@@ -325,9 +325,9 @@ void NetworkController::setupImprov()
   // Bluetooth Configuration
 #ifdef IMPROV_WIFI_BLE_ENABLED
   improvBLE.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32,
-    _cfg.board_name,
+    _cfg.getBoardName(),
     _app.firmware_version,
-    _cfg.board_name,
+    _cfg.getBoardName(),
     device_url.c_str());
 
   improvBLE.onImprovError(_onImprovErrorStatic);

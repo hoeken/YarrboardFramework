@@ -23,12 +23,12 @@ ConfigManager::ConfigManager(YarrboardApp& app) : BaseController(app, "config"),
 bool ConfigManager::setup()
 {
   // setup some defaults
-  strlcpy(board_name, _app.board_name, sizeof(board_name));
-  strlcpy(startup_melody, _app.default_melody, sizeof(startup_melody));
+  strlcpy(_board_name, _app.board_name, sizeof(_board_name));
+  strlcpy(_startup_melody, _app.default_melody, sizeof(_startup_melody));
 
-  app_update_interval = _app.update_interval;
+  _app_update_interval = _app.update_interval;
 
-  app_enable_mfd = _app.enable_mfd;
+  _app_enable_mfd = _app.enable_mfd;
 
   // our temporary preferences too.
   preferences.end(); // begin() returns false if already open.
@@ -139,7 +139,7 @@ void ConfigManager::generateFullConfig(JsonVariant output)
 void ConfigManager::generateBoardConfig(JsonVariant output)
 {
   // our identifying info
-  output["name"] = board_name;
+  output["name"] = _board_name;
   output["uuid"] = _app.network.getUUID();
   output["firmware_version"] = _app.firmware_version;
   output["hardware_version"] = _app.hardware_version;
@@ -174,9 +174,9 @@ void ConfigManager::generateAppConfig(JsonVariant output)
 {
   // our identifying info
   output["is_first_boot"] = _is_first_boot;
-  output["startup_melody"] = startup_melody;
-  output["app_update_interval"] = app_update_interval;
-  output["app_enable_mfd"] = app_enable_mfd;
+  output["startup_melody"] = _startup_melody;
+  output["app_update_interval"] = _app_update_interval;
+  output["app_enable_mfd"] = _app_enable_mfd;
   _app.ota.generateOTAConfig(output);
   _app.auth.generateAuthConfig(output);
   _app.http.generateHTTPConfig(output);
@@ -301,17 +301,17 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
 
   // startup_melody
   v = config["startup_melody"] | _app.default_melody;
-  strlcpy(startup_melody, v, sizeof(startup_melody));
+  strlcpy(_startup_melody, v, sizeof(_startup_melody));
 
   if (config["app_update_interval"]) {
-    app_update_interval = config["app_update_interval"] | _app.update_interval;
-    app_update_interval = max(100u, app_update_interval);
-    app_update_interval = min(10000u, app_update_interval);
+    _app_update_interval = config["app_update_interval"] | _app.update_interval;
+    _app_update_interval = max(100u, _app_update_interval);
+    _app_update_interval = min(10000u, _app_update_interval);
   }
 
-  app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
-  _app.ota.loadOTAConfig(config);
+  _app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
 
+  _app.ota.loadOTAConfig(config);
   _app.auth.loadAuthConfig(config);
   _app.http.loadHTTPConfig(config);
   _app.protocol.loadSerialConfig(config);
@@ -325,7 +325,7 @@ bool ConfigManager::loadBoardConfigFromJSON(JsonVariant config, char* error, siz
   bool result = true;
 
   const char* v = config["name"] | _app.board_name;
-  strlcpy(board_name, v, sizeof(board_name));
+  strlcpy(_board_name, v, sizeof(_board_name));
 
   for (const auto& entry : _app.getControllers()) {
     entry.controller->loadConfigHook(config, error, len);

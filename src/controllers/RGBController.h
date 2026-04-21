@@ -65,7 +65,7 @@ class RGBController : public RGBControllerInterface
     {
       // 10hz refresh
       if (millis() - lastRGBUpdateMillis > 1000) {
-        FastLED.setBrightness(maxBrightness * _cfg.globalBrightness);
+        FastLED.setBrightness(maxBrightness * _cfg.getGlobalBrightness());
         FastLED.show();
         lastRGBUpdateMillis = millis();
       }
@@ -86,7 +86,7 @@ class RGBController : public RGBControllerInterface
         return;
 
       _leds[c].setRGB(r, g, b);
-      FastLED.setBrightness(maxBrightness * _cfg.globalBrightness);
+      FastLED.setBrightness(maxBrightness * _cfg.getGlobalBrightness());
 
       if (millis() - lastRGBUpdateMillis > 100) {
         FastLED.show();
@@ -101,7 +101,7 @@ class RGBController : public RGBControllerInterface
         return;
 
       _leds[c] = color;
-      FastLED.setBrightness(maxBrightness * _cfg.globalBrightness);
+      FastLED.setBrightness(maxBrightness * _cfg.getGlobalBrightness());
 
       if (millis() - lastRGBUpdateMillis > 100) {
         FastLED.show();

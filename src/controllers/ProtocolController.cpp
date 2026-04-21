@@ -198,8 +198,8 @@ void ProtocolController::handleHello(JsonVariantConst input, JsonVariant output,
   output["msg"] = "hello";
   output["role"] = _app.auth.getRoleText(context.role);
   output["default_role"] = _app.auth.getRoleText(_app.auth.getDefaultRole());
-  output["name"] = _cfg.board_name;
-  output["brightness"] = _cfg.globalBrightness;
+  output["name"] = _cfg.getBoardName();
+  output["brightness"] = _cfg.getGlobalBrightness();
   output["firmware_version"] = _app.firmware_version;
 }
 
@@ -277,8 +277,8 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
   }
 
   // update variable
-  strlcpy(_cfg.board_name, input["board_name"] | _app.board_name, sizeof(_cfg.board_name));
-  strlcpy(_cfg.startup_melody, input["startup_melody"] | _app.default_melody, sizeof(_cfg.startup_melody));
+  _cfg.setBoardName(input["board_name"] | _app.board_name);
+  _cfg.setStartupMelody(input["startup_melody"] | _app.default_melody);
 
   // save it to file.
   char error[128];
@@ -367,7 +367,7 @@ void ProtocolController::handleSetTheme(JsonVariantConst input, JsonVariant outp
     return generateErrorJSON(output,
       "'theme' must either be 'light' or 'dark'");
 
-  _cfg.app_theme = temp;
+  _cfg.setAppTheme(temp);
 
   sendThemeUpdate();
 }
@@ -383,7 +383,7 @@ void ProtocolController::handleSetBrightness(JsonVariantConst input, JsonVariant
     else if (brightness > 1)
       return generateErrorJSON(output, "Brightness must be <= 1");
 
-    _cfg.globalBrightness = brightness;
+    _cfg.setGlobalBrightness(brightness);
 
     // TODO: need to put this on a time delay
     // preferences.putFloat("brightness", globalBrightness);
@@ -415,7 +415,7 @@ void ProtocolController::generateConfigMessage(JsonVariant output)
   output["enable_ota"] = _app.ota.isEnabled();
   output["enable_mqtt"] = _app.mqtt.isEnabled();
   output["default_role"] = _app.auth.getRoleText(_app.auth.getDefaultRole());
-  output["brightness"] = _cfg.globalBrightness;
+  output["brightness"] = _cfg.getGlobalBrightness();
   output["git_hash"] = GIT_HASH;
   output["build_time"] = BUILD_TIME;
   output["firmware_manifest_url"] = _app.ota.firmware_manifest_url;
@@ -458,7 +458,7 @@ void ProtocolController::sendThemeUpdate()
 {
   JsonDocument output;
   output["msg"] = "set_theme";
-  output["theme"] = _cfg.app_theme;
+  output["theme"] = _cfg.getAppTheme();
 
   sendToAll(output, NOBODY);
 }
@@ -467,7 +467,7 @@ void ProtocolController::sendBrightnessUpdate()
 {
   JsonDocument output;
   output["msg"] = "set_brightness";
-  output["brightness"] = _cfg.globalBrightness;
+  output["brightness"] = _cfg.getGlobalBrightness();
 
   sendToAll(output, NOBODY);
 }

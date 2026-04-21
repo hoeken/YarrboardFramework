@@ -25,7 +25,7 @@ NavicoController::NavicoController(YarrboardApp& app) : BaseController(app, "nav
 void NavicoController::loop()
 {
   // must be enabled.
-  if (!_cfg.app_enable_mfd)
+  if (!_cfg.isAppMfdEnabled())
     return;
 
   String url = "http://xxx.xxx.xxx.xxx:yy";
@@ -44,14 +44,14 @@ void NavicoController::loop()
     JsonDocument doc;
 
     doc["Version"] = "1";
-    doc["Source"] = _cfg.board_name;
+    doc["Source"] = _cfg.getBoardName();
     doc["IP"] = WiFi.localIP();
-    doc["FeatureName"] = String(_cfg.board_name) + " Webapp";
+    doc["FeatureName"] = String(_cfg.getBoardName()) + " Webapp";
 
     JsonObject Text_0 = doc["Text"].add<JsonObject>();
     Text_0["Language"] = "en";
-    Text_0["Name"] = _cfg.board_name;
-    Text_0["Description"] = String(_cfg.board_name) + " Webapp";
+    Text_0["Name"] = _cfg.getBoardName();
+    Text_0["Description"] = String(_cfg.getBoardName()) + " Webapp";
     doc["Icon"] = url + "/logo.png";
     doc["URL"] = url + "/";
     doc["OnlyShowOnClientIP"] = "true";

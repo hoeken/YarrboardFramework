@@ -29,14 +29,6 @@ class ConfigManager : public BaseController
   public:
     Preferences preferences;
 
-    char board_name[YB_BOARD_NAME_LENGTH];
-    char startup_melody[YB_BOARD_NAME_LENGTH];
-    unsigned int app_update_interval;
-    String app_theme = "light";   // runtime-only, not persisted
-    float globalBrightness = 1.0; // runtime-only, not persisted
-
-    bool app_enable_mfd;
-
     ConfigManager(YarrboardApp& app);
 
     // Lifecycle
@@ -61,9 +53,30 @@ class ConfigManager : public BaseController
     bool isFirstBoot() const { return _is_first_boot; }
     void setFirstBoot(bool v) { _is_first_boot = v; }
 
+    const char* getBoardName() const { return _board_name; }
+    void setBoardName(const char* name) { strlcpy(_board_name, name, sizeof(_board_name)); }
+
+    const String& getAppTheme() const { return _app_theme; }
+    void setAppTheme(const String& theme) { _app_theme = theme; }
+
+    float getGlobalBrightness() const { return _global_brightness; }
+    void setGlobalBrightness(float b) { _global_brightness = b; }
+
+    const char* getStartupMelody() const { return _startup_melody; }
+    void setStartupMelody(const char* melody) { strlcpy(_startup_melody, melody, sizeof(_startup_melody)); }
+
+    bool isAppMfdEnabled() const { return _app_enable_mfd; }
+    void setAppMfdEnabled(bool v) { _app_enable_mfd = v; }
+
   private:
     YarrboardApp& _app;
     bool _is_first_boot;
+    char _board_name[YB_BOARD_NAME_LENGTH];
+    unsigned int _app_update_interval;
+    String _app_theme = "light";
+    float _global_brightness = 1.0;
+    char _startup_melody[YB_BOARD_NAME_LENGTH];
+    bool _app_enable_mfd;
 };
 
 #endif
