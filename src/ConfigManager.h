@@ -34,7 +34,6 @@ class ConfigManager : public BaseController
 
     unsigned int app_update_interval;
     bool app_enable_mfd;
-    bool app_enable_ota;
 
     String app_theme = "light";   // runtime-only, not persisted
     float globalBrightness = 1.0; // runtime-only, not persisted

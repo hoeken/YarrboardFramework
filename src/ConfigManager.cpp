@@ -30,7 +30,6 @@ bool ConfigManager::setup()
 
   app_enable_mfd = _app.enable_mfd;
 
-  app_enable_ota = _app.enable_arduino_ota;
   // our temporary preferences too.
   preferences.end(); // begin() returns false if already open.
   if (preferences.begin("yarrboard", false)) {
@@ -178,7 +177,7 @@ void ConfigManager::generateAppConfig(JsonVariant output)
   output["startup_melody"] = startup_melody;
   output["app_update_interval"] = app_update_interval;
   output["app_enable_mfd"] = app_enable_mfd;
-  output["app_enable_ota"] = app_enable_ota;
+  _app.ota.generateOTAConfig(output);
   _app.auth.generateAuthConfig(output);
   _app.http.generateHTTPConfig(output);
   _app.protocol.generateSerialConfig(output);
@@ -311,7 +310,7 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
   }
 
   app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
-  app_enable_ota = config["app_enable_ota"] | _app.enable_arduino_ota;
+  _app.ota.loadOTAConfig(config);
 
   _app.auth.loadAuthConfig(config);
   _app.http.loadHTTPConfig(config);

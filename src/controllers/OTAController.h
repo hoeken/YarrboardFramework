@@ -40,10 +40,12 @@ class OTAController : public BaseController
     bool validate_firmware = true;
     const char* public_key = "";
 
-  private:
-    esp32FOTA*
-      FOTA;
+    void loadOTAConfig(JsonVariant config);
+    void generateOTAConfig(JsonVariant output);
 
+  private:
+    bool _enable_ota = false;
+    esp32FOTA* FOTA;
     CryptoMemAsset* MyPubKey;
     bool doOTAUpdate = false;
     unsigned long ota_last_message = 0;

@@ -27,7 +27,7 @@ bool OTAController::setup()
 
   _app.protocol.registerCommand(ADMIN, "ota_start", this, &OTAController::handleOTAStart);
 
-  if (_cfg.app_enable_ota) {
+  if (_enable_ota) {
     ArduinoOTA.setHostname(_app.network.getLocalHostname());
     ArduinoOTA.setPort(3232);
     ArduinoOTA.setPassword(_app.auth.getAdminPass());
@@ -65,7 +65,7 @@ void OTAController::loop()
     doOTAUpdate = false;
   }
 
-  if (_cfg.app_enable_ota) {
+  if (_enable_ota) {
     ArduinoOTA.handle();
   }
 }
@@ -80,7 +80,7 @@ void OTAController::handleOTAStart(JsonVariantConst input, JsonVariant output, P
 
 void OTAController::end()
 {
-  if (!_cfg.app_enable_ota)
+  if (!_enable_ota)
     ArduinoOTA.end();
 }
 
@@ -95,6 +95,16 @@ void OTAController::startOTA()
 {
   YBP.printf("Starting OTA.");
   doOTAUpdate = true;
+}
+
+void OTAController::loadOTAConfig(JsonVariant config)
+{
+  _enable_ota = config["app_enable_ota"] | _app.enable_arduino_ota;
+}
+
+void OTAController::generateOTAConfig(JsonVariant output)
+{
+  output["app_enable_ota"] = _enable_ota;
 }
 
 void OTAController::_updateBeginFailCallback(int partition)
