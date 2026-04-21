@@ -75,8 +75,8 @@ class ProtocolController : public BaseController
     void sendThemeUpdate();
     void sendFastUpdate();
     void sendDebug(const char* message);
-    void sendToAll(JsonVariantConst output, UserRole auth_level);
-    void sendToAll(const char* jsonString, UserRole auth_level);
+    void sendToAll(JsonVariantConst output, UserRole min_receiver_role);
+    void sendToAll(const char* jsonString, UserRole min_receiver_role);
 
     void handleReceivedJSON(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     static void generateErrorJSON(JsonVariant output, const char* error);
@@ -90,6 +90,7 @@ class ProtocolController : public BaseController
   private:
     bool _enable_serial;
     unsigned long previousMessageMillis = 0;
+    unsigned long previousFastUpdateMillis = 0;
     unsigned int receivedMessages = 0;
     unsigned int receivedMessagesPerSecond = 0;
     unsigned long totalReceivedMessages = 0;
@@ -129,7 +130,6 @@ class ProtocolController : public BaseController
     void handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSaveConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleRestart(JsonVariantConst input, JsonVariant output, ProtocolContext context);
-    void handleCrashMe(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleFactoryReset(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetTheme(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetBrightness(JsonVariantConst input, JsonVariant output, ProtocolContext context);

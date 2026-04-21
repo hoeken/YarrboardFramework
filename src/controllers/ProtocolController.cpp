@@ -68,8 +68,13 @@ void ProtocolController::loop()
     }
   }
 
-  if (doFastUpdate)
-    sendFastUpdate();
+  if (doFastUpdate) {
+    unsigned int fastUpdateDelta = millis() - previousFastUpdateMillis;
+    if (fastUpdateDelta >= YB_FAST_UPDATE_MIN_INTERVAL_MS) {
+      previousFastUpdateMillis = millis();
+      sendFastUpdate();
+    }
+  }
 
   // any serial port customers?
   if (_enable_serial) {
@@ -139,8 +144,7 @@ void ProtocolController::handleSerialJson()
     if (output.size()) {
       serializeJson(output, Serial);
 
-      sentMessages++;
-      totalSentMessages++;
+      incrementSentMessages();
     }
   }
 }
@@ -272,7 +276,7 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
   // is it too long?
   if (strlen(input["board_name"]) > YB_BOARD_NAME_LENGTH - 1) {
     char error[50];
-    sprintf(error, "Maximum board name length is %s characters.", YB_BOARD_NAME_LENGTH - 1);
+    sprintf(error, "Maximum board name length is %d characters.", YB_BOARD_NAME_LENGTH - 1);
     return generateErrorJSON(output, error);
   }
 
@@ -304,6 +308,8 @@ void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, Js
     _app.ota.setup();
   else
     _app.ota.end();
+
+  generateSuccessJSON(output, "Miscellaneous config saved.");
 }
 
 void ProtocolController::handleSaveConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -495,7 +501,7 @@ void ProtocolController::sendDebug(const char* message)
   sendToAll(output, NOBODY);
 }
 
-void ProtocolController::sendToAll(JsonVariantConst output, UserRole auth_level)
+void ProtocolController::sendToAll(JsonVariantConst output, UserRole min_receiver_role)
 {
   // dynamically allocate our buffer
   size_t jsonSize = measureJson(output);
@@ -505,7 +511,7 @@ void ProtocolController::sendToAll(JsonVariantConst output, UserRole auth_level)
   if (jsonBuffer != NULL) {
     jsonBuffer[jsonSize] = '\0'; // null terminate
     serializeJson(output, jsonBuffer, jsonSize + 1);
-    sendToAll(jsonBuffer, auth_level);
+    sendToAll(jsonBuffer, min_receiver_role);
     free(jsonBuffer);
   } else {
     // dont call YBP b/c loops...
@@ -513,10 +519,10 @@ void ProtocolController::sendToAll(JsonVariantConst output, UserRole auth_level)
   }
 }
 
-void ProtocolController::sendToAll(const char* jsonString, UserRole auth_level)
+void ProtocolController::sendToAll(const char* jsonString, UserRole min_receiver_role)
 {
-  _app.http.sendToAllWebsockets(jsonString, auth_level);
+  _app.http.sendToAllWebsockets(jsonString, min_receiver_role);
 
-  if (_enable_serial && _app.auth.getSerialRole() >= auth_level)
+  if (_enable_serial && _app.auth.getSerialRole() >= min_receiver_role)
     Serial.println(jsonString);
 }

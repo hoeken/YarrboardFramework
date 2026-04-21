@@ -103,4 +103,8 @@
     #define YB_PROTOCOL_MAX_COMMANDS 50
   #endif
 
+  #ifndef YB_FAST_UPDATE_MIN_INTERVAL_MS
+    #define YB_FAST_UPDATE_MIN_INTERVAL_MS 50
+  #endif
+
 #endif // YB_FRAMEWORK_CONFIG_H
