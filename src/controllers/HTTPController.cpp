@@ -275,15 +275,15 @@ void HTTPController::sendToAllWebsockets(const char* jsonString, UserRole auth_l
 
   // make sure we're allowed to see the message
   if (auth_level > _app.auth.getDefaultRole()) {
-    for (byte i = 0; i < YB_CLIENT_LIMIT; i++) {
-      if (_app.auth.authenticatedClients[i].socket) {
+    for (auto& authClient : _app.auth.getAuthenticatedClients()) {
+      if (authClient.socket) {
         // make sure its a valid client
         PsychicWebSocketClient* client =
-          websocketHandler.getClient(_app.auth.authenticatedClients[i].socket);
+          websocketHandler.getClient(authClient.socket);
         if (client == NULL)
           continue;
 
-        if (_app.auth.authenticatedClients[i].role >= auth_level) {
+        if (authClient.role >= auth_level) {
           if (xSemaphoreTake(sendMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
             client->sendMessage(jsonString);
             xSemaphoreGive(sendMutex);

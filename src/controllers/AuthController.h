@@ -30,8 +30,6 @@ class AuthController : public BaseController
   public:
     AuthController(YarrboardApp& app);
 
-    etl::vector<AuthenticatedClient, YB_CLIENT_LIMIT> authenticatedClients;
-
     bool setup() override;
 
     UserRole getUserRole(JsonVariantConst input, byte mode, int socket);
@@ -51,6 +49,7 @@ class AuthController : public BaseController
     const char* getAdminPass() const;
     UserRole getDefaultRole() const;
     UserRole getSerialRole() const;
+    const etl::vector<AuthenticatedClient, YB_CLIENT_LIMIT>& getAuthenticatedClients() const;
 
     void handleLogin(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleLogout(JsonVariantConst input, JsonVariant output, ProtocolContext context);
@@ -69,7 +68,8 @@ class AuthController : public BaseController
     char guest_pass[YB_PASSWORD_LENGTH];
     UserRole app_default_role;
     UserRole serial_role;
-    UserRole api_role;
+
+    etl::vector<AuthenticatedClient, YB_CLIENT_LIMIT> authenticatedClients;
 
     bool addClientToAuthList(int socket, UserRole role);
     bool isWebsocketClientLoggedIn(JsonVariantConst input, int socket);

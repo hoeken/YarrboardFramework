@@ -22,7 +22,7 @@ AuthController::AuthController(YarrboardApp& app) : BaseController(app, "auth")
   strlcpy(admin_pass, _app.default_admin_pass, sizeof(admin_pass));
   strlcpy(guest_user, _app.default_guest_user, sizeof(guest_user));
   strlcpy(guest_pass, _app.default_guest_pass, sizeof(guest_pass));
-  app_default_role = serial_role = api_role = _app.default_role;
+  app_default_role = serial_role = _app.default_role;
 }
 
 bool AuthController::setup()
@@ -81,8 +81,11 @@ UserRole AuthController::getUserRole(JsonVariantConst input, byte mode, int sock
   // login only required for websockets.
   if (mode == YBP_MODE_WEBSOCKET)
     return getWebsocketRole(input, socket);
-  else if (mode == YBP_MODE_HTTP)
-    return api_role;
+  else if (mode == YBP_MODE_HTTP) {
+    UserRole role = app_default_role;
+    checkLoginCredentials(input, role);
+    return role;
+  }
   else if (mode == YBP_MODE_SERIAL)
     return serial_role;
   else if (mode == YBP_MODE_MQTT) {
@@ -124,7 +127,7 @@ bool AuthController::checkLoginCredentials(JsonVariantConst doc, UserRole& role)
   char myuser[YB_USERNAME_LENGTH];
   char mypass[YB_PASSWORD_LENGTH];
   strlcpy(myuser, doc["user"] | "", sizeof(myuser));
-  strlcpy(mypass, doc["pass"] | "", sizeof(myuser));
+  strlcpy(mypass, doc["pass"] | "", sizeof(mypass));
 
   // morpheus... i'm in.
   if (!strcmp(admin_user, myuser) && !strcmp(admin_pass, mypass)) {
@@ -152,7 +155,8 @@ bool AuthController::isSerialClientLoggedIn(JsonVariantConst doc)
 
 bool AuthController::isApiClientLoggedIn(JsonVariantConst doc)
 {
-  return checkLoginCredentials(doc, api_role);
+  UserRole role = app_default_role;
+  return checkLoginCredentials(doc, role);
 }
 
 bool AuthController::addClientToAuthList(int socket, UserRole role)
@@ -237,6 +241,11 @@ UserRole AuthController::getSerialRole() const
   return serial_role;
 }
 
+const etl::vector<AuthenticatedClient, YB_CLIENT_LIMIT>& AuthController::getAuthenticatedClients() const
+{
+  return authenticatedClients;
+}
+
 void AuthController::handleLogin(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   if (!input["user"].is<String>())
@@ -272,6 +281,9 @@ void AuthController::handleLogout(JsonVariantConst input, JsonVariant output, Pr
   } else if (context.mode == YBP_MODE_SERIAL) {
     _app.auth.logSerialClientOut();
   }
+
+  output["msg"] = "logout";
+  output["message"] = "Logout successful.";
 }
 
 void AuthController::handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -321,8 +333,10 @@ void AuthController::handleSetAuthenticationConfig(JsonVariantConst input, JsonV
       app_default_role = ADMIN;
     else if (!strcmp(input["default_role"], "guest"))
       app_default_role = GUEST;
-    else
+    else if (!strcmp(input["default_role"], "nobody"))
       app_default_role = NOBODY;
+    else
+      return ProtocolController::generateErrorJSON(output, "Invalid 'default_role': must be 'admin', 'guest', or 'nobody'.");
   }
 
   char error[128] = "Unknown";
@@ -356,5 +370,5 @@ void AuthController::loadAuthConfig(JsonVariant config)
     else if (!strcmp(v, "guest"))
       app_default_role = GUEST;
   }
-  serial_role = api_role = app_default_role;
+  serial_role = app_default_role;
 }
