@@ -76,6 +76,7 @@ class YarrboardApp
 
     UserRole default_role = NOBODY;
     const char* default_melody = "STARTUP";
+    uint32_t config_version = 1;
 
     ConfigManager config;
     DebugController debug;

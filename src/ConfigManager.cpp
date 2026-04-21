@@ -26,9 +26,8 @@ bool ConfigManager::setup()
   strlcpy(_board_name, _app.board_name, sizeof(_board_name));
   strlcpy(_startup_melody, _app.default_melody, sizeof(_startup_melody));
 
-  _app_update_interval = _app.update_interval;
-
   _app_enable_mfd = _app.enable_mfd;
+  _config_version = _app.config_version;
 
   // our temporary preferences too.
   preferences.end(); // begin() returns false if already open.
@@ -173,9 +172,9 @@ void ConfigManager::generateBoardConfig(JsonVariant output)
 void ConfigManager::generateAppConfig(JsonVariant output)
 {
   // our identifying info
+  output["config_version"] = _config_version;
   output["is_first_boot"] = _is_first_boot;
   output["startup_melody"] = _startup_melody;
-  output["app_update_interval"] = _app_update_interval;
   output["app_enable_mfd"] = _app_enable_mfd;
   _app.ota.generateOTAConfig(output);
   _app.auth.generateAuthConfig(output);
@@ -296,18 +295,14 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
 {
   const char* v;
 
+  _config_version = config["config_version"] | _app.config_version;
+
   // determines if we do our improv loop or not.
   _is_first_boot = config["is_first_boot"] | false;
 
   // startup_melody
   v = config["startup_melody"] | _app.default_melody;
   strlcpy(_startup_melody, v, sizeof(_startup_melody));
-
-  if (config["app_update_interval"]) {
-    _app_update_interval = config["app_update_interval"] | _app.update_interval;
-    _app_update_interval = max(100u, _app_update_interval);
-    _app_update_interval = min(10000u, _app_update_interval);
-  }
 
   _app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
 

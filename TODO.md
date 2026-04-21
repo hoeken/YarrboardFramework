@@ -1,3 +1,11 @@
+## Refactors
+
+* Asymmetric delegation — MODERATE
+Board config uses hooks (loadConfigHook / generateConfigHook), but app config uses direct calls (loadAuthConfig(), generateOTAConfig(), etc.). Two different patterns for the same job creates confusion about which controllers need hooks and which don't.
+
+* Error propagation hole — MODERATE
+loadNetworkConfigFromJSON() can return false and propagate errors. loadAppConfigFromJSON() always returns true even if sub-component loads silently fail. Partial boot with broken config becomes invisible.
+
 ## Long Term
 
 * check out: https://github.com/trip5/ehdp

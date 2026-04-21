@@ -27,6 +27,7 @@ class YarrboardApp;
 class ConfigManager : public BaseController
 {
   public:
+    // Public to allow controllers direct access to the ESP32 Preferences API.
     Preferences preferences;
 
     ConfigManager(YarrboardApp& app);
@@ -68,15 +69,18 @@ class ConfigManager : public BaseController
     bool isAppMfdEnabled() const { return _app_enable_mfd; }
     void setAppMfdEnabled(bool v) { _app_enable_mfd = v; }
 
+    uint32_t getConfigVersion() const { return _config_version; }
+    void setConfigVersion(uint32_t v) { _config_version = v; }
+
   private:
     YarrboardApp& _app;
     bool _is_first_boot;
     char _board_name[YB_BOARD_NAME_LENGTH];
-    unsigned int _app_update_interval;
     String _app_theme = "light";
     float _global_brightness = 1.0;
-    char _startup_melody[YB_BOARD_NAME_LENGTH];
+    char _startup_melody[YB_MELODY_LENGTH];
     bool _app_enable_mfd;
+    uint32_t _config_version;
 };
 
 #endif
