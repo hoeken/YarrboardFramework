@@ -63,7 +63,10 @@ bool MQTTController::connect(bool waitBlocking)
   if (!_enable_mqtt)
     return true;
 
-  // this is our first try.
+  // Mark as first try so onError() can broadcast to ADMIN on failure.
+  // IMPORTANT: auto-reconnect is handled internally by PsychicMqttClient and does NOT
+  // call this method, so _firstConnection stays false after a successful connection.
+  // If reconnect logic is ever added to loop(), revisit this flag.
   _firstConnection = true;
 
   mqttClient.setServer(_mqtt_server);
@@ -109,17 +112,14 @@ void MQTTController::loop()
   // periodically update our mqtt / HomeAssistant status
   unsigned int messageDelta = millis() - previousMQTTMillis;
   if (messageDelta >= 1000) {
-    if (mqttClient.connected()) {
+    for (const auto& entry : _app.getControllers()) {
+      entry.controller->mqttUpdateHook(this);
+    }
 
+    // separately update our Home Assistant status
+    if (_enable_ha_integration) {
       for (const auto& entry : _app.getControllers()) {
-        entry.controller->mqttUpdateHook(this);
-      }
-
-      // separately update our Home Assistant status
-      if (_enable_ha_integration) {
-        for (const auto& entry : _app.getControllers()) {
-          entry.controller->haUpdateHook(this);
-        }
+        entry.controller->haUpdateHook(this);
       }
     }
 
@@ -155,7 +155,7 @@ void MQTTController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant out
 
 void MQTTController::generateStatsHook(JsonVariant output)
 {
-  output["mqtt_connected"] = _app.mqtt.isConnected();
+  output["mqtt_connected"] = isConnected();
 }
 
 bool MQTTController::loadMQTTConfig(JsonVariant config, char* error, size_t len)
@@ -189,8 +189,8 @@ void MQTTController::generateMQTTConfig(JsonVariant output)
   output["app_use_hostname_as_mqtt_uuid"] = _use_hostname_as_mqtt_uuid;
   output["mqtt_server"] = _mqtt_server;
   output["mqtt_user"] = _mqtt_user;
-  output["mqtt_pass"] = _mqtt_pass;
-  output["mqtt_cert"] = _mqtt_cert;
+  output["mqtt_pass"] = _mqtt_pass; // intentional plaintext
+  output["mqtt_cert"] = _mqtt_cert; // intentional plaintext
 }
 
 void MQTTController::disconnect()
@@ -219,7 +219,7 @@ void MQTTController::publish(const char* topic, const char* payload, bool use_pr
   // prefix it with yarrboard or nah?
   if (use_prefix) {
     char mqtt_path[256];
-    sprintf(mqtt_path, "yarrboard/%s/%s", _app.network.getLocalHostname(), topic);
+    snprintf(mqtt_path, sizeof(mqtt_path), "yarrboard/%s/%s", _app.network.getLocalHostname(), topic);
     ret = mqttClient.publish(mqtt_path, 0, 0, payload, strlen(payload), false);
     if (ret == -1)
       YBP.printf("[mqtt] Error publishing prefix path %s\n", mqtt_path);
@@ -242,7 +242,7 @@ void MQTTController::receiveMessage(const char* topic, const char* payload, int 
 
   if (err) {
     char error[64];
-    sprintf(error, "deserializeJson() failed with code %s", err.c_str());
+    snprintf(error, sizeof(error), "deserializeJson() failed with code %s", err.c_str());
     _app.protocol.generateErrorJSON(output, error);
   } else {
     ProtocolContext context;
@@ -265,7 +265,6 @@ void MQTTController::receiveMessage(const char* topic, const char* payload, int 
       this->publish("response", jsonBuffer);
       free(jsonBuffer);
     } else {
-      // dont call YBP b/c loops...
       YBP.println("Error allocating in MQTTController::receiveMessage");
     }
   }
@@ -292,7 +291,7 @@ void MQTTController::onConnect(bool sessionPresent)
   // on reconnect so there is no need to add a duplicate entry every reconnect.
   if (!_commandTopicRegistered) {
     char mqtt_path[128];
-    sprintf(mqtt_path, "yarrboard/%s/command", _app.network.getLocalHostname());
+    snprintf(mqtt_path, sizeof(mqtt_path), "yarrboard/%s/command", _app.network.getLocalHostname());
     mqttClient.onTopic(mqtt_path, 0, _receiveMessageStatic);
     _commandTopicRegistered = true;
   }
@@ -329,7 +328,7 @@ void MQTTController::onError(esp_mqtt_error_codes_t error)
     // send error message to ADMIN
     JsonDocument output;
     char errorMsg[128];
-    sprintf(errorMsg, "MQTT connection error: %d", error.error_type);
+    snprintf(errorMsg, sizeof(errorMsg), "MQTT connection error: %d", error.error_type);
     _app.protocol.generateErrorJSON(output, errorMsg);
 
     // send to all ADMIN clients
@@ -359,10 +358,10 @@ void MQTTController::haDiscovery()
 
   // how to structure our id?
   char ha_dev_uuid[128];
-  sprintf(ha_dev_uuid, "yarrboard_%s", getBoardKey());
+  snprintf(ha_dev_uuid, sizeof(ha_dev_uuid), "yarrboard_%s", getBoardKey());
 
   char topic[128];
-  sprintf(topic, "homeassistant/device/%s/config", ha_dev_uuid);
+  snprintf(topic, sizeof(topic), "homeassistant/device/%s/config", ha_dev_uuid);
 
   // this is our device information.
   JsonDocument doc;
@@ -374,7 +373,7 @@ void MQTTController::haDiscovery()
   device["sw"] = _app.firmware_version;
   device["sn"] = _app.network.getUUID();
   char config_url[128];
-  sprintf(config_url, "http://%s.local", _app.network.getLocalHostname());
+  snprintf(config_url, sizeof(config_url), "http://%s.local", _app.network.getLocalHostname());
   device["configuration_url"] = config_url;
 
   // our origin to let HA know where it came from.
@@ -441,7 +440,7 @@ void MQTTController::append_index_to_topic(char* buf, size_t& len, size_t cap, s
 {
   char ibuf[16];
   // Enough for size_t up to 64-bit
-  int n = snprintf(ibuf, sizeof(ibuf), "%u", static_cast<unsigned>(index));
+  int n = snprintf(ibuf, sizeof(ibuf), "%zu", index);
   (void)n; // silence -Wunused-result
   append_to_topic(buf, len, cap, ibuf);
 }
