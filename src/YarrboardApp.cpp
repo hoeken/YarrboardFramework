@@ -62,7 +62,7 @@ void YarrboardApp::_handleImprov()
 {
   // First boot mode?  That means we're doing ImprovWifi
   // we need to check improvDone because of race conditions.
-  if (config.is_first_boot && !network.improvDone) {
+  if (config.isFirstBoot() && !network.improvDone) {
     network.loop(); // Handle Improv serial communication
     return;
   }
@@ -95,7 +95,7 @@ void YarrboardApp::_handleImprov()
 void YarrboardApp::loop()
 {
   // for first boot.
-  if (config.is_first_boot || network.improvDone) {
+  if (config.isFirstBoot() || network.improvDone) {
     _handleImprov();
     return;
   }

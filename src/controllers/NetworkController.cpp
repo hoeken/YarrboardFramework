@@ -36,7 +36,7 @@ bool NetworkController::setup()
   // pin 0 is boot pin
   pinMode(YB_BOOT_PIN, INPUT);
 
-  if (_cfg.is_first_boot)
+  if (_cfg.isFirstBoot())
     setupImprov();
   else
     setupWifi();
@@ -46,7 +46,7 @@ bool NetworkController::setup()
 
 void NetworkController::loop()
 {
-  if (_cfg.is_first_boot) {
+  if (_cfg.isFirstBoot()) {
     improvSerial.handleSerial();
   }
 
@@ -159,7 +159,7 @@ void NetworkController::waitForBootPress()
         // Button is being held, check if 5 seconds have elapsed
         if (millis() - pressStartTime >= 5000) {
           YBP.println("Boot button held for 5 seconds - resetting to first boot");
-          _cfg.is_first_boot = true;
+          _cfg.setFirstBoot(true);
 
           char error[128];
           _cfg.saveConfig(error, sizeof(error));
@@ -388,7 +388,7 @@ void NetworkController::_handleImprovConnected(const char* ssid, const char* pas
   strlcpy(_wifi_pass, password, sizeof(_wifi_pass));
 
   // we're connected now.
-  _cfg.is_first_boot = false;
+  _cfg.setFirstBoot(false);
   improvDone = true;
 }
 
@@ -400,7 +400,7 @@ void NetworkController::handleGetNetworkConfig(JsonVariantConst input, JsonVaria
 
 void NetworkController::handleSetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
-  _cfg.is_first_boot = false;
+  _cfg.setFirstBoot(false);
 
   char error[128];
 

@@ -441,7 +441,7 @@ void ProtocolController::generateConfigMessage(JsonVariant output)
   output["boot_log"] = startupLogger.c_str();
 
   // do we want to flag it for config?
-  if (_cfg.is_first_boot)
+  if (_cfg.isFirstBoot())
     output["first_boot"] = true;
 }
 

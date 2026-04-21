@@ -16,7 +16,7 @@
 
 ConfigManager::ConfigManager(YarrboardApp& app) : BaseController(app, "config"),
                                                   _app(app),
-                                                  is_first_boot(true)
+                                                  _is_first_boot(true)
 {
 }
 
@@ -48,7 +48,7 @@ bool ConfigManager::setup()
   }
 
   // default to first time, prove it later
-  is_first_boot = true;
+  _is_first_boot = true;
 
   // initialize error string
   char error[YB_ERROR_LENGTH] = "";
@@ -181,7 +181,7 @@ void ConfigManager::generateBoardConfig(JsonVariant output)
 void ConfigManager::generateAppConfig(JsonVariant output)
 {
   // our identifying info
-  output["is_first_boot"] = is_first_boot;
+  output["is_first_boot"] = _is_first_boot;
   output["startup_melody"] = startup_melody;
   _app.auth.generateAuthConfig(output);
   output["app_update_interval"] = app_update_interval;
@@ -315,7 +315,7 @@ bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_
   const char* v;
 
   // determines if we do our improv loop or not.
-  is_first_boot = config["is_first_boot"] | false;
+  _is_first_boot = config["is_first_boot"] | false;
 
   // startup_melody
   v = config["startup_melody"] | _app.default_melody;

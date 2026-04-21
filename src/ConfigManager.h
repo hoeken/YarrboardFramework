@@ -28,7 +28,6 @@ class ConfigManager : public BaseController
 {
   public:
     Preferences preferences;
-    bool is_first_boot;
 
     char board_name[YB_BOARD_NAME_LENGTH];
     char startup_melody[YB_BOARD_NAME_LENGTH];
@@ -73,8 +72,12 @@ class ConfigManager : public BaseController
     void generateAppConfig(JsonVariant output);
     void generateNetworkConfig(JsonVariant output);
 
+    bool isFirstBoot() const { return _is_first_boot; }
+    void setFirstBoot(bool v) { _is_first_boot = v; }
+
   private:
     YarrboardApp& _app;
+    bool _is_first_boot;
 };
 
 #endif
