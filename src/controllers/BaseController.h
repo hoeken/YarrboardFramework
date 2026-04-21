@@ -25,13 +25,14 @@ class BaseController
 {
   public:
     BaseController(YarrboardApp& app, const char* name);
+    virtual ~BaseController() = default;
 
     bool start();
-    bool isStarted() { return _started; }
+    bool isStarted() const { return _started; }
 
     virtual bool setup() { return true; }
     virtual void loop() {}
-    const char* getName() { return _name; }
+    const char* getName() const { return _name; }
 
     virtual bool loadConfigHook(JsonVariant config, char* error, size_t len) { return true; };
     virtual void generateConfigHook(JsonVariant config) {};
@@ -43,11 +44,12 @@ class BaseController
     virtual void mqttUpdateHook(MQTTController* mqtt) {};
     virtual void haUpdateHook(MQTTController* mqtt) {};
     virtual void haGenerateDiscoveryHook(JsonVariant components, const char* uuid, MQTTController* mqtt) {};
+    // many boards control lights or have displays — brightness is a universal concept here
     virtual void updateBrightnessHook(float brightness) {};
 
   protected:
     YarrboardApp& _app;
-    ConfigManager& _cfg;
+    ConfigManager& _cfg; // ergonomic alias for _app.config — avoids repetitive _app.config. chains in subclasses
     const char* _name;
     bool _started = false;
 };

@@ -137,7 +137,7 @@ class ChannelController : public BaseController
       }
     }
 
-    bool needsFastUpdate()
+    bool needsFastUpdate() override
     {
       for (auto& ch : _channels) {
         if (ch.sendFastUpdate)

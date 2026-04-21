@@ -23,6 +23,8 @@ BaseController::BaseController(YarrboardApp& app, const char* name) : _app(app),
 
 bool BaseController::start()
 {
+  if (_started)
+    return true;
   _started = this->setup();
   return _started;
 }
