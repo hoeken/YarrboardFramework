@@ -16,24 +16,25 @@
 #include "YarrboardApp.h"
 #include "YarrboardConfig.h"
 #include "YarrboardDebug.h"
+#include "channels/BaseChannel.h"
 #include "controllers/BaseController.h"
 #include <Arduino.h>
+#include <type_traits>
 
 template <typename ChannelType, size_t COUNT>
 class ChannelController : public BaseController
 {
+    static_assert(std::is_base_of<BaseChannel, ChannelType>::value,
+      "ChannelType must derive from BaseChannel");
+
   protected:
     etl::array<ChannelType, COUNT> _channels;
 
   public:
     ChannelController(YarrboardApp& app, const char* name) : BaseController(app, name)
     {
-      // init everything with defaults
-      byte i = 0;
-      for (auto& ch : _channels) {
-        ch.init(i + 1);
-        i++;
-      }
+      for (size_t i = 0; i < COUNT; i++)
+        _channels[i].init(i + 1);
     }
 
     etl::array<ChannelType, COUNT>& getChannels()
@@ -188,9 +189,6 @@ class ChannelController : public BaseController
 
     ChannelType* getChannelById(uint8_t id)
     {
-      static_assert(std::is_base_of<BaseChannel, ChannelType>::value,
-        "ChannelType must derive from BaseChannel");
-
       for (auto& ch : _channels) {
         if (ch.id == id)
           return &ch;
@@ -200,9 +198,6 @@ class ChannelController : public BaseController
 
     ChannelType* getChannelByKey(const char* key)
     {
-      static_assert(std::is_base_of<BaseChannel, ChannelType>::value,
-        "ChannelType must derive from BaseChannel");
-
       for (auto& ch : _channels) {
         if (ch.key && key && !strcmp(key, ch.key))
           return &ch;
@@ -212,9 +207,6 @@ class ChannelController : public BaseController
 
     ChannelType* lookupChannel(JsonVariantConst input, JsonVariant output)
     {
-      static_assert(std::is_base_of<BaseChannel, ChannelType>::value,
-        "ChannelType must derive from BaseChannel");
-
       // Prefer 'id' if present
       JsonVariantConst vId = input["id"];
       JsonVariantConst vKey = input["key"];
