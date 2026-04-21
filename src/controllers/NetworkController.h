@@ -43,7 +43,10 @@ class NetworkController : public BaseController
     IPAddress apIP;
     bool improvDone = false;
 
+    const char* getUUID() const { return _uuid; }
+
   private:
+    char _uuid[YB_UUID_LENGTH] = {};
     ImprovWiFi improvSerial;
 
 #ifdef IMPROV_WIFI_BLE_ENABLED

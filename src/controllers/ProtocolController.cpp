@@ -217,7 +217,7 @@ void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant outp
 {
   // some basic statistics and info
   output["msg"] = "stats";
-  output["uuid"] = _cfg.uuid;
+  output["uuid"] = _app.network.getUUID();
   output["received_message_total"] = totalReceivedMessages;
   output["received_message_mps"] = receivedMessagesPerSecond;
   output["sent_message_total"] = totalSentMessages;

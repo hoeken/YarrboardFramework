@@ -40,8 +40,6 @@ class ConfigManager : public BaseController
     char wifi_subnet[YB_IP_ADDRESS_LENGTH] = "";
     char wifi_dns1[YB_IP_ADDRESS_LENGTH] = "";
     char wifi_dns2[YB_IP_ADDRESS_LENGTH] = "";
-    char uuid[YB_UUID_LENGTH];
-
     char board_name[YB_BOARD_NAME_LENGTH];
     char startup_melody[YB_BOARD_NAME_LENGTH];
     char admin_user[YB_USERNAME_LENGTH];
@@ -65,8 +63,8 @@ class ConfigManager : public BaseController
     UserRole app_default_role;
     UserRole serial_role;
     UserRole api_role;
-    String app_theme = "light";
-    float globalBrightness = 1.0;
+    String app_theme = "light";    // runtime-only, not persisted
+    float globalBrightness = 1.0; // runtime-only, not persisted
 
     String server_cert;
     String server_key;

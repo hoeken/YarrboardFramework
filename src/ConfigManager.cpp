@@ -157,7 +157,7 @@ void ConfigManager::generateBoardConfig(JsonVariant output)
 {
   // our identifying info
   output["name"] = board_name;
-  output["uuid"] = uuid;
+  output["uuid"] = _app.network.getUUID();
   output["firmware_version"] = _app.firmware_version;
   output["hardware_version"] = _app.hardware_version;
   output["hardware_url"] = _app.hardware_url;

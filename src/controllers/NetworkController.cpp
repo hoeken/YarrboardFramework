@@ -28,7 +28,7 @@ bool NetworkController::setup()
   _instance = this; // Capture the instance for callbacks
 
   uint64_t chipid = ESP.getEfuseMac(); // unique 48-bit MAC base ID
-  snprintf(_cfg.uuid, sizeof(_cfg.uuid), "%04X%08lX", (uint16_t)(chipid >> 32), (uint32_t)chipid);
+  snprintf(_uuid, sizeof(_uuid), "%04X%08lX", (uint16_t)(chipid >> 32), (uint32_t)chipid);
 
   // pin 0 is boot pin
   pinMode(YB_BOOT_PIN, INPUT);

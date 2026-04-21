@@ -314,7 +314,7 @@ const char* MQTTController::getBoardKey()
   if (_cfg.app_use_hostname_as_mqtt_uuid)
     return _cfg.local_hostname;
   else
-    return _cfg.uuid;
+    return _app.network.getUUID();
 }
 
 void MQTTController::haDiscovery()
@@ -337,7 +337,7 @@ void MQTTController::haDiscovery()
   device["mf"] = _app.manufacturer;
   device["mdl"] = _app.hardware_version;
   device["sw"] = _app.firmware_version;
-  device["sn"] = _cfg.uuid;
+  device["sn"] = _app.network.getUUID();
   char config_url[128];
   sprintf(config_url, "http://%s.local", _cfg.local_hostname);
   device["configuration_url"] = config_url;
