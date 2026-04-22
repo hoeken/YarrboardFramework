@@ -27,7 +27,6 @@ bool NetworkController::setup()
 {
   _instance = this; // Capture the instance for callbacks
 
-  _app.protocol.registerCommand(ADMIN, "get_network_config", this, &NetworkController::handleGetNetworkConfig);
   _app.protocol.registerCommand(ADMIN, "set_network_config", this, &NetworkController::handleSetNetworkConfig);
 
   uint64_t chipid = ESP.getEfuseMac(); // unique 48-bit MAC base ID
@@ -51,7 +50,7 @@ void NetworkController::loop()
   }
 }
 
-bool NetworkController::loadNetworkConfig(JsonVariant config, char* error, size_t len)
+bool NetworkController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
 {
   const char* v;
 
@@ -87,17 +86,7 @@ bool NetworkController::loadNetworkConfig(JsonVariant config, char* error, size_
   return true;
 }
 
-bool NetworkController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
-{
-  return loadNetworkConfig(config, error, len);
-}
-
 void NetworkController::generateAdminConfigHook(JsonVariant output)
-{
-  generateNetworkConfig(output);
-}
-
-void NetworkController::generateNetworkConfig(JsonVariant output)
 {
   output["wifi_mode"] = _wifi_mode;
   output["wifi_ssid"] = _wifi_ssid;
@@ -393,12 +382,6 @@ void NetworkController::_handleImprovConnected(const char* ssid, const char* pas
   // we're connected now.
   _cfg.setFirstBoot(false);
   improvDone = true;
-}
-
-void NetworkController::handleGetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
-{
-  output["msg"] = "network_config";
-  generateNetworkConfig(output);
 }
 
 void NetworkController::handleSetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)

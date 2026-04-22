@@ -46,8 +46,6 @@ class HTTPController : public BaseController
     bool setup() override;
     void loop() override;
 
-    void generateHTTPConfig(JsonVariant output);
-    void loadHTTPConfig(JsonVariantConst config);
     bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
     void generateAdminConfigHook(JsonVariant output) override;
 

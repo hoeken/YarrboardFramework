@@ -41,11 +41,10 @@ class OTAController : public BaseController
     bool validate_firmware = true;
     const char* public_key = "";
 
-    void loadOTAConfig(JsonVariantConst config);
-    void generateOTAConfig(JsonVariant output);
     bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
     void generateAdminConfigHook(JsonVariant output) override;
     bool isEnabled() const { return _enable_ota; }
+    void setEnabled(bool v) { _enable_ota = v; }
 
   private:
     bool _enable_ota = false;

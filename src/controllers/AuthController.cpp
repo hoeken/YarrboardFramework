@@ -346,26 +346,6 @@ void AuthController::handleSetAuthenticationConfig(JsonVariantConst input, JsonV
 
 bool AuthController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
 {
-  loadAuthConfig(config);
-  return true;
-}
-
-void AuthController::generateAdminConfigHook(JsonVariant output)
-{
-  generateAuthConfig(output);
-}
-
-void AuthController::generateAuthConfig(JsonVariant output)
-{
-  output["default_role"] = getRoleText(app_default_role);
-  output["admin_user"] = admin_user;
-  output["admin_pass"] = admin_pass;
-  output["guest_user"] = guest_user;
-  output["guest_pass"] = guest_pass;
-}
-
-void AuthController::loadAuthConfig(JsonVariant config)
-{
   strlcpy(admin_user, config["admin_user"] | _app.default_admin_user, sizeof(admin_user));
   strlcpy(admin_pass, config["admin_pass"] | _app.default_admin_pass, sizeof(admin_pass));
   strlcpy(guest_user, config["guest_user"] | _app.default_guest_user, sizeof(guest_user));
@@ -382,4 +362,14 @@ void AuthController::loadAuthConfig(JsonVariant config)
       app_default_role = GUEST;
   }
   serial_role = app_default_role;
+  return true;
+}
+
+void AuthController::generateAdminConfigHook(JsonVariant output)
+{
+  output["default_role"] = getRoleText(app_default_role);
+  output["admin_user"] = admin_user;
+  output["admin_pass"] = admin_pass;
+  output["guest_user"] = guest_user;
+  output["guest_pass"] = guest_pass;
 }

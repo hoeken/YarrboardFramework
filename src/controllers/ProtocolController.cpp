@@ -297,12 +297,13 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
 
 void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
+  char error[128] = "Unknown";
+
   _enable_serial = input["app_enable_serial"] | _app.enable_serial_api;
   _app_enable_mfd = input["app_enable_mfd"] | _app.enable_mfd;
-  _app.ota.loadOTAConfig(input);
+  _app.ota.setEnabled(input["app_enable_ota"] | _app.enable_arduino_ota);
 
   // save it to file.
-  char error[128] = "Unknown";
   if (!_cfg.saveConfig(error, sizeof(error)))
     return generateErrorJSON(output, error);
 

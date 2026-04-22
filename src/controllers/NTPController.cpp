@@ -86,17 +86,6 @@ void NTPController::generateStatsHook(JsonVariant output)
 
 bool NTPController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
 {
-  loadNTPConfig(config);
-  return true;
-}
-
-void NTPController::generateAdminConfigHook(JsonVariant output)
-{
-  generateNTPConfig(output);
-}
-
-void NTPController::loadNTPConfig(JsonVariantConst config)
-{
   const char* v;
   v = config["ntp_server1"] | "pool.ntp.org";
   strlcpy(_ntp_server1, v, sizeof(_ntp_server1));
@@ -104,9 +93,10 @@ void NTPController::loadNTPConfig(JsonVariantConst config)
   strlcpy(_ntp_server2, v, sizeof(_ntp_server2));
   _gmt_offset_sec = config["gmt_offset_sec"] | 0L;
   _daylight_offset_sec = config["daylight_offset_sec"] | 0;
+  return true;
 }
 
-void NTPController::generateNTPConfig(JsonVariant output)
+void NTPController::generateAdminConfigHook(JsonVariant output)
 {
   output["ntp_server1"] = _ntp_server1;
   output["ntp_server2"] = _ntp_server2;

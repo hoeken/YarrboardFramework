@@ -22,29 +22,19 @@ HTTPController::HTTPController(YarrboardApp& app) : BaseController(app, "http")
 
 bool HTTPController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
 {
-  loadHTTPConfig(config);
+  _app_enable_api = config["app_enable_api"] | _app.enable_http_api;
+  _app_enable_ssl = config["app_enable_ssl"] | _app.enable_ssl;
+  _server_cert = config["server_cert"] | "";
+  _server_key = config["server_key"] | "";
   return true;
 }
 
 void HTTPController::generateAdminConfigHook(JsonVariant output)
 {
-  generateHTTPConfig(output);
-}
-
-void HTTPController::generateHTTPConfig(JsonVariant output)
-{
   output["app_enable_api"] = _app_enable_api;
   output["app_enable_ssl"] = _app_enable_ssl;
   output["server_cert"] = _server_cert;
   output["server_key"] = _server_key;
-}
-
-void HTTPController::loadHTTPConfig(JsonVariantConst config)
-{
-  _app_enable_api = config["app_enable_api"] | _app.enable_http_api;
-  _app_enable_ssl = config["app_enable_ssl"] | _app.enable_ssl;
-  _server_cert = config["server_cert"] | "";
-  _server_key = config["server_key"] | "";
 }
 
 esp_err_t HTTPController::sendJsonResponse(PsychicResponse* response, JsonDocument& doc, const char* contentType)

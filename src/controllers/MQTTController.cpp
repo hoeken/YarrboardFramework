@@ -160,16 +160,6 @@ void MQTTController::generateStatsHook(JsonVariant output)
 
 bool MQTTController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
 {
-  return loadMQTTConfig(config, error, len);
-}
-
-void MQTTController::generateAdminConfigHook(JsonVariant output)
-{
-  generateMQTTConfig(output);
-}
-
-bool MQTTController::loadMQTTConfig(JsonVariant config, char* error, size_t len)
-{
   const char* v;
 
   v = config["mqtt_server"] | "";
@@ -191,7 +181,7 @@ bool MQTTController::loadMQTTConfig(JsonVariant config, char* error, size_t len)
   return true;
 }
 
-void MQTTController::generateMQTTConfig(JsonVariant output)
+void MQTTController::generateAdminConfigHook(JsonVariant output)
 {
   output["app_enable_mqtt"] = _enable_mqtt;
   output["app_enable_mqtt_protocol"] = _enable_mqtt_protocol;
