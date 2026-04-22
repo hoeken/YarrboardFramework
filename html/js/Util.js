@@ -266,9 +266,9 @@
     },
 
     populateMelodySelector: function (select) {
-      if (YB.App.config.melodies) {
+      if (YB.capabilities.buzzer && YB.capabilities.buzzer.melodies) {
         // select.empty();
-        YB.App.config.melodies.forEach(m => {
+        YB.capabilities.buzzer.melodies.forEach(m => {
           $("<option>")
             .val(m)
             .text(YB.Util.humanizeText(m))

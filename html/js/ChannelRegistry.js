@@ -123,7 +123,7 @@
 
         //handle each individual channels setup
         let editContent = "";
-        for (var channel_config of cfg[ctype]) {
+        for (var channel_config of cfg[ctype]["channels"]) {
           let ch = this.channelFromConfig(channel_config, ctype);
 
           let ui_card = ch.generateControlUI();
@@ -140,7 +140,7 @@
         let panel = YB.App.getSettingsPanel(ctype)
         if (panel) {
           panel.setContent(`<div class="row">${editContent}</div>`);
-          for (var channel_config of cfg[ctype]) {
+          for (var channel_config of cfg[ctype]["channels"]) {
             let ch = this.getChannelById(channel_config.id, ctype);
             ch.setupEditUI();
           }

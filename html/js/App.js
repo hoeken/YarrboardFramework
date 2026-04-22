@@ -277,15 +277,11 @@
 
     loadConfigs: function () {
       if (YB.App.role == "nobody") {
-        YB.App.config = {}; // empty config so our login page loads.
+        YB.config = {}; // empty config so our login page loads.
         return;
       }
 
       YB.client.getConfig();
-
-      // if (YB.App.role == "admin") {
-      //   YB.client.send({ "cmd": "get_full_config" });
-      // }
     },
 
     checkConnectionStatus: function () {
@@ -390,7 +386,7 @@
         a.href = url;
         const today = new Date();
         const dateStr = today.toISOString().split('T')[0];
-        a.download = `${YB.App.config.hostname}_${YB.App.config.uuid}_${dateStr}_config.json`;
+        a.download = `${YB.config.network.hostname}_${YB.config.network.uuid}_${dateStr}_config.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -563,11 +559,11 @@
       };
 
       // Only add startup_melody validation if melodies config exists
-      if (YB.App.config.melodies) {
+      if (YB.capabilities.buzzer && YB.capabilities.buzzer.melodies) {
         schema.startup_melody = {
           presence: { allowEmpty: true },
           inclusion: {
-            within: YB.App.config.melodies,
+            within: YB.capabilities.buzzer.melodies,
             message: "^Invalid melody selection"
           }
         };
@@ -817,7 +813,7 @@
       YB.Util.flashClass($("#saveMQTTSettings"), "btn-success");
 
       //we dont need a full config refresh
-      YB.App.config.enable_mqtt = settings.app_enable_mqtt;
+      YB.config.mqtt.enable_mqtt = settings.app_enable_mqtt;
 
       // okay, send it off
       YB.client.send({
@@ -1027,17 +1023,17 @@
 
     checkForUpdates: function () {
       //did we get a config yet?
-      if (YB.App.config) {
+      if (YB.yarrboard) {
         //dont look up firmware if we're in development mode.
-        if (YB.App.config.is_development) {
+        if (YB.yarrboard.is_development) {
           $("#firmware_checking").html("Development Mode, automatic firmware checking disabled.")
           return;
         }
 
         //check them if we got em.
-        if (YB.App.config.firmware_manifest_url && YB.App.config.firmware_manifest_url.length) {
+        if (YB.yarrboard.firmware_manifest_url && YB.yarrboard.firmware_manifest_url.length) {
           $.ajax({
-            url: YB.App.config.firmware_manifest_url,
+            url: YB.yarrboard.firmware_manifest_url,
             cache: false,
             dataType: "json"
           })
@@ -1057,7 +1053,7 @@
       //did we get anything?
       let data;
       for (let firmware of jdata)
-        if (firmware.type == YB.App.config.hardware_version)
+        if (firmware.type == YB.yarrboard.hardware_version)
           data = firmware;
 
       if (!data) {
@@ -1068,7 +1064,7 @@
       $("#firmware_checking").hide();
 
       //do we have a new version?
-      if (YB.Util.compareVersions(data.version, YB.App.config.firmware_version)) {
+      if (YB.Util.compareVersions(data.version, YB.yarrboard.firmware_version)) {
 
         //big changelogs are saved as markdown files.
         if (data.changelog) {
@@ -1153,7 +1149,7 @@
 
     openDefaultPage: function () {
       //wait for our config.
-      if (!YB.App.config || typeof YB.App.config !== 'object') {
+      if (!YB.config || typeof YB.config !== 'object') {
         setTimeout(YB.App.openDefaultPage, 50);
         return;
       }
@@ -1285,25 +1281,27 @@
     },
 
     handleConfigMessage: function (msg) {
-      YB.log("config");
-      console.log(msg);
+      // YB.log("config");
+      // console.log(msg);
 
-      YB.App.config = msg;
+      YB.yarrboard = msg.yarrboard;
+      YB.capabilities = msg.capabilities;
+      YB.config = msg.config;
 
       //we can check for new firmware now.
       YB.App.checkForUpdates();
 
       //did we get a crash?
-      if (msg.has_coredump)
+      if (YB.config.debug.has_coredump)
         YB.App.showAdminAlert(/*html*/ `
           <p>Oops, looks like Yarrboard crashed.</p>
-          <p>Please download the <a href="/coredump.bin" target="_blank">coredump</a> and report it to our <a href="${msg.git_url}/issues">Github Issue Tracker</a> along with the following information:</p>
-          <ul><li>Firmware: ${msg.firmware_version}</li><li>Hardware: ${msg.hardware_version}</li></ul>
+          <p>Please download the <a href="/coredump.bin" target="_blank">coredump</a> and report it to our <a href="${YB.yarrboard.git_url}/issues">Github Issue Tracker</a> along with the following information:</p>
+          <ul><li>Firmware: ${YB.yarrboard.firmware_version}</li><li>Hardware: ${YB.yarrboard.hardware_version}</li></ul>
         `, "danger");
 
       //send our boot log
-      if (msg.boot_log) {
-        var lines = msg.boot_log.split("\n");
+      if (YB.config.debug.boot_log) {
+        var lines = YB.config.debug.boot_log.split("\n");
         for (let line of lines) {
           line = line.trim();
           if (line)
@@ -1312,14 +1310,14 @@
       }
 
       //let the people choose their own names!
-      YB.App.updateBoardName(msg.name);
+      YB.App.updateBoardName(YB.config.config.name);
 
       //all our versions
-      $("#firmware_version").html(`v${msg.firmware_version}`);
+      $("#firmware_version").html(`v${YB.yarrboard.firmware_version}`);
 
       //do we have git configured?
-      if (msg.git_hash) {
-        let clean_hash = msg.git_hash;
+      if (YB.yarrboard.git_hash) {
+        let clean_hash = YB.yarrboard.git_hash;
         let is_dirty = false;
         if (clean_hash.endsWith("-dirty")) {
           is_dirty = true;
@@ -1329,45 +1327,48 @@
         if (is_dirty)
           short_hash += "-dirty";
 
-        if (msg.git_url)
-          $("#git_hash").html(`<a href="${msg.git_url}/commit/${clean_hash}">${short_hash}</a>`);
+        if (YB.yarrboard.git_url)
+          $("#git_hash").html(`<a href="${YB.yarrboard.git_url}/commit/${clean_hash}">${short_hash}</a>`);
         else
           $("#git_hash").html(`${short_hash}`);
       }
 
       //various other component versions
-      $("#build_time").html(msg.build_time);
-      if (msg.hardware_url && msg.hardware_url.length)
-        $("#hardware_version").html(`<a href="${msg.hardware_url}">${msg.hardware_version}</a>`);
+      $("#build_time").html(YB.yarrboard.build_time);
+      if (YB.yarrboard.hardware_url && YB.yarrboard.hardware_url.length)
+        $("#hardware_version").html(`<a href="${YB.yarrboard.hardware_url}">${YB.yarrboard.hardware_version}</a>`);
       else
-        $("#hardware_version").html(msg.hardware_version);
-      $("#esp_idf_version").html(`${msg.esp_idf_version}`);
-      $("#arduino_version").html(`v${msg.arduino_version}`);
-      $("#yarrboard_framework_version").html(`v${msg.yarrboard_framework_version}`);
-      $("#psychic_http_version").html(`v${msg.psychic_http_version}`);
+        $("#hardware_version").html(YB.yarrboard.hardware_version);
+      $("#esp_idf_version").html(`${YB.yarrboard.esp_idf_version}`);
+      $("#arduino_version").html(`v${YB.yarrboard.arduino_version}`);
+      $("#yarrboard_framework_version").html(`v${YB.yarrboard.yarrboard_framework_version}`);
+      $("#psychic_http_version").html(`v${YB.yarrboard.psychic_http_version}`);
       $("#yarrboard_client_version").html(`v${YarrboardClient.version}`);
 
       //update our footer
       $('#projectName')
-        .attr('href', msg.project_url)
-        .text(msg.project_name);
+        .attr('href', YB.yarrboard.project_url)
+        .text(YB.yarrboard.project_name);
       $('#year').text(new Date().getFullYear());
 
       //show some info about restarts
-      if (msg.last_restart_reason)
-        $("#last_reboot_reason").html(msg.last_restart_reason);
+      if (YB.config.debug.last_restart_reason)
+        $("#last_reboot_reason").html(YB.config.debug.last_restart_reason);
       else
         $("#last_reboot_reason").parent().hide();
 
-      YB.ChannelRegistry.loadAllChannels(msg);
+      YB.ChannelRegistry.loadAllChannels(YB.config);
 
       //did we get brightness?
-      if (msg.brightness && !YB.App.currentlyPickingBrightness)
-        $('#brightnessSlider').val(Math.round(msg.brightness * 100));
+      if (YB.config.config.brightness && !YB.App.currentlyPickingBrightness)
+        $('#brightnessSlider').val(Math.round(YB.config.config.brightness * 100));
 
       YB.App.applyMFDVisibility();
 
       YB.Util.populateMelodySelector($("#startup_melody"));
+
+      if (YB.App.role == "admin")
+        YB.App.handleAdminConfigMessage();
 
       //ready!
       let settingsPage = YB.App.getPage('settings');
@@ -1380,7 +1381,7 @@
       // YB.log(msg);
 
       //we need a config loaded.
-      if (!YB.App.config)
+      if (!YB.config)
         return;
 
       YB.ChannelRegistry.updateAllChannels(msg);
@@ -1396,7 +1397,7 @@
       //YB.log("stats");
 
       //we need this
-      if (!YB.App.config)
+      if (!YB.config)
         return;
 
       YB.ChannelRegistry.updateAllStats(msg);
@@ -1460,7 +1461,7 @@
       $("#ip_address").html(msg.ip_address);
 
       //our mqtt?
-      if (YB.App.config.enable_mqtt) {
+      if (YB.config.mqtt.enable_mqtt) {
         if (msg.mqtt_connected)
           $("#mqtt_status").html(`<span class="text-success">Connected</span>`);
         else
@@ -1484,8 +1485,8 @@
     },
 
     handleFullConfigMessage: function (msg) {
-      YB.log("full config");
-      console.log(msg);
+      // YB.log("full config");
+      // console.log(msg);
 
       //load our config
       const textarea = document.getElementById('configurationTextarea');
@@ -1493,50 +1494,45 @@
       textarea.value = prettyJSON;
     },
 
-    handleAdminConfigMessage: function (msg) {
-      YB.log("admin config");
-      console.log(msg);
+    handleAdminConfigMessage: function () {
 
       //update some ui stuff
       YB.App.updateRoleUI();
-      YB.App.toggleRolePasswords(msg.default_role);
-
-      //what is our update interval?
-      if (msg.app_update_interval)
-        YB.App.updateInterval = msg.app_update_interval;
+      YB.App.toggleRolePasswords(YB.config.auth.default_role);
 
       //for our melodies
-      if (YB.App.config.melodies)
-        $('#startup_melody').val(msg.startup_melody);
-      else
-        $("#startup_melody").parent().hide();
+      if (YB.capabilities.buzzer) {
+        if (YB.capabilities.buzzer.melodies)
+          $('#startup_melody').val(YB.config.buzzer.startup_melody);
+        else
+          $("#startup_melody").parent().hide();
+      }
 
       //YB.log(msg);
-      $("#admin_user").val(msg.admin_user);
-      $("#admin_pass").val(msg.admin_pass);
-      $("#guest_user").val(msg.guest_user);
-      $("#guest_pass").val(msg.guest_pass);
-      $("#app_update_interval").val(msg.app_update_interval);
-      $("#default_role").val(msg.default_role);
+      $("#admin_user").val(YB.config.auth.admin_user);
+      $("#admin_pass").val(YB.config.auth.admin_pass);
+      $("#guest_user").val(YB.config.auth.guest_user);
+      $("#guest_pass").val(YB.config.auth.guest_pass);
+      $("#default_role").val(YB.config.auth.default_role);
       $("#default_role").off("change").change(function () { YB.App.toggleRolePasswords($(this).val()) });
-      $("#app_enable_mfd").prop("checked", msg.app_enable_mfd);
-      $("#app_enable_api").prop("checked", msg.app_enable_api);
-      $("#app_enable_serial").prop("checked", msg.app_enable_serial);
-      $("#app_enable_ota").prop("checked", msg.app_enable_ota);
+      $("#app_enable_mfd").prop("checked", YB.config.navico.app_enable_mfd);
+      $("#app_enable_api").prop("checked", YB.config.http.app_enable_api);
+      $("#app_enable_serial").prop("checked", YB.config.protocol.app_enable_serial);
+      $("#app_enable_ota").prop("checked", YB.config.ota.app_enable_ota);
 
-      $("#wifi_mode").val(msg.wifi_mode);
-      $("#wifi_ssid").val(msg.wifi_ssid);
-      $("#wifi_pass").val(msg.wifi_pass);
-      $("#local_hostname").val(msg.local_hostname);
+      $("#wifi_mode").val(YB.config.network.wifi_mode);
+      $("#wifi_ssid").val(YB.config.network);
+      $("#wifi_pass").val(YB.config.network.wifi_pass);
+      $("#local_hostname").val(YB.config.network.local_hostname);
 
-      const useStatic = msg.wifi_use_static_ip === true;
+      const useStatic = YB.config.network.wifi_use_static_ip === true;
       $("#wifi_use_static_ip").prop("checked", useStatic);
       $("#staticIPFields").toggle(useStatic);
-      $("#wifi_static_ip").val(msg.wifi_static_ip || "");
-      $("#wifi_gateway").val(msg.wifi_gateway || "");
-      $("#wifi_subnet").val(msg.wifi_subnet || "");
-      $("#wifi_dns1").val(msg.wifi_dns1 || "");
-      $("#wifi_dns2").val(msg.wifi_dns2 || "");
+      $("#wifi_static_ip").val(YB.config.network.wifi_static_ip || "");
+      $("#wifi_gateway").val(YB.config.network.wifi_gateway || "");
+      $("#wifi_subnet").val(YB.config.network.wifi_subnet || "");
+      $("#wifi_dns1").val(YB.config.network.wifi_dns1 || "");
+      $("#wifi_dns2").val(YB.config.network.wifi_dns2 || "");
 
       // wire the toggle (once, idempotent via .off/.on)
       $("#wifi_use_static_ip").off("change.staticip").on("change.staticip", function () {
@@ -1544,12 +1540,12 @@
       });
 
       //for our ssl stuff
-      $("#app_enable_ssl").prop("checked", msg.app_enable_ssl);
-      $("#server_cert").val(msg.server_cert);
-      $("#server_key").val(msg.server_key);
+      $("#app_enable_ssl").prop("checked", YB.config.http.app_enable_ssl);
+      $("#server_cert").val(YB.config.http.server_cert);
+      $("#server_key").val(YB.config.http.server_key);
 
       //hide/show these guys
-      if (msg.app_enable_ssl) {
+      if (YB.config.http.app_enable_ssl) {
         $("#server_cert_container").show();
         $("#server_key_container").show();
       }
@@ -1567,17 +1563,17 @@
       });
 
       //for our mqtt stuff
-      $("#app_enable_mqtt").prop("checked", msg.app_enable_mqtt);
-      $("#app_enable_mqtt_protocol").prop("checked", msg.app_enable_mqtt_protocol);
-      $("#app_enable_ha_integration").prop("checked", msg.app_enable_ha_integration);
-      $("#app_use_hostname_as_mqtt_uuid").prop("checked", msg.app_use_hostname_as_mqtt_uuid);
-      $("#mqtt_server").val(msg.mqtt_server);
-      $("#mqtt_user").val(msg.mqtt_user);
-      $("#mqtt_pass").val(msg.mqtt_pass);
-      $("#mqtt_cert").val(msg.mqtt_cert);
+      $("#app_enable_mqtt").prop("checked", YB.config.mqtt.app_enable_mqtt);
+      $("#app_enable_mqtt_protocol").prop("checked", YB.config.mqtt.app_enable_mqtt_protocol);
+      $("#app_enable_ha_integration").prop("checked", YB.config.mqtt.app_enable_ha_integration);
+      $("#app_use_hostname_as_mqtt_uuid").prop("checked", YB.config.mqtt.app_use_hostname_as_mqtt_uuid);
+      $("#mqtt_server").val(YB.config.mqtt.mqtt_server);
+      $("#mqtt_user").val(YB.config.mqtt.mqtt_user);
+      $("#mqtt_pass").val(YB.config.mqtt.mqtt_pass);
+      $("#mqtt_cert").val(YB.config.mqtt.mqtt_cert);
 
       //hide/show these guys
-      if (msg.app_enable_mqtt) {
+      if (YB.config.mqtt.app_enable_mqtt) {
         $(".mqtt_field").show();
       }
 
@@ -1591,10 +1587,6 @@
           $(".mqtt_field").hide();
         }
       });
-
-      let settingsPage = YB.App.getPage('settings');
-      if (settingsPage)
-        settingsPage.ready = true;
     },
 
     handleOTAProgressMessage: function (msg) {
@@ -2006,7 +1998,6 @@
   YB.App.onMessage("update", YB.App.handleUpdateMessage);
   YB.App.onMessage("stats", YB.App.handleStatsMessage);
   YB.App.onMessage("full_config", YB.App.handleFullConfigMessage);
-  YB.App.onMessage("admin_config", YB.App.handleAdminConfigMessage);
   YB.App.onMessage("ota_progress", YB.App.handleOTAProgressMessage);
   YB.App.onMessage("ota_finished", YB.App.handleOTAFinishedMessage);
   YB.App.onMessage("error", YB.App.handleErrorMessage);
