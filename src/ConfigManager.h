@@ -50,6 +50,11 @@ class ConfigManager : public BaseController
     void generateFullConfig(JsonVariant output);
     void generateGuestConfig(JsonVariant output);
     void generateAdminConfig(JsonVariant output);
+    void generateConfigHook(JsonVariant output) override;
+    void generateAdminConfigHook(JsonVariant output) override;
+
+    bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
+    bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
 
     bool isFirstBoot() const { return _is_first_boot; }
     void setFirstBoot(bool v) { _is_first_boot = v; }

@@ -119,11 +119,21 @@ void ConfigManager::generateFullConfig(JsonVariant output)
   generateAdminConfig(admin);
 }
 
+void ConfigManager::generateConfigHook(JsonVariant output)
+{
+  output["name"] = _board_name;
+}
+
+bool ConfigManager::loadConfigHook(JsonVariant config, char* error, size_t len)
+{
+  const char* v = config["name"] | _app.board_name;
+  strlcpy(_board_name, v, sizeof(_board_name));
+  return true;
+}
 
 void ConfigManager::generateGuestConfig(JsonVariant output)
 {
-  // name is owned by ConfigManager; it lives at guest root, not under a sub-key
-  output["name"] = _board_name;
+  generateConfigHook(output);
 
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
@@ -131,10 +141,20 @@ void ConfigManager::generateGuestConfig(JsonVariant output)
   }
 }
 
+void ConfigManager::generateAdminConfigHook(JsonVariant output)
+{
+  output["is_first_boot"] = _is_first_boot;
+}
+
+bool ConfigManager::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+{
+  _is_first_boot = config["is_first_boot"] | false;
+  return true;
+}
+
 void ConfigManager::generateAdminConfig(JsonVariant output)
 {
-  // is_first_boot lives at admin root
-  output["is_first_boot"] = _is_first_boot;
+  generateAdminConfigHook(output);
 
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
@@ -210,13 +230,13 @@ bool ConfigManager::loadConfigFromJSON(JsonVariant config, char* error, size_t l
 {
   int schemaVersion = config["schema_version"] | 0;
 
-  if (schemaVersion > 2) {
-    snprintf(error, len, "Unsupported schema_version: %d", schemaVersion);
-    return false;
+  if (schemaVersion == 1) {
+    return loadV1Config(config, error, len);
   } else if (schemaVersion == 2) {
     return loadV2Config(config, error, len);
   } else {
-    return loadV1Config(config, error, len);
+    snprintf(error, len, "Unsupported schema_version: %d", schemaVersion);
+    return false;
   }
 }
 
@@ -234,7 +254,6 @@ bool ConfigManager::loadV2Config(JsonVariant config, char* error, size_t len)
   }
 
   if (config["admin"]) {
-    _is_first_boot = config["admin"]["is_first_boot"] | false;
     if (!loadAdminConfigFromJSON(config["admin"], error, len)) {
       YBP.print(error);
       result = false;
@@ -249,10 +268,6 @@ bool ConfigManager::loadV2Config(JsonVariant config, char* error, size_t len)
 bool ConfigManager::loadGuestConfigFromJSON(JsonVariant config, char* error, size_t len)
 {
   bool result = true;
-
-  // name lives at guest root, not under a controller sub-key
-  const char* v = config["name"] | _app.board_name;
-  strlcpy(_board_name, v, sizeof(_board_name));
 
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
