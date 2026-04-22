@@ -88,6 +88,8 @@ bool NetworkController::loadAdminConfigHook(JsonVariant config, char* error, siz
 
 void NetworkController::generateAdminConfigHook(JsonVariant output)
 {
+  TRACE();
+
   output["wifi_mode"] = _wifi_mode;
   output["wifi_ssid"] = _wifi_ssid;
   output["wifi_pass"] = _wifi_pass;

@@ -653,46 +653,48 @@ static const Note ACTIVE_WARNING[] = {
 };
 
 // Morse code helpers: dot = 80 ms tone / 80 ms gap, dash = 240 ms tone / 80 ms gap
-#define MDOT  {3000, 80}, {0, 80}
-#define MDASH {3000, 240}, {0, 80}
+#define MDOT \
+  {3000, 80}, { 0, 80 }
+#define MDASH \
+  {3000, 240}, { 0, 80 }
 
-static const Note MORSE_A[] = { MDOT, MDASH };                          // .-
-static const Note MORSE_B[] = { MDASH, MDOT, MDOT, MDOT };              // -...
-static const Note MORSE_C[] = { MDASH, MDOT, MDASH, MDOT };             // -.-.
-static const Note MORSE_D[] = { MDASH, MDOT, MDOT };                    // -..
-static const Note MORSE_E[] = { MDOT };                                  // .
-static const Note MORSE_F[] = { MDOT, MDOT, MDASH, MDOT };              // ..-.
-static const Note MORSE_G[] = { MDASH, MDASH, MDOT };                   // --.
-static const Note MORSE_H[] = { MDOT, MDOT, MDOT, MDOT };               // ....
-static const Note MORSE_I[] = { MDOT, MDOT };                            // ..
-static const Note MORSE_J[] = { MDOT, MDASH, MDASH, MDASH };            // .---
-static const Note MORSE_K[] = { MDASH, MDOT, MDASH };                   // -.-
-static const Note MORSE_L[] = { MDOT, MDASH, MDOT, MDOT };              // .-..
-static const Note MORSE_M[] = { MDASH, MDASH };                         // --
-static const Note MORSE_N[] = { MDASH, MDOT };                          // -.
-static const Note MORSE_O[] = { MDASH, MDASH, MDASH };                  // ---
-static const Note MORSE_P[] = { MDOT, MDASH, MDASH, MDOT };             // .--.
-static const Note MORSE_Q[] = { MDASH, MDASH, MDOT, MDASH };            // --.-
-static const Note MORSE_R[] = { MDOT, MDASH, MDOT };                    // .-.
-static const Note MORSE_S[] = { MDOT, MDOT, MDOT };                     // ...
-static const Note MORSE_T[] = { MDASH };                                 // -
-static const Note MORSE_U[] = { MDOT, MDOT, MDASH };                    // ..-
-static const Note MORSE_V[] = { MDOT, MDOT, MDOT, MDASH };              // ...-
-static const Note MORSE_W[] = { MDOT, MDASH, MDASH };                   // .--
-static const Note MORSE_X[] = { MDASH, MDOT, MDOT, MDASH };             // -..-
-static const Note MORSE_Y[] = { MDASH, MDOT, MDASH, MDASH };            // -.--
-static const Note MORSE_Z[] = { MDASH, MDASH, MDOT, MDOT };             // --..
+static const Note MORSE_A[] = {MDOT, MDASH};               // .-
+static const Note MORSE_B[] = {MDASH, MDOT, MDOT, MDOT};   // -...
+static const Note MORSE_C[] = {MDASH, MDOT, MDASH, MDOT};  // -.-.
+static const Note MORSE_D[] = {MDASH, MDOT, MDOT};         // -..
+static const Note MORSE_E[] = {MDOT};                      // .
+static const Note MORSE_F[] = {MDOT, MDOT, MDASH, MDOT};   // ..-.
+static const Note MORSE_G[] = {MDASH, MDASH, MDOT};        // --.
+static const Note MORSE_H[] = {MDOT, MDOT, MDOT, MDOT};    // ....
+static const Note MORSE_I[] = {MDOT, MDOT};                // ..
+static const Note MORSE_J[] = {MDOT, MDASH, MDASH, MDASH}; // .---
+static const Note MORSE_K[] = {MDASH, MDOT, MDASH};        // -.-
+static const Note MORSE_L[] = {MDOT, MDASH, MDOT, MDOT};   // .-..
+static const Note MORSE_M[] = {MDASH, MDASH};              // --
+static const Note MORSE_N[] = {MDASH, MDOT};               // -.
+static const Note MORSE_O[] = {MDASH, MDASH, MDASH};       // ---
+static const Note MORSE_P[] = {MDOT, MDASH, MDASH, MDOT};  // .--.
+static const Note MORSE_Q[] = {MDASH, MDASH, MDOT, MDASH}; // --.-
+static const Note MORSE_R[] = {MDOT, MDASH, MDOT};         // .-.
+static const Note MORSE_S[] = {MDOT, MDOT, MDOT};          // ...
+static const Note MORSE_T[] = {MDASH};                     // -
+static const Note MORSE_U[] = {MDOT, MDOT, MDASH};         // ..-
+static const Note MORSE_V[] = {MDOT, MDOT, MDOT, MDASH};   // ...-
+static const Note MORSE_W[] = {MDOT, MDASH, MDASH};        // .--
+static const Note MORSE_X[] = {MDASH, MDOT, MDOT, MDASH};  // -..-
+static const Note MORSE_Y[] = {MDASH, MDOT, MDASH, MDASH}; // -.--
+static const Note MORSE_Z[] = {MDASH, MDASH, MDOT, MDOT};  // --..
 
-static const Note MORSE_0[] = { MDASH, MDASH, MDASH, MDASH, MDASH };            // -----
-static const Note MORSE_1[] = { MDOT, MDASH, MDASH, MDASH, MDASH };             // .----
-static const Note MORSE_2[] = { MDOT, MDOT, MDASH, MDASH, MDASH };              // ..---
-static const Note MORSE_3[] = { MDOT, MDOT, MDOT, MDASH, MDASH };               // ...--
-static const Note MORSE_4[] = { MDOT, MDOT, MDOT, MDOT, MDASH };                // ....-
-static const Note MORSE_5[] = { MDOT, MDOT, MDOT, MDOT, MDOT };                 // .....
-static const Note MORSE_6[] = { MDASH, MDOT, MDOT, MDOT, MDOT };                // -....
-static const Note MORSE_7[] = { MDASH, MDASH, MDOT, MDOT, MDOT };               // --...
-static const Note MORSE_8[] = { MDASH, MDASH, MDASH, MDOT, MDOT };              // ---..
-static const Note MORSE_9[] = { MDASH, MDASH, MDASH, MDASH, MDOT };             // ----.
+static const Note MORSE_0[] = {MDASH, MDASH, MDASH, MDASH, MDASH}; // -----
+static const Note MORSE_1[] = {MDOT, MDASH, MDASH, MDASH, MDASH};  // .----
+static const Note MORSE_2[] = {MDOT, MDOT, MDASH, MDASH, MDASH};   // ..---
+static const Note MORSE_3[] = {MDOT, MDOT, MDOT, MDASH, MDASH};    // ...--
+static const Note MORSE_4[] = {MDOT, MDOT, MDOT, MDOT, MDASH};     // ....-
+static const Note MORSE_5[] = {MDOT, MDOT, MDOT, MDOT, MDOT};      // .....
+static const Note MORSE_6[] = {MDASH, MDOT, MDOT, MDOT, MDOT};     // -....
+static const Note MORSE_7[] = {MDASH, MDASH, MDOT, MDOT, MDOT};    // --...
+static const Note MORSE_8[] = {MDASH, MDASH, MDASH, MDOT, MDOT};   // ---..
+static const Note MORSE_9[] = {MDASH, MDASH, MDASH, MDASH, MDOT};  // ----.
 
 static const Melody activeMelodyTable[] = {
   MELODY_ENTRY(ACTIVE_STARTUP),

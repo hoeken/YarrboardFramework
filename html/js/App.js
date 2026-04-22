@@ -284,8 +284,7 @@
       YB.client.getConfig();
 
       if (YB.App.role == "admin") {
-        YB.client.getNetworkConfig();
-        YB.client.getAppConfig();
+        YB.client.send({ "cmd": "get_admin_config" });
         YB.client.send({ "cmd": "get_full_config" });
       }
     },
@@ -1287,8 +1286,8 @@
     },
 
     handleConfigMessage: function (msg) {
-      // YB.log("config");
-      // YB.log(msg);
+      YB.log("config");
+      console.log(msg);
 
       YB.App.config = msg;
 
@@ -1486,7 +1485,8 @@
     },
 
     handleFullConfigMessage: function (msg) {
-      //YB.log("full config");
+      YB.log("full config");
+      console.log(msg);
 
       //load our config
       const textarea = document.getElementById('configurationTextarea');
@@ -1494,32 +1494,9 @@
       textarea.value = prettyJSON;
     },
 
-    handleNetworkConfigMessage: function (msg) {
-      //YB.log("network config");
-
-      //YB.log(msg);
-      $("#wifi_mode").val(msg.wifi_mode);
-      $("#wifi_ssid").val(msg.wifi_ssid);
-      $("#wifi_pass").val(msg.wifi_pass);
-      $("#local_hostname").val(msg.local_hostname);
-
-      const useStatic = msg.wifi_use_static_ip === true;
-      $("#wifi_use_static_ip").prop("checked", useStatic);
-      $("#staticIPFields").toggle(useStatic);
-      $("#wifi_static_ip").val(msg.wifi_static_ip || "");
-      $("#wifi_gateway").val(msg.wifi_gateway || "");
-      $("#wifi_subnet").val(msg.wifi_subnet || "");
-      $("#wifi_dns1").val(msg.wifi_dns1 || "");
-      $("#wifi_dns2").val(msg.wifi_dns2 || "");
-
-      // wire the toggle (once, idempotent via .off/.on)
-      $("#wifi_use_static_ip").off("change.staticip").on("change.staticip", function () {
-        $("#staticIPFields").toggle(this.checked);
-      });
-    },
-
-    handleAppConfigMessage: function (msg) {
-      //YB.log("app config");
+    handleAdminConfigMessage: function (msg) {
+      YB.log("admin config");
+      console.log(msg);
 
       //update some ui stuff
       YB.App.updateRoleUI();
@@ -1547,6 +1524,25 @@
       $("#app_enable_api").prop("checked", msg.app_enable_api);
       $("#app_enable_serial").prop("checked", msg.app_enable_serial);
       $("#app_enable_ota").prop("checked", msg.app_enable_ota);
+
+      $("#wifi_mode").val(msg.wifi_mode);
+      $("#wifi_ssid").val(msg.wifi_ssid);
+      $("#wifi_pass").val(msg.wifi_pass);
+      $("#local_hostname").val(msg.local_hostname);
+
+      const useStatic = msg.wifi_use_static_ip === true;
+      $("#wifi_use_static_ip").prop("checked", useStatic);
+      $("#staticIPFields").toggle(useStatic);
+      $("#wifi_static_ip").val(msg.wifi_static_ip || "");
+      $("#wifi_gateway").val(msg.wifi_gateway || "");
+      $("#wifi_subnet").val(msg.wifi_subnet || "");
+      $("#wifi_dns1").val(msg.wifi_dns1 || "");
+      $("#wifi_dns2").val(msg.wifi_dns2 || "");
+
+      // wire the toggle (once, idempotent via .off/.on)
+      $("#wifi_use_static_ip").off("change.staticip").on("change.staticip", function () {
+        $("#staticIPFields").toggle(this.checked);
+      });
 
       //for our ssl stuff
       $("#app_enable_ssl").prop("checked", msg.app_enable_ssl);
@@ -2011,8 +2007,7 @@
   YB.App.onMessage("update", YB.App.handleUpdateMessage);
   YB.App.onMessage("stats", YB.App.handleStatsMessage);
   YB.App.onMessage("full_config", YB.App.handleFullConfigMessage);
-  YB.App.onMessage("network_config", YB.App.handleNetworkConfigMessage);
-  YB.App.onMessage("app_config", YB.App.handleAppConfigMessage);
+  YB.App.onMessage("admin_config", YB.App.handleAdminConfigMessage);
   YB.App.onMessage("ota_progress", YB.App.handleOTAProgressMessage);
   YB.App.onMessage("ota_finished", YB.App.handleOTAFinishedMessage);
   YB.App.onMessage("error", YB.App.handleErrorMessage);

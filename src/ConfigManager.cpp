@@ -109,14 +109,9 @@ void ConfigManager::generateFullConfig(JsonVariant output)
 {
   output["schema_version"] = _schema_version;
 
-  JsonVariant app = output["app"];
-  _app.generateAppConfig(app);
-
-  JsonVariant guest = output["guest"];
-  generateGuestConfig(guest);
-
-  JsonVariant admin = output["admin"];
-  generateAdminConfig(admin);
+  _app.generateAppConfig(output["app"].to<JsonObject>());
+  generateGuestConfig(output["guest"].to<JsonObject>());
+  generateAdminConfig(output["admin"].to<JsonObject>());
 }
 
 void ConfigManager::generateConfigHook(JsonVariant output)
@@ -133,11 +128,12 @@ bool ConfigManager::loadConfigHook(JsonVariant config, char* error, size_t len)
 
 void ConfigManager::generateGuestConfig(JsonVariant output)
 {
-  generateConfigHook(output);
-
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
-    entry.controller->generateConfigHook(output[name]);
+    entry.controller->generateConfigHook(output[name].to<JsonObject>());
+
+    if (output[name].as<JsonObject>().size() == 0)
+      output.remove(name);
   }
 }
 
@@ -154,11 +150,12 @@ bool ConfigManager::loadAdminConfigHook(JsonVariant config, char* error, size_t 
 
 void ConfigManager::generateAdminConfig(JsonVariant output)
 {
-  generateAdminConfigHook(output);
-
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
-    entry.controller->generateAdminConfigHook(output[name]);
+    entry.controller->generateAdminConfigHook(output[name].to<JsonObject>());
+
+    if (output[name].as<JsonObject>().size() == 0)
+      output.remove(name);
   }
 }
 
@@ -228,7 +225,7 @@ bool ConfigManager::loadConfigFromFile(const char* file, char* error, size_t len
 
 bool ConfigManager::loadConfigFromJSON(JsonVariant config, char* error, size_t len)
 {
-  int schemaVersion = config["schema_version"] | 0;
+  int schemaVersion = config["schema_version"] | 1;
 
   if (schemaVersion == 1) {
     return loadV1Config(config, error, len);

@@ -38,7 +38,7 @@ bool ProtocolController::setup()
   registerCommand(ADMIN, "save_config", this, &ProtocolController::handleSaveConfig);
   registerCommand(ADMIN, "get_full_config", this, &ProtocolController::handleGetFullConfig);
   registerCommand(ADMIN, "get_admin_config", this, &ProtocolController::handleGetAdminConfig);
-  registerCommand(ADMIN, "set_misc_config", this, &ProtocolController::handleSetMiscellaneousConfig);
+  registerCommand(ADMIN, "set_runtime_config", this, &ProtocolController::handleSetruntimeellaneousConfig);
   registerCommand(ADMIN, "restart", this, &ProtocolController::handleRestart);
   registerCommand(ADMIN, "factory_reset", this, &ProtocolController::handleFactoryReset);
 
@@ -210,7 +210,30 @@ void ProtocolController::handleHello(JsonVariantConst input, JsonVariant output,
 
 void ProtocolController::handleGetConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
-  generateConfigMessage(output);
+  output["msg"] = "config";
+
+  // runtime fields at message root for quick client access
+  JsonVariant runtime = output["runtime"].to<JsonObject>();
+  runtime["hostname"] = _app.network.getLocalHostname();
+  runtime["use_ssl"] = _app.http.isSSLEnabled();
+  runtime["enable_ota"] = _app.ota.isEnabled();
+  runtime["enable_mqtt"] = _app.mqtt.isEnabled();
+  runtime["default_role"] = _app.auth.getRoleText(_app.auth.getDefaultRole());
+  runtime["brightness"] = _cfg.getGlobalBrightness();
+  runtime["firmware_manifest_url"] = _app.ota.firmware_manifest_url;
+  runtime["is_development"] = YB_IS_DEVELOPMENT;
+  runtime["last_restart_reason"] = _app.debug.getResetReason();
+  if (_app.debug.hasCoredump())
+    runtime["has_coredump"] = _app.debug.hasCoredump();
+  runtime["boot_log"] = startupLogger.c_str();
+  if (_cfg.isFirstBoot())
+    runtime["first_boot"] = true;
+
+  // v2 config sections
+  _app.generateAppConfig(output["app"].to<JsonObject>());
+  _cfg.generateGuestConfig(output["guest"].to<JsonObject>());
+  if (context.role == ADMIN)
+    _cfg.generateAdminConfig(output["admin"].to<JsonObject>());
 }
 
 void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -256,7 +279,7 @@ void ProtocolController::handleGetUpdate(JsonVariantConst input, JsonVariant out
 void ProtocolController::handleGetFullConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   output["msg"] = "full_config";
-  _cfg.generateFullConfig(output["config"]);
+  _cfg.generateFullConfig(output["config"].to<JsonObject>());
 }
 
 void ProtocolController::handleGetAdminConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -294,7 +317,7 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
   generateConfigMessage(output);
 }
 
-void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+void ProtocolController::handleSetruntimeellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   char error[128] = "Unknown";
 
@@ -311,7 +334,7 @@ void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, Js
   else
     _app.ota.end();
 
-  generateSuccessJSON(output, "Miscellaneous config saved.");
+  generateSuccessJSON(output, "runtimeellaneous config saved.");
 }
 
 void ProtocolController::handleSaveConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -406,26 +429,6 @@ void ProtocolController::handleSetBrightness(JsonVariantConst input, JsonVariant
 
 void ProtocolController::generateConfigMessage(JsonVariant output)
 {
-  output["msg"] = "config";
-
-  // runtime fields at message root for quick client access
-  output["hostname"] = _app.network.getLocalHostname();
-  output["use_ssl"] = _app.http.isSSLEnabled();
-  output["enable_ota"] = _app.ota.isEnabled();
-  output["enable_mqtt"] = _app.mqtt.isEnabled();
-  output["default_role"] = _app.auth.getRoleText(_app.auth.getDefaultRole());
-  output["brightness"] = _cfg.getGlobalBrightness();
-  output["firmware_manifest_url"] = _app.ota.firmware_manifest_url;
-  output["is_development"] = YB_IS_DEVELOPMENT;
-  output["last_restart_reason"] = _app.debug.getResetReason();
-  if (_app.debug.hasCoredump())
-    output["has_coredump"] = _app.debug.hasCoredump();
-  output["boot_log"] = startupLogger.c_str();
-  if (_cfg.isFirstBoot())
-    output["first_boot"] = true;
-
-  // v2 config sections
-  _cfg.generateGuestConfig(output["guest"]);
 }
 
 bool ProtocolController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
