@@ -44,15 +44,21 @@ class ChannelController : public BaseController
 
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override
     {
-      // config is pre-scoped to guest[_name] — it should be a JSON array
-      if (config && config.is<JsonArray>()) {
+      // Support both new format (config["channels"] array) and old format (config is the array directly)
+      JsonVariant channelsVariant;
+      if (config && config.is<JsonObject>() && config["channels"].is<JsonArray>())
+        channelsVariant = config["channels"];
+      else if (config && config.is<JsonArray>())
+        channelsVariant = config;
+
+      if (channelsVariant) {
 
         // now iterate over our initialized channels
         for (auto& ch : _channels) {
           bool found = false;
 
           // loop over our json config to see if we find a match
-          for (JsonVariantConst ch_config : config.as<JsonArrayConst>()) {
+          for (JsonVariantConst ch_config : channelsVariant.as<JsonArrayConst>()) {
 
             // channels are one indexed for humans
             if (ch_config["id"] == ch.id) {
@@ -92,8 +98,7 @@ class ChannelController : public BaseController
 
     void generateConfigHook(JsonVariant output) override
     {
-      // output is pre-scoped to guest[_name] — write directly as an array
-      JsonArray channels = output.to<JsonArray>();
+      JsonArray channels = output["channels"].to<JsonArray>();
       for (auto& ch : _channels) {
         JsonObject jo = channels.add<JsonObject>();
         ch.generateConfig(jo);
