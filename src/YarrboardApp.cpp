@@ -35,7 +35,7 @@ YarrboardApp::YarrboardApp() : config(*this),
   registerController(protocol, 60);
   registerController(auth, 70);
   registerController(ota, 80);
-  registerController(mqtt, 200);
+  registerController(mqtt, 90);
 }
 
 void YarrboardApp::setup()

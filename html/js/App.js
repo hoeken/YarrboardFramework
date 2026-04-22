@@ -1461,7 +1461,7 @@
       $("#ip_address").html(msg.ip_address);
 
       //our mqtt?
-      if (YB.config.mqtt.enable_mqtt) {
+      if (YB.config.mqtt.app_enable_mqtt) {
         if (msg.mqtt_connected)
           $("#mqtt_status").html(`<span class="text-success">Connected</span>`);
         else
