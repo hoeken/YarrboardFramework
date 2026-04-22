@@ -296,16 +296,8 @@ bool ConfigManager::loadV1Config(JsonVariant root, char* error, size_t len)
 {
   bool result = true;
 
-  // Read first-boot flag from old app section
-  _is_first_boot = root["app"]["is_first_boot"] | false;
+  // todo: move everything into one big flat top level json, then call loadConfigHook once
 
-  // Read board name from old board section
-  if (root["board"]["name"]) {
-    const char* v = root["board"]["name"] | _app.board_name;
-    strlcpy(_board_name, v, sizeof(_board_name));
-  }
-
-  // Guest hooks: pass pre-scoped sub-object when it exists, else pass whole board
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
     JsonVariant sub;
@@ -315,21 +307,6 @@ bool ConfigManager::loadV1Config(JsonVariant root, char* error, size_t len)
       sub = root["board"];
     }
     if (!entry.controller->loadConfigHook(sub, error, len)) {
-      YBP.print(error);
-      result = false;
-    }
-  }
-
-  // Admin hooks: network gets its own section, all others get the flat app section
-  for (const auto& entry : _app.getControllers()) {
-    const char* name = entry.controller->getName();
-    JsonVariant sub;
-    if (!strcmp(name, "network")) {
-      sub = root["network"];
-    } else {
-      sub = root["app"];
-    }
-    if (!entry.controller->loadAdminConfigHook(sub, error, len)) {
       YBP.print(error);
       result = false;
     }

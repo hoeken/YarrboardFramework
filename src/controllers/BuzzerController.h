@@ -49,7 +49,7 @@ class BuzzerController : public BaseController
     bool setup() override;
     void generateConfigHook(JsonVariant output) override;
     void generateCapabilitiesHook(JsonVariant config) override;
-    bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
+    bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
     void generateAdminConfigHook(JsonVariant output) override;
 
     const char* getStartupMelody() const { return _startup_melody; }

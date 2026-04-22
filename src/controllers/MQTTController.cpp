@@ -158,7 +158,7 @@ void MQTTController::generateStatsHook(JsonVariant output)
   output["mqtt_connected"] = isConnected();
 }
 
-bool MQTTController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+bool MQTTController::loadConfigHook(JsonVariant config, char* error, size_t len)
 {
   const char* v;
 

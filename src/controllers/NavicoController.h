@@ -30,7 +30,7 @@ class NavicoController : public BaseController
     void loop() override;
     bool setup() override;
 
-    bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
+    bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
     void generateAdminConfigHook(JsonVariant output) override;
 
     bool isMfdEnabled() const { return _app_enable_mfd; }

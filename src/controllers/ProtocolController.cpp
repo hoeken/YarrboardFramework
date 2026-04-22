@@ -38,7 +38,7 @@ bool ProtocolController::setup()
   registerCommand(ADMIN, "save_config", this, &ProtocolController::handleSaveConfig);
   registerCommand(ADMIN, "get_full_config", this, &ProtocolController::handleGetFullConfig);
   registerCommand(ADMIN, "get_admin_config", this, &ProtocolController::handleGetAdminConfig);
-  registerCommand(ADMIN, "set_runtime_config", this, &ProtocolController::handleSetruntimeellaneousConfig);
+  registerCommand(ADMIN, "set_runtime_config", this, &ProtocolController::handleSetMiscellaneousConfig);
   registerCommand(ADMIN, "restart", this, &ProtocolController::handleRestart);
   registerCommand(ADMIN, "factory_reset", this, &ProtocolController::handleFactoryReset);
 
@@ -317,7 +317,7 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
   generateConfigMessage(output);
 }
 
-void ProtocolController::handleSetruntimeellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   char error[128] = "Unknown";
 
@@ -431,7 +431,7 @@ void ProtocolController::generateConfigMessage(JsonVariant output)
 {
 }
 
-bool ProtocolController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+bool ProtocolController::loadConfigHook(JsonVariant config, char* error, size_t len)
 {
   _enable_serial = config["app_enable_serial"] | _app.enable_serial_api;
   return true;

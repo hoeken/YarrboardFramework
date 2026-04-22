@@ -84,7 +84,7 @@ void NTPController::generateStatsHook(JsonVariant output)
   output["ntp_time"] = getTime();
 }
 
-bool NTPController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+bool NTPController::loadConfigHook(JsonVariant config, char* error, size_t len)
 {
   const char* v;
   v = config["ntp_server1"] | "pool.ntp.org";

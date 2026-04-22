@@ -21,7 +21,7 @@ HTTPController::HTTPController(YarrboardApp& app) : BaseController(app, "http")
 {
 }
 
-bool HTTPController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+bool HTTPController::loadConfigHook(JsonVariant config, char* error, size_t len)
 {
   _app_enable_api = config["app_enable_api"] | _app.enable_http_api;
   _app_enable_ssl = config["app_enable_ssl"] | _app.enable_ssl;

@@ -81,7 +81,7 @@ bool NavicoController::setup()
   return true;
 }
 
-bool NavicoController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+bool NavicoController::loadConfigHook(JsonVariant config, char* error, size_t len)
 {
   _app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
   return true;

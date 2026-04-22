@@ -22,6 +22,11 @@
 #include <LittleFS.h>
 #include <Preferences.h>
 
+enum class ConfigPurpose {
+  UI_VIEW, // Building the web interface (includes read-only data & runtime state)
+  EXPORT   // Downloading the config.json (only editable, persisted fields)
+};
+
 class YarrboardApp;
 
 class ConfigManager : public BaseController
@@ -41,8 +46,6 @@ class ConfigManager : public BaseController
 
     // JSON Loading
     bool loadConfigFromJSON(JsonVariant config, char* error, size_t len);
-    bool loadGuestConfigFromJSON(JsonVariant config, char* error, size_t len);
-    bool loadAdminConfigFromJSON(JsonVariant config, char* error, size_t len);
     bool loadV1Config(JsonVariant root, char* error, size_t len);
     bool loadV2Config(JsonVariant root, char* error, size_t len);
 

@@ -84,7 +84,7 @@ class ProtocolController : public BaseController
 
     void incrementSentMessages();
 
-    bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
+    bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
     void generateAdminConfigHook(JsonVariant output) override;
 
   private:

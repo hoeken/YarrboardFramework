@@ -791,7 +791,7 @@ void BuzzerController::generateConfigHook(JsonVariant output)
   generateMelodyJSON(output);
 };
 
-bool BuzzerController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+bool BuzzerController::loadConfigHook(JsonVariant config, char* error, size_t len)
 {
   const char* v = config["startup_melody"] | _app.default_melody;
   strlcpy(_startup_melody, v, sizeof(_startup_melody));

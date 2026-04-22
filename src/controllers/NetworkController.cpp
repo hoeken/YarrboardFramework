@@ -50,7 +50,7 @@ void NetworkController::loop()
   }
 }
 
-bool NetworkController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+bool NetworkController::loadConfigHook(JsonVariant config, char* error, size_t len)
 {
   const char* v;
 

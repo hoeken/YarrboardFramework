@@ -56,7 +56,7 @@ class AuthController : public BaseController
     void handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
 
     // Config hooks
-    bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
+    bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
     void generateAdminConfigHook(JsonVariant output) override;
 
   private:

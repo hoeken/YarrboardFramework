@@ -24,8 +24,8 @@
 #include <PsychicHttp.h>
 #include <PsychicHttpsServer.h>
 #include <atomic>
-#include <freertos/queue.h>
 #include <etl/map.h>
+#include <freertos/queue.h>
 
 #define MAX_GULPED_FILES 32
 
@@ -46,7 +46,7 @@ class HTTPController : public BaseController
     bool setup() override;
     void loop() override;
 
-    bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
+    bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
     void generateAdminConfigHook(JsonVariant output) override;
 
     void sendToAllWebsockets(const char* jsonString, UserRole auth_level);
@@ -72,8 +72,9 @@ class HTTPController : public BaseController
     SemaphoreHandle_t sendMutex;
 
     struct CStringCompare {
-        bool operator()(const char* a, const char* b) const {
-            return strcmp(a, b) < 0;
+        bool operator()(const char* a, const char* b) const
+        {
+          return strcmp(a, b) < 0;
         }
     };
     etl::map<const char*, const GulpedFile*, MAX_GULPED_FILES, CStringCompare> gulpedFiles;

@@ -85,8 +85,7 @@ UserRole AuthController::getUserRole(JsonVariantConst input, byte mode, int sock
     UserRole role = app_default_role;
     checkLoginCredentials(input, role);
     return role;
-  }
-  else if (mode == YBP_MODE_SERIAL)
+  } else if (mode == YBP_MODE_SERIAL)
     return serial_role;
   else if (mode == YBP_MODE_MQTT) {
     UserRole role = app_default_role;
@@ -344,7 +343,7 @@ void AuthController::handleSetAuthenticationConfig(JsonVariantConst input, JsonV
     ProtocolController::generateErrorJSON(output, error);
 }
 
-bool AuthController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+bool AuthController::loadConfigHook(JsonVariant config, char* error, size_t len)
 {
   strlcpy(admin_user, config["admin_user"] | _app.default_admin_user, sizeof(admin_user));
   strlcpy(admin_pass, config["admin_pass"] | _app.default_admin_pass, sizeof(admin_pass));

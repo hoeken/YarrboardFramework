@@ -40,7 +40,6 @@ class BaseController
     virtual void generateCapabilitiesHook(JsonVariant config) {};
 
     // Admin-level config hooks (pre-scoped to admin[controller->getName()])
-    virtual bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) { return true; }
     virtual void generateAdminConfigHook(JsonVariant output) {}
 
     // Validation hooks — called before load and before save; may trim/clamp values
