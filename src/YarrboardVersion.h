@@ -13,11 +13,11 @@
 #pragma once
 
 /** Major version number (X.x.x) */
-#define YARRBOARD_VERSION_MAJOR 2
+#define YARRBOARD_VERSION_MAJOR 3
 /** Minor version number (x.X.x) */
-#define YARRBOARD_VERSION_MINOR 6
+#define YARRBOARD_VERSION_MINOR 0
 /** Patch version number (x.x.X) */
-#define YARRBOARD_VERSION_PATCH 3
+#define YARRBOARD_VERSION_PATCH 0
 
 /**
  * Macro to convert Yarrboard Framework version number into an integer
