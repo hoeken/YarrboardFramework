@@ -49,6 +49,11 @@ class BuzzerController : public BaseController
     bool setup() override;
     void generateConfigHook(JsonVariant output) override;
     void generateCapabilitiesHook(JsonVariant config) override;
+    bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
+    void generateAdminConfigHook(JsonVariant output) override;
+
+    const char* getStartupMelody() const { return _startup_melody; }
+    void setStartupMelody(const char* melody) { strlcpy(_startup_melody, melody, sizeof(_startup_melody)); }
 
     bool playMelodyByName(const char* melody);
     void generateMelodyJSON(JsonVariant output);
@@ -66,6 +71,7 @@ class BuzzerController : public BaseController
   private:
     byte buzzerPin = 0;
     bool isActive = false;
+    char _startup_melody[YB_MELODY_LENGTH];
 
     const Melody* _melodyTable = nullptr;
     size_t _melodyCount = 0;

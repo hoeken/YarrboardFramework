@@ -22,14 +22,10 @@ ConfigManager::ConfigManager(YarrboardApp& app) : BaseController(app, "config"),
 
 bool ConfigManager::setup()
 {
-  // setup some defaults
   strlcpy(_board_name, _app.board_name, sizeof(_board_name));
-  strlcpy(_startup_melody, _app.default_melody, sizeof(_startup_melody));
 
-  _app_enable_mfd = _app.enable_mfd;
-  _config_version = _app.config_version;
+  _schema_version = 2;
 
-  // our temporary preferences too.
   preferences.end(); // begin() returns false if already open.
   if (preferences.begin("yarrboard", false)) {
     YBP.printf("There are: %u entries available in the 'yarrboard' prefs table.\n", preferences.freeEntries());
@@ -38,13 +34,10 @@ bool ConfigManager::setup()
     return false;
   }
 
-  // default to first time, prove it later
   _is_first_boot = true;
 
-  // initialize error string
   char error[YB_ERROR_LENGTH] = "";
 
-  // load our config from the json file.
   if (!loadConfigFromFile(YB_BOARD_CONFIG_PATH, error, sizeof(error))) {
     YBP.printf("CONFIG ERROR: %s\n", error);
     return false;
@@ -55,26 +48,21 @@ bool ConfigManager::setup()
 
 bool ConfigManager::saveConfig(char* error, size_t len)
 {
-  // our doc to store.
   JsonDocument config;
 
-  // generate a full new document each time
   generateFullConfig(config);
 
-  // dynamically allocate our buffer
   size_t jsonSize = measureJson(config);
   char* jsonBuffer = (char*)malloc(jsonSize + 1);
 
-  // now serialize it to the buffer
   if (jsonBuffer != NULL) {
-    jsonBuffer[jsonSize] = '\0'; // null terminate
+    jsonBuffer[jsonSize] = '\0';
     serializeJson(config, jsonBuffer, jsonSize + 1);
   } else {
     snprintf(error, len, "saveConfig() failed to create buffer of size %d", jsonSize);
     return false;
   }
 
-  // write our config to local storage
   File fp = LittleFS.open(YB_BOARD_CONFIG_PATH, "w");
   if (!fp) {
     snprintf(error, len, "Failed to open %s for writing", YB_BOARD_CONFIG_PATH);
@@ -82,7 +70,6 @@ bool ConfigManager::saveConfig(char* error, size_t len)
     return false;
   }
 
-  // check write result
   size_t bytesWritten = fp.print((char*)jsonBuffer);
   if (bytesWritten == 0) {
     fp.close();
@@ -91,18 +78,15 @@ bool ConfigManager::saveConfig(char* error, size_t len)
     return false;
   }
 
-  // flush data (no return value, but still good to call)
   fp.flush();
   fp.close();
 
-  // confirm file exists and has non-zero length
   if (!LittleFS.exists(YB_BOARD_CONFIG_PATH)) {
     strncpy(error, "File not found after write", len);
     free(jsonBuffer);
     return false;
   }
 
-  // check for size and opening
   File verify = LittleFS.open(YB_BOARD_CONFIG_PATH, "r");
   if (!verify || verify.size() == 0) {
     verify.close();
@@ -112,33 +96,31 @@ bool ConfigManager::saveConfig(char* error, size_t len)
   }
   verify.close();
 
-  // free up our memory
   free(jsonBuffer);
 
   return true;
 }
 
+// -------------------------------------------------------------------------
+// Generation
+// -------------------------------------------------------------------------
+
 void ConfigManager::generateFullConfig(JsonVariant output)
 {
-  // our board specific configuration
-  JsonObject board = output["board"].to<JsonObject>();
-  generateBoardConfig(board);
+  output["schema_version"] = _schema_version;
 
-  // yarrboard application specific configuration
-  JsonObject app = output["app"].to<JsonObject>();
+  JsonVariant app = output["app"];
   generateAppConfig(app);
-  app.remove("msg");
 
-  // network connection specific configuration
-  JsonObject network = output["network"].to<JsonObject>();
-  generateNetworkConfig(network);
-  network.remove("msg");
+  JsonVariant guest = output["guest"];
+  generateGuestConfig(guest);
+
+  JsonVariant admin = output["admin"];
+  generateAdminConfig(admin);
 }
 
-void ConfigManager::generateBoardConfig(JsonVariant output)
+void ConfigManager::generateAppConfig(JsonVariant output)
 {
-  // our identifying info
-  output["name"] = _board_name;
   output["uuid"] = _app.network.getUUID();
   output["firmware_version"] = _app.firmware_version;
   output["hardware_version"] = _app.hardware_version;
@@ -157,67 +139,63 @@ void ConfigManager::generateBoardConfig(JsonVariant output)
   output["build_time"] = BUILD_TIME;
 #endif
 
-  // hook for our hardware capabilities
-  JsonObject capabilities = output["capabilities"].to<JsonObject>();
+  JsonVariant capabilities = output["capabilities"];
   for (const auto& entry : _app.getControllers()) {
     entry.controller->generateCapabilitiesHook(capabilities);
   }
+}
 
-  // hook for each controller
+void ConfigManager::generateGuestConfig(JsonVariant output)
+{
+  // name is owned by ConfigManager; it lives at guest root, not under a sub-key
+  output["name"] = _board_name;
+
   for (const auto& entry : _app.getControllers()) {
-    entry.controller->generateConfigHook(output);
+    const char* name = entry.controller->getName();
+    entry.controller->generateConfigHook(output[name]);
   }
 }
 
-void ConfigManager::generateAppConfig(JsonVariant output)
+void ConfigManager::generateAdminConfig(JsonVariant output)
 {
-  // our identifying info
-  output["config_version"] = _config_version;
+  // is_first_boot lives at admin root
   output["is_first_boot"] = _is_first_boot;
-  output["startup_melody"] = _startup_melody;
-  output["app_enable_mfd"] = _app_enable_mfd;
-  _app.ntp.generateNTPConfig(output);
-  _app.ota.generateOTAConfig(output);
-  _app.auth.generateAuthConfig(output);
-  _app.http.generateHTTPConfig(output);
-  _app.protocol.generateSerialConfig(output);
-  _app.mqtt.generateMQTTConfig(output);
+
+  for (const auto& entry : _app.getControllers()) {
+    const char* name = entry.controller->getName();
+    entry.controller->generateAdminConfigHook(output[name]);
+  }
 }
 
-void ConfigManager::generateNetworkConfig(JsonVariant output)
-{
-  _app.network.generateNetworkConfig(output);
-}
+// -------------------------------------------------------------------------
+// Loading
+// -------------------------------------------------------------------------
 
 bool ConfigManager::loadConfigFromFile(const char* file, char* error, size_t len)
 {
-  // sanity check on LittleFS
   if (!LittleFS.begin()) {
     snprintf(error, len, "LittleFS mount failed");
     return false;
   }
 
-  // open file
   File configFile = LittleFS.open(file, "r");
   if (!configFile || !configFile.available()) {
     snprintf(error, len, "Could not open file: %s", file);
     return false;
   }
 
-  // get size and check reasonableness
   size_t size = configFile.size();
   if (size == 0) {
     snprintf(error, len, "File %s is empty", file);
     configFile.close();
     return false;
   }
-  if (size > 10000) { // arbitrary limit to prevent large loads
+  if (size > 10000) {
     snprintf(error, len, "File %s too large (%u bytes)", file, (unsigned int)size);
     configFile.close();
     return false;
   }
 
-  // read into buffer
   char* buf = (char*)malloc(size + 1);
   if (!buf) {
     snprintf(error, len, "Memory allocation failed for %u bytes", (unsigned int)size);
@@ -235,11 +213,9 @@ bool ConfigManager::loadConfigFromFile(const char* file, char* error, size_t len
     return false;
   }
 
-  // parse JSON
-  JsonDocument doc; // adjust to match your configuration complexity
+  JsonDocument doc;
   DeserializationError err = deserializeJson(doc, buf);
 
-  // no leaks
   free(buf);
 
   if (err) {
@@ -247,7 +223,6 @@ bool ConfigManager::loadConfigFromFile(const char* file, char* error, size_t len
     return false;
   }
 
-  // sanity check: ensure root object
   if (!doc.is<JsonObject>()) {
     snprintf(error, len, "Root element is not a JSON object");
     return false;
@@ -258,74 +233,111 @@ bool ConfigManager::loadConfigFromFile(const char* file, char* error, size_t len
 
 bool ConfigManager::loadConfigFromJSON(JsonVariant config, char* error, size_t len)
 {
-  bool result = true;
+  int schemaVersion = config["schema_version"] | 0;
 
-  if (config["network"]) {
-    if (!loadNetworkConfigFromJSON(config["network"], error, len)) {
-      YBP.print(error);
-      result = false;
+  if (schemaVersion >= 2) {
+    bool result = true;
+
+    if (config["guest"]) {
+      if (!loadGuestConfigFromJSON(config["guest"], error, len)) {
+        YBP.print(error);
+        result = false;
+      }
+    } else {
+      YBP.println("Missing 'guest' config section");
     }
-  } else
-    YBP.println("Missing 'network' config");
 
-  if (config["app"]) {
-    if (!loadAppConfigFromJSON(config["app"], error, len)) {
-      YBP.print(error);
-      result = false;
+    if (config["admin"]) {
+      _is_first_boot = config["admin"]["is_first_boot"] | false;
+      if (!loadAdminConfigFromJSON(config["admin"], error, len)) {
+        YBP.print(error);
+        result = false;
+      }
+    } else {
+      YBP.println("Missing 'admin' config section");
     }
-  } else
-    YBP.println("Missing 'app' config");
 
-  if (config["board"]) {
-    if (!loadBoardConfigFromJSON(config["board"], error, len)) {
-      YBP.print(error);
-      result = false;
-    }
-  } else
-    YBP.println("Missing 'board' config");
-
-  return result;
+    return result;
+  } else {
+    return loadV1Config(config, error, len);
+  }
 }
 
-bool ConfigManager::loadNetworkConfigFromJSON(JsonVariant config, char* error, size_t len)
-{
-  return _app.network.loadNetworkConfig(config, error, len);
-}
-
-bool ConfigManager::loadAppConfigFromJSON(JsonVariant config, char* error, size_t len)
-{
-  const char* v;
-
-  _config_version = config["config_version"] | _app.config_version;
-
-  // determines if we do our improv loop or not.
-  _is_first_boot = config["is_first_boot"] | false;
-
-  // startup_melody
-  v = config["startup_melody"] | _app.default_melody;
-  strlcpy(_startup_melody, v, sizeof(_startup_melody));
-
-  _app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
-
-  _app.ntp.loadNTPConfig(config);
-  _app.ota.loadOTAConfig(config);
-  _app.auth.loadAuthConfig(config);
-  _app.http.loadHTTPConfig(config);
-  _app.protocol.loadSerialConfig(config);
-  _app.mqtt.loadMQTTConfig(config, error, len);
-
-  return true;
-}
-
-bool ConfigManager::loadBoardConfigFromJSON(JsonVariant config, char* error, size_t len)
+bool ConfigManager::loadGuestConfigFromJSON(JsonVariant config, char* error, size_t len)
 {
   bool result = true;
 
+  // name lives at guest root, not under a controller sub-key
   const char* v = config["name"] | _app.board_name;
   strlcpy(_board_name, v, sizeof(_board_name));
 
   for (const auto& entry : _app.getControllers()) {
-    entry.controller->loadConfigHook(config, error, len);
+    const char* name = entry.controller->getName();
+    if (!entry.controller->loadConfigHook(config[name], error, len)) {
+      YBP.print(error);
+      result = false;
+    }
+  }
+
+  return result;
+}
+
+bool ConfigManager::loadAdminConfigFromJSON(JsonVariant config, char* error, size_t len)
+{
+  bool result = true;
+
+  for (const auto& entry : _app.getControllers()) {
+    const char* name = entry.controller->getName();
+    if (!entry.controller->loadAdminConfigHook(config[name], error, len)) {
+      YBP.print(error);
+      result = false;
+    }
+  }
+
+  return result;
+}
+
+bool ConfigManager::loadV1Config(JsonVariant root, char* error, size_t len)
+{
+  bool result = true;
+
+  // Read first-boot flag from old app section
+  _is_first_boot = root["app"]["is_first_boot"] | false;
+
+  // Read board name from old board section
+  if (root["board"]["name"]) {
+    const char* v = root["board"]["name"] | _app.board_name;
+    strlcpy(_board_name, v, sizeof(_board_name));
+  }
+
+  // Guest hooks: pass pre-scoped sub-object when it exists, else pass whole board
+  for (const auto& entry : _app.getControllers()) {
+    const char* name = entry.controller->getName();
+    JsonVariant sub;
+    if (root["board"].is<JsonObject>() && !root["board"][name].isNull()) {
+      sub = root["board"][name];
+    } else {
+      sub = root["board"];
+    }
+    if (!entry.controller->loadConfigHook(sub, error, len)) {
+      YBP.print(error);
+      result = false;
+    }
+  }
+
+  // Admin hooks: network gets its own section, all others get the flat app section
+  for (const auto& entry : _app.getControllers()) {
+    const char* name = entry.controller->getName();
+    JsonVariant sub;
+    if (!strcmp(name, "network")) {
+      sub = root["network"];
+    } else {
+      sub = root["app"];
+    }
+    if (!entry.controller->loadAdminConfigHook(sub, error, len)) {
+      YBP.print(error);
+      result = false;
+    }
   }
 
   return result;

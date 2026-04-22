@@ -87,6 +87,16 @@ bool NetworkController::loadNetworkConfig(JsonVariant config, char* error, size_
   return true;
 }
 
+bool NetworkController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+{
+  return loadNetworkConfig(config, error, len);
+}
+
+void NetworkController::generateAdminConfigHook(JsonVariant output)
+{
+  generateNetworkConfig(output);
+}
+
 void NetworkController::generateNetworkConfig(JsonVariant output)
 {
   output["wifi_mode"] = _wifi_mode;

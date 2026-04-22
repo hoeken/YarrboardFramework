@@ -20,6 +20,17 @@ HTTPController::HTTPController(YarrboardApp& app) : BaseController(app, "http")
 {
 }
 
+bool HTTPController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+{
+  loadHTTPConfig(config);
+  return true;
+}
+
+void HTTPController::generateAdminConfigHook(JsonVariant output)
+{
+  generateHTTPConfig(output);
+}
+
 void HTTPController::generateHTTPConfig(JsonVariant output)
 {
   output["app_enable_api"] = _app_enable_api;
@@ -227,7 +238,7 @@ void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVarian
 {
   bool old_app_enable_ssl = _app_enable_ssl;
 
-  _cfg.setAppMfdEnabled(input["app_enable_mfd"] | _app.enable_mfd);
+  _app.protocol.setAppMfdEnabled(input["app_enable_mfd"] | _app.enable_mfd);
   _app_enable_api = input["app_enable_api"] | _app.enable_http_api;
   _app_enable_ssl = input["app_enable_ssl"] | _app_enable_ssl;
   _server_cert = input["server_cert"] | _server_cert.c_str();

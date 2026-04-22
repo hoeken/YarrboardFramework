@@ -344,6 +344,17 @@ void AuthController::handleSetAuthenticationConfig(JsonVariantConst input, JsonV
     ProtocolController::generateErrorJSON(output, error);
 }
 
+bool AuthController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+{
+  loadAuthConfig(config);
+  return true;
+}
+
+void AuthController::generateAdminConfigHook(JsonVariant output)
+{
+  generateAuthConfig(output);
+}
+
 void AuthController::generateAuthConfig(JsonVariant output)
 {
   output["default_role"] = getRoleText(app_default_role);

@@ -22,7 +22,7 @@ NavicoController::NavicoController(YarrboardApp& app) : BaseController(app, "nav
 
 void NavicoController::loop()
 {
-  if (!_cfg.isAppMfdEnabled())
+  if (!_app.protocol.isAppMfdEnabled())
     return;
 
   if (millis() - _lastPublishMillis > 10000) {

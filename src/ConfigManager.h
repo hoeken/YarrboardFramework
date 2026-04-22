@@ -41,15 +41,15 @@ class ConfigManager : public BaseController
 
     // JSON Loading
     bool loadConfigFromJSON(JsonVariant config, char* error, size_t len);
-    bool loadNetworkConfigFromJSON(JsonVariant config, char* error, size_t len);
-    bool loadAppConfigFromJSON(JsonVariant config, char* error, size_t len);
-    bool loadBoardConfigFromJSON(JsonVariant config, char* error, size_t len);
+    bool loadGuestConfigFromJSON(JsonVariant config, char* error, size_t len);
+    bool loadAdminConfigFromJSON(JsonVariant config, char* error, size_t len);
+    bool loadV1Config(JsonVariant root, char* error, size_t len);
 
     // JSON Generation
     void generateFullConfig(JsonVariant output);
-    void generateBoardConfig(JsonVariant output);
     void generateAppConfig(JsonVariant output);
-    void generateNetworkConfig(JsonVariant output);
+    void generateGuestConfig(JsonVariant output);
+    void generateAdminConfig(JsonVariant output);
 
     bool isFirstBoot() const { return _is_first_boot; }
     void setFirstBoot(bool v) { _is_first_boot = v; }
@@ -63,14 +63,7 @@ class ConfigManager : public BaseController
     float getGlobalBrightness() const { return _global_brightness; }
     void setGlobalBrightness(float b) { _global_brightness = b; }
 
-    const char* getStartupMelody() const { return _startup_melody; }
-    void setStartupMelody(const char* melody) { strlcpy(_startup_melody, melody, sizeof(_startup_melody)); }
-
-    bool isAppMfdEnabled() const { return _app_enable_mfd; }
-    void setAppMfdEnabled(bool v) { _app_enable_mfd = v; }
-
-    uint32_t getConfigVersion() const { return _config_version; }
-    void setConfigVersion(uint32_t v) { _config_version = v; }
+    uint32_t getSchemaVersion() const { return _schema_version; }
 
   private:
     YarrboardApp& _app;
@@ -78,9 +71,7 @@ class ConfigManager : public BaseController
     char _board_name[YB_BOARD_NAME_LENGTH];
     String _app_theme = "light";
     float _global_brightness = 1.0;
-    char _startup_melody[YB_MELODY_LENGTH];
-    bool _app_enable_mfd;
-    uint32_t _config_version;
+    uint32_t _schema_version = 2;
 };
 
 #endif

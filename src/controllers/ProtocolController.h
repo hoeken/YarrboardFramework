@@ -84,11 +84,15 @@ class ProtocolController : public BaseController
 
     void incrementSentMessages();
 
-    void generateSerialConfig(JsonVariant output);
-    void loadSerialConfig(JsonVariantConst config);
+    bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
+    void generateAdminConfigHook(JsonVariant output) override;
+
+    bool isAppMfdEnabled() const { return _app_enable_mfd; }
+    void setAppMfdEnabled(bool v) { _app_enable_mfd = v; }
 
   private:
     bool _enable_serial;
+    bool _app_enable_mfd;
     unsigned long previousMessageMillis = 0;
     unsigned long previousFastUpdateMillis = 0;
     unsigned int receivedMessages = 0;
@@ -125,7 +129,7 @@ class ProtocolController : public BaseController
     void handleGetStats(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleGetUpdate(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleGetFullConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
-    void handleGetAppConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleGetAdminConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetGeneralConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSaveConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);

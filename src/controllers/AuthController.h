@@ -55,9 +55,11 @@ class AuthController : public BaseController
     void handleLogout(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
 
-    // Config hooks (delegated from ConfigManager)
+    // Config hooks
     void generateAuthConfig(JsonVariant output);
     void loadAuthConfig(JsonVariant config);
+    bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
+    void generateAdminConfigHook(JsonVariant output) override;
 
   private:
     bool is_serial_authenticated = false;

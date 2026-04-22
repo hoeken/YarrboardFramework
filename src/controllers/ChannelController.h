@@ -44,15 +44,15 @@ class ChannelController : public BaseController
 
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override
     {
-      // did we get a config entry?
-      if (config[_name]) {
+      // config is pre-scoped to guest[_name] — it should be a JSON array
+      if (config && config.is<JsonArray>()) {
 
         // now iterate over our initialized channels
         for (auto& ch : _channels) {
           bool found = false;
 
           // loop over our json config to see if we find a match
-          for (JsonVariantConst ch_config : config[_name].as<JsonArrayConst>()) {
+          for (JsonVariantConst ch_config : config.as<JsonArrayConst>()) {
 
             // channels are one indexed for humans
             if (ch_config["id"] == ch.id) {
@@ -78,12 +78,12 @@ class ChannelController : public BaseController
           }
 
           if (!found) {
-            snprintf(error, len, "Missing 'board.%s' #%d config", _name, ch.id);
+            snprintf(error, len, "Missing 'guest.%s' #%d config", _name, ch.id);
             return false;
           }
         }
       } else {
-        snprintf(error, len, "Missing 'board.%s' config", _name);
+        snprintf(error, len, "Missing 'guest.%s' config", _name);
         return false;
       }
 
@@ -92,7 +92,8 @@ class ChannelController : public BaseController
 
     void generateConfigHook(JsonVariant output) override
     {
-      JsonArray channels = output[_name].to<JsonArray>();
+      // output is pre-scoped to guest[_name] — write directly as an array
+      JsonArray channels = output.to<JsonArray>();
       for (auto& ch : _channels) {
         JsonObject jo = channels.add<JsonObject>();
         ch.generateConfig(jo);

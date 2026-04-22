@@ -14,12 +14,14 @@
 #include "ConfigManager.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
+#include "controllers/BuzzerController.h"
 #include "controllers/OTAController.h"
 #include "utility.h"
 
 ProtocolController::ProtocolController(YarrboardApp& app) : BaseController(app, "protocol")
 {
   _enable_serial = app.enable_serial_api;
+  _app_enable_mfd = app.enable_mfd;
 }
 
 bool ProtocolController::setup()
@@ -36,7 +38,7 @@ bool ProtocolController::setup()
   registerCommand(ADMIN, "set_general_config", this, &ProtocolController::handleSetGeneralConfig);
   registerCommand(ADMIN, "save_config", this, &ProtocolController::handleSaveConfig);
   registerCommand(ADMIN, "get_full_config", this, &ProtocolController::handleGetFullConfig);
-  registerCommand(ADMIN, "get_app_config", this, &ProtocolController::handleGetAppConfig);
+  registerCommand(ADMIN, "get_admin_config", this, &ProtocolController::handleGetAdminConfig);
   registerCommand(ADMIN, "set_misc_config", this, &ProtocolController::handleSetMiscellaneousConfig);
   registerCommand(ADMIN, "restart", this, &ProtocolController::handleRestart);
   registerCommand(ADMIN, "factory_reset", this, &ProtocolController::handleFactoryReset);
@@ -254,18 +256,14 @@ void ProtocolController::handleGetUpdate(JsonVariantConst input, JsonVariant out
 
 void ProtocolController::handleGetFullConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
-  // build our message
   output["msg"] = "full_config";
-  JsonObject cfg = output["config"].to<JsonObject>();
-
-  // separate call to make a clean config.
-  _cfg.generateFullConfig(cfg);
+  _cfg.generateFullConfig(output["config"]);
 }
 
-void ProtocolController::handleGetAppConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+void ProtocolController::handleGetAdminConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
-  output["msg"] = "app_config";
-  _cfg.generateAppConfig(output);
+  output["msg"] = "admin_config";
+  _cfg.generateAdminConfig(output["admin"]);
 }
 
 void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -280,9 +278,13 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
     return generateErrorJSON(output, error);
   }
 
-  // update variable
   _cfg.setBoardName(input["board_name"] | _app.board_name);
-  _cfg.setStartupMelody(input["startup_melody"] | _app.default_melody);
+
+  BuzzerController* buzzer = static_cast<BuzzerController*>(_app.getController("buzzer"));
+  if (buzzer && input["startup_melody"].is<const char*>())
+    buzzer->setStartupMelody(input["startup_melody"]);
+  else if (buzzer)
+    buzzer->setStartupMelody(_app.default_melody);
 
   // save it to file.
   char error[128];
@@ -296,6 +298,7 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
 void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   _enable_serial = input["app_enable_serial"] | _app.enable_serial_api;
+  _app_enable_mfd = input["app_enable_mfd"] | _app.enable_mfd;
   _app.ota.loadOTAConfig(input);
 
   // save it to file.
@@ -402,43 +405,41 @@ void ProtocolController::handleSetBrightness(JsonVariantConst input, JsonVariant
     return generateErrorJSON(output, "'brightness' is a required parameter.");
 }
 
-void ProtocolController::generateSerialConfig(JsonVariant output)
-{
-  output["app_enable_serial"] = _enable_serial;
-}
-
-void ProtocolController::loadSerialConfig(JsonVariantConst config)
-{
-  _enable_serial = config["app_enable_serial"] | _app.enable_serial_api;
-}
-
 void ProtocolController::generateConfigMessage(JsonVariant output)
 {
-  // extra info
   output["msg"] = "config";
+
+  // runtime fields at message root for quick client access
   output["hostname"] = _app.network.getLocalHostname();
   output["use_ssl"] = _app.http.isSSLEnabled();
   output["enable_ota"] = _app.ota.isEnabled();
   output["enable_mqtt"] = _app.mqtt.isEnabled();
   output["default_role"] = _app.auth.getRoleText(_app.auth.getDefaultRole());
   output["brightness"] = _cfg.getGlobalBrightness();
-  output["git_hash"] = GIT_HASH;
-  output["build_time"] = BUILD_TIME;
   output["firmware_manifest_url"] = _app.ota.firmware_manifest_url;
-
-  _cfg.generateBoardConfig(output);
-
   output["is_development"] = YB_IS_DEVELOPMENT;
-
-  // some debug info
   output["last_restart_reason"] = _app.debug.getResetReason();
   if (_app.debug.hasCoredump())
     output["has_coredump"] = _app.debug.hasCoredump();
   output["boot_log"] = startupLogger.c_str();
-
-  // do we want to flag it for config?
   if (_cfg.isFirstBoot())
     output["first_boot"] = true;
+
+  // v2 config sections
+  _cfg.generateGuestConfig(output["guest"]);
+}
+
+bool ProtocolController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+{
+  _enable_serial = config["app_enable_serial"] | _app.enable_serial_api;
+  _app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
+  return true;
+}
+
+void ProtocolController::generateAdminConfigHook(JsonVariant output)
+{
+  output["app_enable_serial"] = _enable_serial;
+  output["app_enable_mfd"] = _app_enable_mfd;
 }
 
 void ProtocolController::generateErrorJSON(JsonVariant output, const char* error)

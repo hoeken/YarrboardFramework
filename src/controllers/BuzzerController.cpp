@@ -740,6 +740,7 @@ static const size_t activeMelodyCount = sizeof(activeMelodyTable) / sizeof(activ
 
 BuzzerController::BuzzerController(YarrboardApp& app) : BaseController(app, "buzzer")
 {
+  strlcpy(_startup_melody, app.default_melody, sizeof(_startup_melody));
 }
 
 bool BuzzerController::setup()
@@ -778,7 +779,7 @@ bool BuzzerController::setup()
     1, // low priority is fine
     &buzzerTaskHandle);
 
-  playMelodyByName(_cfg.getStartupMelody());
+  playMelodyByName(_startup_melody);
 
   return true;
 }
@@ -787,6 +788,18 @@ void BuzzerController::generateConfigHook(JsonVariant output)
 {
   generateMelodyJSON(output);
 };
+
+bool BuzzerController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+{
+  const char* v = config["startup_melody"] | _app.default_melody;
+  strlcpy(_startup_melody, v, sizeof(_startup_melody));
+  return true;
+}
+
+void BuzzerController::generateAdminConfigHook(JsonVariant output)
+{
+  output["startup_melody"] = _startup_melody;
+}
 
 void BuzzerController::generateCapabilitiesHook(JsonVariant config)
 {

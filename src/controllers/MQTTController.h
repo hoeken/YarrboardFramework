@@ -45,6 +45,8 @@ class MQTTController : public BaseController
 
     bool loadMQTTConfig(JsonVariant config, char* error, size_t len);
     void generateMQTTConfig(JsonVariant output);
+    bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
+    void generateAdminConfigHook(JsonVariant output) override;
 
     bool isEnabled() const { return _enable_mqtt; }
 
