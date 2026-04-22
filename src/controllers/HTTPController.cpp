@@ -34,8 +34,11 @@ void HTTPController::generateConfigHook(JsonVariant output, UserRole role, Confi
 {
   output["app_enable_api"] = _app_enable_api;
   output["app_enable_ssl"] = _app_enable_ssl;
-  output["server_cert"] = _server_cert;
-  output["server_key"] = _server_key;
+
+  if (role == ADMIN) {
+    output["server_cert"] = _server_cert;
+    output["server_key"] = _server_key;
+  }
 }
 
 esp_err_t HTTPController::sendJsonResponse(PsychicResponse* response, JsonDocument& doc, const char* contentType)

@@ -187,10 +187,13 @@ void MQTTController::generateConfigHook(JsonVariant output, UserRole role, Confi
   output["app_enable_mqtt_protocol"] = _enable_mqtt_protocol;
   output["app_enable_ha_integration"] = _enable_ha_integration;
   output["app_use_hostname_as_mqtt_uuid"] = _use_hostname_as_mqtt_uuid;
-  output["mqtt_server"] = _mqtt_server;
-  output["mqtt_user"] = _mqtt_user;
-  output["mqtt_pass"] = _mqtt_pass; // intentional plaintext
-  output["mqtt_cert"] = _mqtt_cert; // intentional plaintext
+
+  if (role == ADMIN) {
+    output["mqtt_server"] = _mqtt_server;
+    output["mqtt_user"] = _mqtt_user;
+    output["mqtt_pass"] = _mqtt_pass; // intentional plaintext
+    output["mqtt_cert"] = _mqtt_cert; // intentional plaintext
+  }
 }
 
 void MQTTController::disconnect()

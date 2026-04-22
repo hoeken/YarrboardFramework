@@ -121,6 +121,19 @@ void DebugController::loop()
     it.reset();
 }
 
+void DebugController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
+{
+  if (purpose == ConfigPurpose::UI_VIEW) {
+    output["last_restart_reason"] = _app.debug.getResetReason();
+    output["boot_log"] = startupLogger.c_str();
+
+    if (role == ADMIN) {
+      if (_app.debug.hasCoredump())
+        output["has_coredump"] = _app.debug.hasCoredump();
+    }
+  }
+}
+
 void DebugController::generateStatsHook(JsonVariant output)
 {
   if (it.getEntries().empty())

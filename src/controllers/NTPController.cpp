@@ -98,8 +98,11 @@ bool NTPController::loadConfigHook(JsonVariant config, char* error, size_t len)
 
 void NTPController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
-  output["ntp_server1"] = _ntp_server1;
-  output["ntp_server2"] = _ntp_server2;
   output["gmt_offset_sec"] = _gmt_offset_sec;
   output["daylight_offset_sec"] = _daylight_offset_sec;
+
+  if (role == ADMIN) {
+    output["ntp_server1"] = _ntp_server1;
+    output["ntp_server2"] = _ntp_server2;
+  }
 }

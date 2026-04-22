@@ -101,7 +101,7 @@ class ChannelController : public BaseController
       JsonArray channels = output["channels"].to<JsonArray>();
       for (auto& ch : _channels) {
         JsonObject jo = channels.add<JsonObject>();
-        ch.generateConfig(jo);
+        ch.generateConfig(jo, role, purpose);
       }
     };
 

@@ -211,23 +211,6 @@ void ProtocolController::handleGetConfig(JsonVariantConst input, JsonVariant out
 {
   output["msg"] = "config";
 
-  // runtime fields at message root for quick client access
-  JsonVariant runtime = output["runtime"].to<JsonObject>();
-  runtime["hostname"] = _app.network.getLocalHostname();
-  runtime["use_ssl"] = _app.http.isSSLEnabled();
-  runtime["enable_ota"] = _app.ota.isEnabled();
-  runtime["enable_mqtt"] = _app.mqtt.isEnabled();
-  runtime["default_role"] = _app.auth.getRoleText(_app.auth.getDefaultRole());
-  runtime["brightness"] = _cfg.getGlobalBrightness();
-  runtime["firmware_manifest_url"] = _app.ota.firmware_manifest_url;
-  runtime["is_development"] = YB_IS_DEVELOPMENT;
-  runtime["last_restart_reason"] = _app.debug.getResetReason();
-  if (_app.debug.hasCoredump())
-    runtime["has_coredump"] = _app.debug.hasCoredump();
-  runtime["boot_log"] = startupLogger.c_str();
-  if (_cfg.isFirstBoot())
-    runtime["first_boot"] = true;
-
   // v2 config sections
   _app.generateAppConfig(output);
   _cfg.generateConfig(output, context.role, ConfigPurpose::UI_VIEW);
@@ -426,7 +409,8 @@ bool ProtocolController::loadConfigHook(JsonVariant config, char* error, size_t 
 
 void ProtocolController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
-  output["app_enable_serial"] = _enable_serial;
+  if (role == ADMIN)
+    output["app_enable_serial"] = _enable_serial;
 }
 
 void ProtocolController::generateErrorJSON(JsonVariant output, const char* error)

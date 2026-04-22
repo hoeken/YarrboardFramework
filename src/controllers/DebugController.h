@@ -28,6 +28,8 @@ class DebugController : public BaseController
 
     bool setup() override;
     void loop() override;
+
+    void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
     void generateStatsHook(JsonVariant output) override;
 
     void handleCrashMe(JsonVariantConst input, JsonVariant output);

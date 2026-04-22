@@ -92,7 +92,7 @@ bool BaseChannel::loadConfig(JsonVariantConst config, char* error, size_t err_si
   return true;
 }
 
-void BaseChannel::generateConfig(JsonVariant config)
+void BaseChannel::generateConfig(JsonVariant config, UserRole role, ConfigPurpose purpose)
 {
   config["id"] = this->id;
   config["name"] = this->name;

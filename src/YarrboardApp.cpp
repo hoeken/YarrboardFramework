@@ -218,14 +218,14 @@ void YarrboardApp::playMelody(const char* melody)
 
 void YarrboardApp::generateAppConfig(JsonVariant output)
 {
-  JsonVariant app = output["app_info"].to<JsonObject>();
-  app["uuid"] = network.getUUID();
+  JsonVariant app = output["yarrboard"].to<JsonObject>();
   app["firmware_version"] = firmware_version;
   app["hardware_version"] = hardware_version;
   app["hardware_url"] = hardware_url;
   app["project_name"] = project_name;
   app["project_url"] = project_url;
   app["git_url"] = git_url;
+  app["firmware_manifest_url"] = ota.firmware_manifest_url;
   app["esp_idf_version"] = esp_get_idf_version();
   app["arduino_version"] = ESP_ARDUINO_VERSION_STR;
   app["psychic_http_version"] = PSYCHIC_VERSION_STR;
@@ -236,6 +236,7 @@ void YarrboardApp::generateAppConfig(JsonVariant output)
 #ifdef BUILD_TIME
   app["build_time"] = BUILD_TIME;
 #endif
+  app["is_development"] = YB_IS_DEVELOPMENT;
 
   JsonVariant capabilities = output["capabilities"].to<JsonObject>();
   for (const auto& entry : _controllers) {
