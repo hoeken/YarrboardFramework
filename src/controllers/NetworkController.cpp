@@ -111,11 +111,6 @@ void NetworkController::setupWifi()
 {
   // which mode do we want?
   if (!strcmp(_wifi_mode, "client")) {
-    YBP.print("Client mode: ");
-    YBP.print(_wifi_ssid);
-    YBP.print(" / ");
-    YBP.println(_wifi_pass);
-
     // try and connect
     if (connectToWifi(_wifi_ssid, _wifi_pass))
       startServices();
@@ -124,11 +119,6 @@ void NetworkController::setupWifi()
   }
   // default to AP mode.
   else {
-    YBP.print("AP mode: ");
-    YBP.print(_wifi_ssid);
-    YBP.print(" / ");
-    YBP.println(_wifi_pass);
-
     WiFi.mode(WIFI_AP);
     WiFi.softAP(_wifi_ssid, _wifi_pass);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
