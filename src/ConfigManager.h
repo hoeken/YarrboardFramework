@@ -44,6 +44,7 @@ class ConfigManager : public BaseController
     bool loadGuestConfigFromJSON(JsonVariant config, char* error, size_t len);
     bool loadAdminConfigFromJSON(JsonVariant config, char* error, size_t len);
     bool loadV1Config(JsonVariant root, char* error, size_t len);
+    bool loadV2Config(JsonVariant root, char* error, size_t len);
 
     // JSON Generation
     void generateFullConfig(JsonVariant output);

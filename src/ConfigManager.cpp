@@ -235,32 +235,40 @@ bool ConfigManager::loadConfigFromJSON(JsonVariant config, char* error, size_t l
 {
   int schemaVersion = config["schema_version"] | 0;
 
-  if (schemaVersion >= 2) {
-    bool result = true;
-
-    if (config["guest"]) {
-      if (!loadGuestConfigFromJSON(config["guest"], error, len)) {
-        YBP.print(error);
-        result = false;
-      }
-    } else {
-      YBP.println("Missing 'guest' config section");
-    }
-
-    if (config["admin"]) {
-      _is_first_boot = config["admin"]["is_first_boot"] | false;
-      if (!loadAdminConfigFromJSON(config["admin"], error, len)) {
-        YBP.print(error);
-        result = false;
-      }
-    } else {
-      YBP.println("Missing 'admin' config section");
-    }
-
-    return result;
+  if (schemaVersion > 2) {
+    snprintf(error, len, "Unsupported schema_version: %d", schemaVersion);
+    return false;
+  } else if (schemaVersion == 2) {
+    return loadV2Config(config, error, len);
   } else {
     return loadV1Config(config, error, len);
   }
+}
+
+bool ConfigManager::loadV2Config(JsonVariant config, char* error, size_t len)
+{
+  bool result = true;
+
+  if (config["guest"]) {
+    if (!loadGuestConfigFromJSON(config["guest"], error, len)) {
+      YBP.print(error);
+      result = false;
+    }
+  } else {
+    YBP.println("Missing 'guest' config section");
+  }
+
+  if (config["admin"]) {
+    _is_first_boot = config["admin"]["is_first_boot"] | false;
+    if (!loadAdminConfigFromJSON(config["admin"], error, len)) {
+      YBP.print(error);
+      result = false;
+    }
+  } else {
+    YBP.println("Missing 'admin' config section");
+  }
+
+  return result;
 }
 
 bool ConfigManager::loadGuestConfigFromJSON(JsonVariant config, char* error, size_t len)
