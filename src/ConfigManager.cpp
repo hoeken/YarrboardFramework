@@ -117,15 +117,15 @@ bool ConfigManager::loadConfigHook(JsonVariant config, char* error, size_t len)
 
 void ConfigManager::generateConfig(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
-  JsonVariant config = output["config"].to<JsonObject>();
-  config["schema_version"] = _schema_version;
+  // JsonVariant config = output["config"].to<JsonObject>();
+  output["schema_version"] = _schema_version;
 
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
-    entry.controller->generateConfigHook(config[name].to<JsonObject>(), role, purpose);
+    entry.controller->generateConfigHook(output[name].to<JsonObject>(), role, purpose);
 
-    if (config[name].as<JsonObject>().size() == 0)
-      config.remove(name);
+    if (output[name].as<JsonObject>().size() == 0)
+      output.remove(name);
   }
 }
 
@@ -224,7 +224,7 @@ bool ConfigManager::loadV2Config(JsonVariant config, char* error, size_t len)
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
     if (!entry.controller->loadConfigHook(config[name], error, len)) {
-      YBP.print(error);
+      YBP.println(error);
       result = false;
     }
   }
@@ -253,7 +253,7 @@ bool ConfigManager::loadV1Config(JsonVariant root, char* error, size_t len)
       sub = root["board"];
     }
     if (!entry.controller->loadConfigHook(sub, error, len)) {
-      YBP.print(error);
+      YBP.println(error);
       result = false;
     }
   }

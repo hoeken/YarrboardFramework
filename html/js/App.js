@@ -1521,7 +1521,7 @@
       $("#app_enable_ota").prop("checked", YB.config.ota.app_enable_ota);
 
       $("#wifi_mode").val(YB.config.network.wifi_mode);
-      $("#wifi_ssid").val(YB.config.network);
+      $("#wifi_ssid").val(YB.config.network.wifi_ssid);
       $("#wifi_pass").val(YB.config.network.wifi_pass);
       $("#local_hostname").val(YB.config.network.local_hostname);
 

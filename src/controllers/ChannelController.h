@@ -45,20 +45,20 @@ class ChannelController : public BaseController
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override
     {
       // Support both new format (config["channels"] array) and old format (config is the array directly)
-      JsonVariant channelsVariant;
-      if (config && config.is<JsonObject>() && config["channels"].is<JsonArray>())
-        channelsVariant = config["channels"];
-      else if (config && config.is<JsonArray>())
-        channelsVariant = config;
+      JsonArrayConst channels;
+      if (config.is<JsonObject>() && config["channels"].is<JsonArray>())
+        channels = config["channels"].as<JsonArrayConst>();
+      else if (config.is<JsonArray>())
+        channels = config.as<JsonArrayConst>();
 
-      if (channelsVariant) {
+      if (channels) {
 
         // now iterate over our initialized channels
         for (auto& ch : _channels) {
           bool found = false;
 
           // loop over our json config to see if we find a match
-          for (JsonVariantConst ch_config : channelsVariant.as<JsonArrayConst>()) {
+          for (JsonVariantConst ch_config : channels) {
 
             // channels are one indexed for humans
             if (ch_config["id"] == ch.id) {

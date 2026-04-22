@@ -213,7 +213,7 @@ void ProtocolController::handleGetConfig(JsonVariantConst input, JsonVariant out
 
   // v2 config sections
   _app.generateAppConfig(output);
-  _cfg.generateConfig(output, context.role, ConfigPurpose::UI_VIEW);
+  _cfg.generateConfig(output["config"].to<JsonObject>(), context.role, ConfigPurpose::UI_VIEW);
 }
 
 void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -259,7 +259,7 @@ void ProtocolController::handleGetUpdate(JsonVariantConst input, JsonVariant out
 void ProtocolController::handleGetFullConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   output["msg"] = "full_config";
-  _cfg.generateConfig(output, context.role, ConfigPurpose::FIRMWARE);
+  _cfg.generateConfig(output["config"].to<JsonObject>(), context.role, ConfigPurpose::FIRMWARE);
 }
 
 void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -288,7 +288,7 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
     return generateErrorJSON(output, error);
 
   // give them the updated config
-  _cfg.generateConfig(output, context.role, ConfigPurpose::UI_VIEW);
+  _cfg.generateConfig(output["config"].to<JsonObject>(), context.role, ConfigPurpose::UI_VIEW);
 }
 
 void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
