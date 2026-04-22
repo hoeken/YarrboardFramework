@@ -114,6 +114,8 @@ class YarrboardApp
     ConfigManager& getConfig() { return config; }
     const ConfigManager& getConfig() const { return config; }
 
+    void generateAppConfig(JsonVariant output);
+
     void setStatusColor(uint8_t r, uint8_t g, uint8_t b);
     void setStatusColor(const CRGB& color);
 

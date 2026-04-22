@@ -110,7 +110,7 @@ void ConfigManager::generateFullConfig(JsonVariant output)
   output["schema_version"] = _schema_version;
 
   JsonVariant app = output["app"];
-  generateAppConfig(app);
+  _app.generateAppConfig(app);
 
   JsonVariant guest = output["guest"];
   generateGuestConfig(guest);
@@ -119,31 +119,6 @@ void ConfigManager::generateFullConfig(JsonVariant output)
   generateAdminConfig(admin);
 }
 
-void ConfigManager::generateAppConfig(JsonVariant output)
-{
-  output["uuid"] = _app.network.getUUID();
-  output["firmware_version"] = _app.firmware_version;
-  output["hardware_version"] = _app.hardware_version;
-  output["hardware_url"] = _app.hardware_url;
-  output["project_name"] = _app.project_name;
-  output["project_url"] = _app.project_url;
-  output["git_url"] = _app.git_url;
-  output["esp_idf_version"] = esp_get_idf_version();
-  output["arduino_version"] = ESP_ARDUINO_VERSION_STR;
-  output["psychic_http_version"] = PSYCHIC_VERSION_STR;
-  output["yarrboard_framework_version"] = YARRBOARD_VERSION_STR;
-#ifdef GIT_HASH
-  output["git_hash"] = GIT_HASH;
-#endif
-#ifdef BUILD_TIME
-  output["build_time"] = BUILD_TIME;
-#endif
-
-  JsonVariant capabilities = output["capabilities"];
-  for (const auto& entry : _app.getControllers()) {
-    entry.controller->generateCapabilitiesHook(capabilities);
-  }
-}
 
 void ConfigManager::generateGuestConfig(JsonVariant output)
 {

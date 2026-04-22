@@ -48,7 +48,6 @@ class ConfigManager : public BaseController
 
     // JSON Generation
     void generateFullConfig(JsonVariant output);
-    void generateAppConfig(JsonVariant output);
     void generateGuestConfig(JsonVariant output);
     void generateAdminConfig(JsonVariant output);
 

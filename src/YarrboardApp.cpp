@@ -215,3 +215,29 @@ void YarrboardApp::playMelody(const char* melody)
   if (buzzer)
     buzzer->playMelodyByName(melody);
 }
+
+void YarrboardApp::generateAppConfig(JsonVariant output)
+{
+  output["uuid"] = network.getUUID();
+  output["firmware_version"] = firmware_version;
+  output["hardware_version"] = hardware_version;
+  output["hardware_url"] = hardware_url;
+  output["project_name"] = project_name;
+  output["project_url"] = project_url;
+  output["git_url"] = git_url;
+  output["esp_idf_version"] = esp_get_idf_version();
+  output["arduino_version"] = ESP_ARDUINO_VERSION_STR;
+  output["psychic_http_version"] = PSYCHIC_VERSION_STR;
+  output["yarrboard_framework_version"] = YARRBOARD_VERSION_STR;
+#ifdef GIT_HASH
+  output["git_hash"] = GIT_HASH;
+#endif
+#ifdef BUILD_TIME
+  output["build_time"] = BUILD_TIME;
+#endif
+
+  JsonVariant capabilities = output["capabilities"];
+  for (const auto& entry : _controllers) {
+    entry.controller->generateCapabilitiesHook(capabilities);
+  }
+}
