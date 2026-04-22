@@ -87,12 +87,8 @@ class ProtocolController : public BaseController
     bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
     void generateAdminConfigHook(JsonVariant output) override;
 
-    bool isAppMfdEnabled() const { return _app_enable_mfd; }
-    void setAppMfdEnabled(bool v) { _app_enable_mfd = v; }
-
   private:
     bool _enable_serial;
-    bool _app_enable_mfd;
     unsigned long previousMessageMillis = 0;
     unsigned long previousFastUpdateMillis = 0;
     unsigned int receivedMessages = 0;

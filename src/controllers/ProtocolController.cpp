@@ -21,7 +21,6 @@
 ProtocolController::ProtocolController(YarrboardApp& app) : BaseController(app, "protocol")
 {
   _enable_serial = app.enable_serial_api;
-  _app_enable_mfd = app.enable_mfd;
 }
 
 bool ProtocolController::setup()
@@ -300,7 +299,6 @@ void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, Js
   char error[128] = "Unknown";
 
   _enable_serial = input["app_enable_serial"] | _app.enable_serial_api;
-  _app_enable_mfd = input["app_enable_mfd"] | _app.enable_mfd;
   _app.ota.setEnabled(input["app_enable_ota"] | _app.enable_arduino_ota);
 
   // save it to file.
@@ -433,14 +431,12 @@ void ProtocolController::generateConfigMessage(JsonVariant output)
 bool ProtocolController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
 {
   _enable_serial = config["app_enable_serial"] | _app.enable_serial_api;
-  _app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
   return true;
 }
 
 void ProtocolController::generateAdminConfigHook(JsonVariant output)
 {
   output["app_enable_serial"] = _enable_serial;
-  output["app_enable_mfd"] = _app_enable_mfd;
 }
 
 void ProtocolController::generateErrorJSON(JsonVariant output, const char* error)

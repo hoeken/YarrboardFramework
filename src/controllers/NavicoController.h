@@ -16,6 +16,7 @@
 // Protocol reference: https://github.com/SignalK/signalk-server/blob/master/src/interfaces/mfd_webapp.ts
 #include "controllers/BaseController.h"
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <WiFi.h>
 
 class YarrboardApp;
@@ -29,7 +30,14 @@ class NavicoController : public BaseController
     void loop() override;
     bool setup() override;
 
+    bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
+    void generateAdminConfigHook(JsonVariant output) override;
+
+    bool isMfdEnabled() const { return _app_enable_mfd; }
+    void setMfdEnabled(bool v) { _app_enable_mfd = v; }
+
   private:
+    bool _app_enable_mfd;
     unsigned long _lastPublishMillis = 0;
     static constexpr int kPublishPort = 2053;
     IPAddress _multicastGroupIp;

@@ -18,11 +18,12 @@
 NavicoController::NavicoController(YarrboardApp& app) : BaseController(app, "navico"),
                                                         _multicastGroupIp(239, 2, 1, 1)
 {
+  _app_enable_mfd = app.enable_mfd;
 }
 
 void NavicoController::loop()
 {
-  if (!_app.protocol.isAppMfdEnabled())
+  if (!_app_enable_mfd)
     return;
 
   if (millis() - _lastPublishMillis > 10000) {
@@ -78,4 +79,15 @@ bool NavicoController::setup()
 {
   Udp.begin(0);
   return true;
+}
+
+bool NavicoController::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
+{
+  _app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
+  return true;
+}
+
+void NavicoController::generateAdminConfigHook(JsonVariant output)
+{
+  output["app_enable_mfd"] = _app_enable_mfd;
 }

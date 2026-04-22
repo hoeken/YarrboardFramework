@@ -14,6 +14,7 @@
 #include "ConfigManager.h"
 #include "YarrboardApp.h"
 #include "YarrboardDebug.h"
+#include "controllers/NavicoController.h"
 #include "controllers/ProtocolController.h"
 
 HTTPController::HTTPController(YarrboardApp& app) : BaseController(app, "http")
@@ -228,7 +229,9 @@ void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVarian
 {
   bool old_app_enable_ssl = _app_enable_ssl;
 
-  _app.protocol.setAppMfdEnabled(input["app_enable_mfd"] | _app.enable_mfd);
+  NavicoController* navico = static_cast<NavicoController*>(_app.getController("navico"));
+  if (navico)
+    navico->setMfdEnabled(input["app_enable_mfd"] | _app.enable_mfd);
   _app_enable_api = input["app_enable_api"] | _app.enable_http_api;
   _app_enable_ssl = input["app_enable_ssl"] | _app_enable_ssl;
   _server_cert = input["server_cert"] | _server_cert.c_str();
