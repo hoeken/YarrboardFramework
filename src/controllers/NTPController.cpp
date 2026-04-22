@@ -96,7 +96,7 @@ bool NTPController::loadConfigHook(JsonVariant config, char* error, size_t len)
   return true;
 }
 
-void NTPController::generateAdminConfigHook(JsonVariant output)
+void NTPController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
   output["ntp_server1"] = _ntp_server1;
   output["ntp_server2"] = _ntp_server2;

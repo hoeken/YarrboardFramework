@@ -80,7 +80,7 @@ class RGBController : public RGBControllerInterface
 
     void generateCapabilitiesHook(JsonVariant config) override
     {
-      config["rgb"]["count"] = _numLeds;
+      config["count"] = _numLeds;
     };
 
     void setStatusColor(uint8_t r, uint8_t g, uint8_t b) override { setPixelColor(0, r, g, b); }

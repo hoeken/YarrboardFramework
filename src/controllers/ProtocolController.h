@@ -85,7 +85,7 @@ class ProtocolController : public BaseController
     void incrementSentMessages();
 
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
-    void generateAdminConfigHook(JsonVariant output) override;
+    void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
   private:
     bool _enable_serial;
@@ -125,7 +125,6 @@ class ProtocolController : public BaseController
     void handleGetStats(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleGetUpdate(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleGetFullConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
-    void handleGetAdminConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetGeneralConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSaveConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
@@ -133,8 +132,6 @@ class ProtocolController : public BaseController
     void handleFactoryReset(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetTheme(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSetBrightness(JsonVariantConst input, JsonVariant output, ProtocolContext context);
-
-    void generateConfigMessage(JsonVariant output);
 };
 
 #endif /* !YARR_PROTOCOL_H */

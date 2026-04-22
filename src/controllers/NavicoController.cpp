@@ -87,7 +87,7 @@ bool NavicoController::loadConfigHook(JsonVariant config, char* error, size_t le
   return true;
 }
 
-void NavicoController::generateAdminConfigHook(JsonVariant output)
+void NavicoController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
   output["app_enable_mfd"] = _app_enable_mfd;
 }

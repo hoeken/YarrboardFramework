@@ -22,11 +22,6 @@
 #include <LittleFS.h>
 #include <Preferences.h>
 
-enum class ConfigPurpose {
-  UI_VIEW, // Building the web interface (includes read-only data & runtime state)
-  EXPORT   // Downloading the config.json (only editable, persisted fields)
-};
-
 class YarrboardApp;
 
 class ConfigManager : public BaseController
@@ -50,14 +45,11 @@ class ConfigManager : public BaseController
     bool loadV2Config(JsonVariant root, char* error, size_t len);
 
     // JSON Generation
-    void generateFullConfig(JsonVariant output);
-    void generateGuestConfig(JsonVariant output);
-    void generateAdminConfig(JsonVariant output);
-    void generateConfigHook(JsonVariant output) override;
-    void generateAdminConfigHook(JsonVariant output) override;
+    void generateConfig(JsonVariant output, UserRole role, ConfigPurpose purpose);
 
+    // our personal hooks as a controller.
+    void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
-    bool loadAdminConfigHook(JsonVariant config, char* error, size_t len) override;
 
     bool isFirstBoot() const { return _is_first_boot; }
     void setFirstBoot(bool v) { _is_first_boot = v; }

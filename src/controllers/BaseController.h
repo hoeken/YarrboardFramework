@@ -13,6 +13,7 @@
 #ifndef YARR_BASE_CONTROLLER_H
 #define YARR_BASE_CONTROLLER_H
 
+#include "AuthTypes.h"
 #include "YarrboardConfig.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
@@ -36,11 +37,8 @@ class BaseController
 
     // Guest-level config hooks (pre-scoped to guest[controller->getName()])
     virtual bool loadConfigHook(JsonVariant config, char* error, size_t len) { return true; };
-    virtual void generateConfigHook(JsonVariant output) {};
+    virtual void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) {};
     virtual void generateCapabilitiesHook(JsonVariant config) {};
-
-    // Admin-level config hooks (pre-scoped to admin[controller->getName()])
-    virtual void generateAdminConfigHook(JsonVariant output) {}
 
     // Validation hooks — called before load and before save; may trim/clamp values
     virtual bool validateConfigJSON(JsonVariant config, char* error, size_t len) { return true; }

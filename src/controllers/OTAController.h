@@ -42,7 +42,7 @@ class OTAController : public BaseController
     const char* public_key = "";
 
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
-    void generateAdminConfigHook(JsonVariant output) override;
+    void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
     bool isEnabled() const { return _enable_ota; }
     void setEnabled(bool v) { _enable_ota = v; }
 

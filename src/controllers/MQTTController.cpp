@@ -181,7 +181,7 @@ bool MQTTController::loadConfigHook(JsonVariant config, char* error, size_t len)
   return true;
 }
 
-void MQTTController::generateAdminConfigHook(JsonVariant output)
+void MQTTController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
   output["app_enable_mqtt"] = _enable_mqtt;
   output["app_enable_mqtt_protocol"] = _enable_mqtt_protocol;

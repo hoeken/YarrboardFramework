@@ -218,26 +218,31 @@ void YarrboardApp::playMelody(const char* melody)
 
 void YarrboardApp::generateAppConfig(JsonVariant output)
 {
-  output["uuid"] = network.getUUID();
-  output["firmware_version"] = firmware_version;
-  output["hardware_version"] = hardware_version;
-  output["hardware_url"] = hardware_url;
-  output["project_name"] = project_name;
-  output["project_url"] = project_url;
-  output["git_url"] = git_url;
-  output["esp_idf_version"] = esp_get_idf_version();
-  output["arduino_version"] = ESP_ARDUINO_VERSION_STR;
-  output["psychic_http_version"] = PSYCHIC_VERSION_STR;
-  output["yarrboard_framework_version"] = YARRBOARD_VERSION_STR;
+  JsonVariant app = output["app_info"].to<JsonObject>();
+  app["uuid"] = network.getUUID();
+  app["firmware_version"] = firmware_version;
+  app["hardware_version"] = hardware_version;
+  app["hardware_url"] = hardware_url;
+  app["project_name"] = project_name;
+  app["project_url"] = project_url;
+  app["git_url"] = git_url;
+  app["esp_idf_version"] = esp_get_idf_version();
+  app["arduino_version"] = ESP_ARDUINO_VERSION_STR;
+  app["psychic_http_version"] = PSYCHIC_VERSION_STR;
+  app["yarrboard_framework_version"] = YARRBOARD_VERSION_STR;
 #ifdef GIT_HASH
-  output["git_hash"] = GIT_HASH;
+  app["git_hash"] = GIT_HASH;
 #endif
 #ifdef BUILD_TIME
-  output["build_time"] = BUILD_TIME;
+  app["build_time"] = BUILD_TIME;
 #endif
 
-  JsonVariant capabilities = output["capabilities"];
+  JsonVariant capabilities = output["capabilities"].to<JsonObject>();
   for (const auto& entry : _controllers) {
-    entry.controller->generateCapabilitiesHook(capabilities);
+    const char* name = entry.controller->getName();
+    entry.controller->generateCapabilitiesHook(capabilities[name].to<JsonObject>());
+
+    if (capabilities[name].as<JsonObject>().size() == 0)
+      capabilities.remove(name);
   }
 }

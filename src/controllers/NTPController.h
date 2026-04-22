@@ -38,7 +38,7 @@ class NTPController : public BaseController
     void generateStatsHook(JsonVariant output) override;
 
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
-    void generateAdminConfigHook(JsonVariant output) override;
+    void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
   private:
     char _ntp_server1[YB_NTP_SERVER_LENGTH] = "pool.ntp.org";

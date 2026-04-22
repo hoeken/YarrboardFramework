@@ -47,7 +47,7 @@ class HTTPController : public BaseController
     void loop() override;
 
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
-    void generateAdminConfigHook(JsonVariant output) override;
+    void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
     void sendToAllWebsockets(const char* jsonString, UserRole auth_level);
     void registerGulpedFile(const GulpedFile* file, const char* path = nullptr);

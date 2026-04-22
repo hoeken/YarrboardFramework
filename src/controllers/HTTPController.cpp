@@ -30,7 +30,7 @@ bool HTTPController::loadConfigHook(JsonVariant config, char* error, size_t len)
   return true;
 }
 
-void HTTPController::generateAdminConfigHook(JsonVariant output)
+void HTTPController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
   output["app_enable_api"] = _app_enable_api;
   output["app_enable_ssl"] = _app_enable_ssl;

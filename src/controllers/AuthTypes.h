@@ -19,6 +19,11 @@ typedef enum {
   ADMIN
 } UserRole;
 
+typedef enum {
+  UI_VIEW, // Building the web interface (includes read-only data & runtime state)
+  FIRMWARE // Downloading the config.json (only editable, persisted fields)
+} ConfigPurpose;
+
 typedef struct {
     int socket;
     UserRole role;

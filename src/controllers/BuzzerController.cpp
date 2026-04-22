@@ -786,11 +786,6 @@ bool BuzzerController::setup()
   return true;
 }
 
-void BuzzerController::generateConfigHook(JsonVariant output)
-{
-  generateMelodyJSON(output);
-};
-
 bool BuzzerController::loadConfigHook(JsonVariant config, char* error, size_t len)
 {
   const char* v = config["startup_melody"] | _app.default_melody;
@@ -798,7 +793,7 @@ bool BuzzerController::loadConfigHook(JsonVariant config, char* error, size_t le
   return true;
 }
 
-void BuzzerController::generateAdminConfigHook(JsonVariant output)
+void BuzzerController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
   output["startup_melody"] = _startup_melody;
 }
@@ -807,6 +802,7 @@ void BuzzerController::generateCapabilitiesHook(JsonVariant config)
 {
   config["buzzer"] = true;
   config["buzzer_is_active"] = isActive;
+  generateMelodyJSON(config);
 };
 
 void BuzzerController::generateMelodyJSON(JsonVariant output)

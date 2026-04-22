@@ -31,7 +31,7 @@ class NavicoController : public BaseController
     bool setup() override;
 
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
-    void generateAdminConfigHook(JsonVariant output) override;
+    void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
     bool isMfdEnabled() const { return _app_enable_mfd; }
     void setMfdEnabled(bool v) { _app_enable_mfd = v; }

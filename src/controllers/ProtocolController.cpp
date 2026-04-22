@@ -37,7 +37,6 @@ bool ProtocolController::setup()
   registerCommand(ADMIN, "set_general_config", this, &ProtocolController::handleSetGeneralConfig);
   registerCommand(ADMIN, "save_config", this, &ProtocolController::handleSaveConfig);
   registerCommand(ADMIN, "get_full_config", this, &ProtocolController::handleGetFullConfig);
-  registerCommand(ADMIN, "get_admin_config", this, &ProtocolController::handleGetAdminConfig);
   registerCommand(ADMIN, "set_runtime_config", this, &ProtocolController::handleSetMiscellaneousConfig);
   registerCommand(ADMIN, "restart", this, &ProtocolController::handleRestart);
   registerCommand(ADMIN, "factory_reset", this, &ProtocolController::handleFactoryReset);
@@ -230,10 +229,8 @@ void ProtocolController::handleGetConfig(JsonVariantConst input, JsonVariant out
     runtime["first_boot"] = true;
 
   // v2 config sections
-  _app.generateAppConfig(output["app"].to<JsonObject>());
-  _cfg.generateGuestConfig(output["guest"].to<JsonObject>());
-  if (context.role == ADMIN)
-    _cfg.generateAdminConfig(output["admin"].to<JsonObject>());
+  _app.generateAppConfig(output);
+  _cfg.generateConfig(output, context.role, ConfigPurpose::UI_VIEW);
 }
 
 void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -279,13 +276,7 @@ void ProtocolController::handleGetUpdate(JsonVariantConst input, JsonVariant out
 void ProtocolController::handleGetFullConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   output["msg"] = "full_config";
-  _cfg.generateFullConfig(output["config"].to<JsonObject>());
-}
-
-void ProtocolController::handleGetAdminConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
-{
-  output["msg"] = "admin_config";
-  _cfg.generateAdminConfig(output["admin"]);
+  _cfg.generateConfig(output, context.role, ConfigPurpose::FIRMWARE);
 }
 
 void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -314,7 +305,7 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
     return generateErrorJSON(output, error);
 
   // give them the updated config
-  generateConfigMessage(output);
+  _cfg.generateConfig(output, context.role, ConfigPurpose::UI_VIEW);
 }
 
 void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -427,17 +418,13 @@ void ProtocolController::handleSetBrightness(JsonVariantConst input, JsonVariant
     return generateErrorJSON(output, "'brightness' is a required parameter.");
 }
 
-void ProtocolController::generateConfigMessage(JsonVariant output)
-{
-}
-
 bool ProtocolController::loadConfigHook(JsonVariant config, char* error, size_t len)
 {
   _enable_serial = config["app_enable_serial"] | _app.enable_serial_api;
   return true;
 }
 
-void ProtocolController::generateAdminConfigHook(JsonVariant output)
+void ProtocolController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
   output["app_enable_serial"] = _enable_serial;
 }

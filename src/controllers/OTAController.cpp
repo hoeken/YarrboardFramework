@@ -109,7 +109,7 @@ bool OTAController::loadConfigHook(JsonVariant config, char* error, size_t len)
   return true;
 }
 
-void OTAController::generateAdminConfigHook(JsonVariant output)
+void OTAController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
   output["app_enable_ota"] = _enable_ota;
 }

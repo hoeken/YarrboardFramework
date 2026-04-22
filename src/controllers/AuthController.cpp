@@ -364,7 +364,7 @@ bool AuthController::loadConfigHook(JsonVariant config, char* error, size_t len)
   return true;
 }
 
-void AuthController::generateAdminConfigHook(JsonVariant output)
+void AuthController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
   output["default_role"] = getRoleText(app_default_role);
   output["admin_user"] = admin_user;

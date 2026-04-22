@@ -47,10 +47,9 @@ class BuzzerController : public BaseController
     BuzzerController(YarrboardApp& app);
 
     bool setup() override;
-    void generateConfigHook(JsonVariant output) override;
+    void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
     void generateCapabilitiesHook(JsonVariant config) override;
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
-    void generateAdminConfigHook(JsonVariant output) override;
 
     const char* getStartupMelody() const { return _startup_melody; }
     void setStartupMelody(const char* melody) { strlcpy(_startup_melody, melody, sizeof(_startup_melody)); }

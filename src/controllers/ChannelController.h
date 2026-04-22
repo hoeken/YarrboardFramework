@@ -96,7 +96,7 @@ class ChannelController : public BaseController
       return true;
     };
 
-    void generateConfigHook(JsonVariant output) override
+    void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override
     {
       JsonArray channels = output["channels"].to<JsonArray>();
       for (auto& ch : _channels) {
@@ -107,7 +107,7 @@ class ChannelController : public BaseController
 
     void generateCapabilitiesHook(JsonVariant output) override
     {
-      output[_name]["count"] = _channels.size();
+      output["count"] = _channels.size();
     };
 
     void handleConfigCommand(JsonVariantConst input, JsonVariant output)

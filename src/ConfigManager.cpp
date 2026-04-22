@@ -50,7 +50,7 @@ bool ConfigManager::saveConfig(char* error, size_t len)
 {
   JsonDocument config;
 
-  generateFullConfig(config);
+  generateConfig(config, ADMIN, FIRMWARE);
 
   size_t jsonSize = measureJson(config);
   char* jsonBuffer = (char*)malloc(jsonSize + 1);
@@ -101,62 +101,38 @@ bool ConfigManager::saveConfig(char* error, size_t len)
   return true;
 }
 
-// -------------------------------------------------------------------------
-// Generation
-// -------------------------------------------------------------------------
-
-void ConfigManager::generateFullConfig(JsonVariant output)
-{
-  output["schema_version"] = _schema_version;
-
-  _app.generateAppConfig(output["app"].to<JsonObject>());
-  generateGuestConfig(output["guest"].to<JsonObject>());
-  generateAdminConfig(output["admin"].to<JsonObject>());
-}
-
-void ConfigManager::generateConfigHook(JsonVariant output)
-{
-  output["name"] = _board_name;
-}
-
 bool ConfigManager::loadConfigHook(JsonVariant config, char* error, size_t len)
 {
   const char* v = config["name"] | _app.board_name;
   strlcpy(_board_name, v, sizeof(_board_name));
-  return true;
-}
 
-void ConfigManager::generateGuestConfig(JsonVariant output)
-{
-  for (const auto& entry : _app.getControllers()) {
-    const char* name = entry.controller->getName();
-    entry.controller->generateConfigHook(output[name].to<JsonObject>());
-
-    if (output[name].as<JsonObject>().size() == 0)
-      output.remove(name);
-  }
-}
-
-void ConfigManager::generateAdminConfigHook(JsonVariant output)
-{
-  output["is_first_boot"] = _is_first_boot;
-}
-
-bool ConfigManager::loadAdminConfigHook(JsonVariant config, char* error, size_t len)
-{
   _is_first_boot = config["is_first_boot"] | false;
+
   return true;
 }
 
-void ConfigManager::generateAdminConfig(JsonVariant output)
+// -------------------------------------------------------------------------
+// Generation
+// -------------------------------------------------------------------------
+
+void ConfigManager::generateConfig(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
+  JsonVariant config = output["config"].to<JsonObject>();
+  config["schema_version"] = _schema_version;
+
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
-    entry.controller->generateAdminConfigHook(output[name].to<JsonObject>());
+    entry.controller->generateConfigHook(config[name].to<JsonObject>(), role, purpose);
 
-    if (output[name].as<JsonObject>().size() == 0)
-      output.remove(name);
+    if (config[name].as<JsonObject>().size() == 0)
+      config.remove(name);
   }
+}
+
+void ConfigManager::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
+{
+  output["name"] = _board_name;
+  output["is_first_boot"] = _is_first_boot;
 }
 
 // -------------------------------------------------------------------------
@@ -241,49 +217,9 @@ bool ConfigManager::loadV2Config(JsonVariant config, char* error, size_t len)
 {
   bool result = true;
 
-  if (config["guest"]) {
-    if (!loadGuestConfigFromJSON(config["guest"], error, len)) {
-      YBP.print(error);
-      result = false;
-    }
-  } else {
-    YBP.println("Missing 'guest' config section");
-  }
-
-  if (config["admin"]) {
-    if (!loadAdminConfigFromJSON(config["admin"], error, len)) {
-      YBP.print(error);
-      result = false;
-    }
-  } else {
-    YBP.println("Missing 'admin' config section");
-  }
-
-  return result;
-}
-
-bool ConfigManager::loadGuestConfigFromJSON(JsonVariant config, char* error, size_t len)
-{
-  bool result = true;
-
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
     if (!entry.controller->loadConfigHook(config[name], error, len)) {
-      YBP.print(error);
-      result = false;
-    }
-  }
-
-  return result;
-}
-
-bool ConfigManager::loadAdminConfigFromJSON(JsonVariant config, char* error, size_t len)
-{
-  bool result = true;
-
-  for (const auto& entry : _app.getControllers()) {
-    const char* name = entry.controller->getName();
-    if (!entry.controller->loadAdminConfigHook(config[name], error, len)) {
       YBP.print(error);
       result = false;
     }
@@ -296,7 +232,13 @@ bool ConfigManager::loadV1Config(JsonVariant root, char* error, size_t len)
 {
   bool result = true;
 
-  // todo: move everything into one big flat top level json, then call loadConfigHook once
+  for (const char* section : {"app", "network"}) {
+    if (root[section].is<JsonObject>()) {
+      for (JsonPair kv : root[section].as<JsonObject>()) {
+        root["board"][kv.key()] = kv.value();
+      }
+    }
+  }
 
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();

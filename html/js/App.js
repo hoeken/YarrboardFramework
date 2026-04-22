@@ -283,10 +283,9 @@
 
       YB.client.getConfig();
 
-      if (YB.App.role == "admin") {
-        YB.client.send({ "cmd": "get_admin_config" });
-        YB.client.send({ "cmd": "get_full_config" });
-      }
+      // if (YB.App.role == "admin") {
+      //   YB.client.send({ "cmd": "get_full_config" });
+      // }
     },
 
     checkConnectionStatus: function () {

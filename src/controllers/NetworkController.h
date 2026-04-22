@@ -59,7 +59,7 @@ class NetworkController : public BaseController
     const IPAddress& getApIP() const { return apIP; }
 
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
-    void generateAdminConfigHook(JsonVariant output) override;
+    void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
     void handleSetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
 
