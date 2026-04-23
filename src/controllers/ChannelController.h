@@ -85,6 +85,8 @@ class ChannelController : public BaseController
     {
       JsonArrayConst channels = config["channels"].as<JsonArrayConst>();
 
+      YBP.printf("%s channel count: %d\n", this->getName(), channels.size());
+
       // now iterate over our initialized channels
       for (auto& ch : _channels) {
         for (JsonVariantConst ch_config : channels) {
@@ -118,7 +120,7 @@ class ChannelController : public BaseController
       if (!ch)
         return;
 
-      if (!input["config"].is<JsonObject>()) {
+      if (!input["config"].is<JsonObjectConst>()) {
         snprintf(error, sizeof(error), "'config' is required parameter");
         return _app.protocol.generateErrorJSON(output, error);
       }
