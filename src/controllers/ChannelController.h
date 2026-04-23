@@ -85,8 +85,6 @@ class ChannelController : public BaseController
     {
       JsonArrayConst channels = config["channels"].as<JsonArrayConst>();
 
-      YBP.printf("%s channel count: %d\n", this->getName(), channels.size());
-
       // now iterate over our initialized channels
       for (auto& ch : _channels) {
         for (JsonVariantConst ch_config : channels) {

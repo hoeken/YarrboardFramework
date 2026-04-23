@@ -271,9 +271,10 @@ bool ConfigManager::loadV1Config(JsonVariant root, char* error, size_t len)
     }
     for (int i = 0; i < arrayKeyCount; i++) {
       const char* key = arrayKeys[i].c_str();
-      JsonArray arr = root["board"][key].as<JsonArray>();
+      JsonDocument tempDoc;
+      tempDoc.set(root["board"][key]);
       JsonObject obj = root["board"][key].to<JsonObject>();
-      obj["channels"] = arr;
+      obj["channels"].set(tempDoc.as<JsonArray>());
     }
   }
 
