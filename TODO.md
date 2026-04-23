@@ -1,9 +1,12 @@
 ## v3.0.0
 
-* implement validateConfigHook() where needed
-* remove error handling from loadConfigHook()
-* more testing of everything
-* bad config shouldnt cause coredump
+* YarrboardController -> AppController
+* implement more sanitizeConfig() on different params
+* more testing of everything:
+  * shareable config
+  * v1 config
+  * v2 config
+  * delete random bits of config
 
 * update FrothFET and SendIt with new framework
   * firmware calls
