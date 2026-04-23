@@ -16,6 +16,9 @@
 #include "YarrboardDebug.h"
 #include "controllers/NavicoController.h"
 #include "controllers/ProtocolController.h"
+#include "mbedtls/error.h"
+#include "mbedtls/pk.h"
+#include "mbedtls/x509_crt.h"
 
 HTTPController::HTTPController(YarrboardApp& app) : BaseController(app, "http")
 {
@@ -95,9 +98,13 @@ bool HTTPController::setup()
 
   // do we want secure or not?
   if (_app_enable_ssl && _server_cert.length() && _server_key.length()) {
-    server = new PsychicHttpsServer(443);
-    server->setCertificate(_server_cert.c_str(), _server_key.c_str());
-    // YBP.println("SSL enabled");
+    if (validateCertAndKey(_server_cert, _server_key)) {
+      server = new PsychicHttpsServer(443);
+      server->setCertificate(_server_cert.c_str(), _server_key.c_str());
+    } else {
+      server = new PsychicHttpServer(80);
+      YBP.println("⚠️ HTTP SSL Certificate invalid, falling back to plain HTTP");
+    }
   } else {
     server = new PsychicHttpServer(80);
     // YBP.println("SSL disabled");
@@ -223,9 +230,48 @@ bool HTTPController::setup()
 
   _app.protocol.registerCommand(ADMIN, "set_webserver_config", this, &HTTPController::handleSetWebServerConfig);
 
-  server->start();
+  esp_err_t err = server->start();
 
-  return true;
+  return err == ESP_OK;
+}
+
+bool HTTPController::validateCertAndKey(const String& cert_pem, const String& key_pem)
+{
+  mbedtls_x509_crt cert;
+  mbedtls_pk_context key;
+  int ret;
+  bool is_valid = false;
+
+  mbedtls_x509_crt_init(&cert);
+  mbedtls_pk_init(&key);
+
+  // 1. Parse the Certificate (PEM: length must include null terminator)
+  ret = mbedtls_x509_crt_parse(&cert, (const unsigned char*)cert_pem.c_str(), cert_pem.length() + 1);
+  if (ret != 0) {
+    YBP.printf("⚠️ Failed to parse certificate. Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
+
+  // 2. Parse the Private Key (PEM: length must include null terminator)
+  ret = mbedtls_pk_parse_key(&key, (const unsigned char*)key_pem.c_str(), key_pem.length() + 1, NULL, 0, NULL, NULL);
+  if (ret != 0) {
+    YBP.printf("⚠️ Failed to parse private key. Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
+
+  // 3. Check that the Certificate and Private Key match
+  ret = mbedtls_pk_check_pair(&cert.pk, &key, NULL, NULL);
+  if (ret != 0) {
+    YBP.printf("⚠️ Certificate and Private Key DO NOT MATCH! Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
+
+  is_valid = true;
+
+cleanup:
+  mbedtls_x509_crt_free(&cert);
+  mbedtls_pk_free(&key);
+  return is_valid;
 }
 
 void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -239,6 +285,9 @@ void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVarian
   _app_enable_ssl = input["app_enable_ssl"] | _app_enable_ssl;
   _server_cert = input["server_cert"] | _server_cert.c_str();
   _server_key = input["server_key"] | _server_key.c_str();
+
+  if (_app_enable_ssl && !validateCertAndKey(_server_cert, _server_key))
+    return _app.protocol.generateErrorJSON(output, "Invalid SSL certificate or key");
 
   // save it to file.
   char error[128] = "Unknown";

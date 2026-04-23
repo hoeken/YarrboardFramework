@@ -46,6 +46,8 @@ class HTTPController : public BaseController
     bool setup() override;
     void loop() override;
 
+    bool validateCertAndKey(const String& cert_pem, const String& key_pem);
+
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
