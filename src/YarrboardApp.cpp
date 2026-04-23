@@ -22,14 +22,14 @@ YarrboardApp::YarrboardApp() : config(*this),
                                mqtt(*this),
                                ota(*this),
                                ntp(*this),
-                               yarrboard(*this),
+                               app(*this),
                                networkLogger(protocol),
                                loopSpeed(100, 1000),
                                framerateAvg(10, 10000)
 
 {
   registerController(debug, 10);
-  registerController(yarrboard, 15);
+  registerController(app, 15);
   registerController(config, 20);
   registerController(network, 30);
   registerController(ntp, 40);

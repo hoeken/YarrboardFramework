@@ -1,6 +1,5 @@
 ## v3.0.0
 
-* YarrboardController -> AppController
 * implement more sanitizeConfig() on different params
 * more testing of everything:
   * shareable config

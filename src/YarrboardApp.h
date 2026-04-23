@@ -17,6 +17,7 @@
 #include "IntervalTimer.h"
 #include "RollingAverage.h"
 #include "YarrboardDebug.h"
+#include "controllers/AppController.h"
 #include "controllers/AuthController.h"
 #include "controllers/BaseController.h"
 #include "controllers/BuzzerController.h"
@@ -28,7 +29,6 @@
 #include "controllers/OTAController.h"
 #include "controllers/ProtocolController.h"
 #include "controllers/RGBController.h"
-#include "controllers/YarrboardController.h"
 
 #include <cstring>         // For strcmp
 #include <etl/algorithm.h> // For finding/removing
@@ -88,7 +88,7 @@ class YarrboardApp
     MQTTController mqtt;
     OTAController ota;
     NTPController ntp;
-    YarrboardController yarrboard;
+    AppController app;
 
     YarrboardApp();
 

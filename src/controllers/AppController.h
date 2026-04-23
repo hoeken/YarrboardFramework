@@ -10,8 +10,8 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-#ifndef YARR_YARRBOARD_H
-#define YARR_YARRBOARD_H
+#ifndef YARR_APP_CONTROLLER_H
+#define YARR_APP_CONTROLLER_H
 
 #include "controllers/BaseController.h"
 #include <Arduino.h>
@@ -20,12 +20,12 @@
 class YarrboardApp;
 class ConfigManager;
 
-class YarrboardController : public BaseController
+class AppController : public BaseController
 {
   public:
-    YarrboardController(YarrboardApp& app);
+    AppController(YarrboardApp& app);
 
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 };
 
-#endif /* !YARR_NAVICO_H */
+#endif /* !YARR_APP_CONTROLLER_H */

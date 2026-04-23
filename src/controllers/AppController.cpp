@@ -10,15 +10,15 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-#include "controllers/YarrboardController.h"
+#include "controllers/AppController.h"
 #include "ConfigManager.h"
 #include "YarrboardApp.h"
 
-YarrboardController::YarrboardController(YarrboardApp& app) : BaseController(app, "yarrboard")
+AppController::AppController(YarrboardApp& app) : BaseController(app, "app")
 {
 }
 
-void YarrboardController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
+void AppController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
   // this is just static information for the UI or for shareable configs.
   if (purpose == ConfigPurpose::FIRMWARE)
