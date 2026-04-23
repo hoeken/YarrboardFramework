@@ -81,13 +81,13 @@ class ChannelController : public BaseController
       return ret;
     }
 
-    void loadConfigHook(JsonVariant config) override
+    void loadConfigHook(JsonVariantConst config) override
     {
-      JsonArray channels = config["channels"].as<JsonArray>();
+      JsonArrayConst channels = config["channels"].as<JsonArrayConst>();
 
       // now iterate over our initialized channels
       for (auto& ch : _channels) {
-        for (JsonVariant ch_config : channels) {
+        for (JsonVariantConst ch_config : channels) {
           if (ch_config["id"] == ch.id) {
             ch.loadConfig(ch_config);
           }
@@ -109,7 +109,7 @@ class ChannelController : public BaseController
       output["count"] = _channels.size();
     };
 
-    void handleConfigCommand(JsonVariant input, JsonVariant output)
+    void handleConfigCommand(JsonVariantConst input, JsonVariant output)
     {
       char error[128];
 
@@ -123,11 +123,16 @@ class ChannelController : public BaseController
         return _app.protocol.generateErrorJSON(output, error);
       }
 
-      if (!ch->sanitizeConfig(input["config"], error, sizeof(error))) {
+      // sanitizeConfig may remove invalid fields, so work on a mutable copy
+      JsonDocument configDoc;
+      configDoc.set(input["config"]);
+      JsonVariant config = configDoc.as<JsonVariant>();
+
+      if (!ch->sanitizeConfig(config, error, sizeof(error))) {
         return _app.protocol.generateErrorJSON(output, error);
       }
 
-      ch->loadConfig(input["config"]);
+      ch->loadConfig(config);
 
       // write it to file
       if (!_app.config.saveConfig(error, sizeof(error)))
