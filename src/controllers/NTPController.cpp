@@ -87,10 +87,13 @@ void NTPController::generateStatsHook(JsonVariant output)
 bool NTPController::loadConfigHook(JsonVariant config, char* error, size_t len)
 {
   const char* v;
+
   v = config["ntp_server1"] | "pool.ntp.org";
   strlcpy(_ntp_server1, v, sizeof(_ntp_server1));
+
   v = config["ntp_server2"] | "time.nist.gov";
   strlcpy(_ntp_server2, v, sizeof(_ntp_server2));
+
   _gmt_offset_sec = config["gmt_offset_sec"] | 0L;
   _daylight_offset_sec = config["daylight_offset_sec"] | 0;
   return true;

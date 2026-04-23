@@ -49,6 +49,7 @@ class HTTPController : public BaseController
     bool validateCertAndKey(const String& cert_pem, const String& key_pem);
     bool generateSelfSignedCert(String& cert_pem_out, String& key_pem_out);
 
+    bool validateConfigHook(JsonVariant config, char* error, size_t len) override;
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 

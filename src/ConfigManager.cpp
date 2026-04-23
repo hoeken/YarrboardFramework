@@ -238,6 +238,8 @@ bool ConfigManager::loadV2Config(JsonVariant config, char* error, size_t len)
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
 
+    // validate prunes invalid entries, so it's safe to load even on error.
+    // we don't want a single bad config option to nuke the whole config loading.
     if (!validateConfigHook(config[name], error, len)) {
       YBP.println(error);
       result = false;

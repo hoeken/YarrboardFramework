@@ -27,6 +27,20 @@ HTTPController::HTTPController(YarrboardApp& app) : BaseController(app, "http")
 {
 }
 
+bool HTTPController::validateConfigHook(JsonVariant config, char* error, size_t len)
+{
+  if (config["app_enable_ssl"] && !validateCertAndKey(config["server_cert"].as<String>(), config["server_key"].as<String>())) {
+    snprintf(error, len, "Invalid SSL certificate or key");
+    config.remove("app_enable_ssl");
+    config.remove("server_cert");
+    config.remove("server_key");
+
+    return false;
+  }
+
+  return true;
+}
+
 bool HTTPController::loadConfigHook(JsonVariant config, char* error, size_t len)
 {
   _app_enable_api = config["app_enable_api"] | _app.enable_http_api;
