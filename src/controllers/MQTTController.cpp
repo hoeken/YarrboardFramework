@@ -188,7 +188,7 @@ void MQTTController::generateConfigHook(JsonVariant output, UserRole role, Confi
   output["app_enable_ha_integration"] = _enable_ha_integration;
   output["app_use_hostname_as_mqtt_uuid"] = _use_hostname_as_mqtt_uuid;
 
-  if (role == ADMIN) {
+  if (role == ADMIN && purpose != ConfigPurpose::SHAREABLE) {
     output["mqtt_server"] = _mqtt_server;
     output["mqtt_user"] = _mqtt_user;
     output["mqtt_pass"] = _mqtt_pass; // intentional plaintext

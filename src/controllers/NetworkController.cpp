@@ -88,16 +88,20 @@ bool NetworkController::loadConfigHook(JsonVariant config, char* error, size_t l
 
 void NetworkController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
-  if (purpose == ConfigPurpose::UI_VIEW) {
+  if (purpose == ConfigPurpose::UI_CONFIG) {
     output["uuid"] = getUUID();
   }
 
   output["local_hostname"] = _local_hostname;
 
   if (role == ADMIN) {
+
+    if (purpose != ConfigPurpose::SHAREABLE) {
+      output["wifi_ssid"] = _wifi_ssid;
+      output["wifi_pass"] = _wifi_pass;
+    }
+
     output["wifi_mode"] = _wifi_mode;
-    output["wifi_ssid"] = _wifi_ssid;
-    output["wifi_pass"] = _wifi_pass;
     output["wifi_use_static_ip"] = _wifi_use_static_ip;
     output["wifi_static_ip"] = _wifi_static_ip;
     output["wifi_gateway"] = _wifi_gateway;

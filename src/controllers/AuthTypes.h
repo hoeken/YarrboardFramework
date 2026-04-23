@@ -20,8 +20,9 @@ typedef enum {
 } UserRole;
 
 typedef enum {
-  UI_VIEW, // Building the web interface (includes read-only data & runtime state)
-  FIRMWARE // Downloading the config.json (only editable, persisted fields)
+  UI_CONFIG, // Building the web interface (includes read-only data & runtime state)
+  FIRMWARE,  // Downloading the config.json (only editable, persisted fields)
+  SHAREABLE  // Editable, persistable fields, but missing private data like passwords and keys
 } ConfigPurpose;
 
 typedef struct {

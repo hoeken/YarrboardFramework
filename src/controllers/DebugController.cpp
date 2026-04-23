@@ -123,7 +123,7 @@ void DebugController::loop()
 
 void DebugController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
-  if (purpose == ConfigPurpose::UI_VIEW) {
+  if (purpose == ConfigPurpose::UI_CONFIG) {
     output["last_restart_reason"] = _app.debug.getResetReason();
     output["boot_log"] = startupLogger.c_str();
 

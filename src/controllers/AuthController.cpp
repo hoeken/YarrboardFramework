@@ -368,7 +368,7 @@ void AuthController::generateConfigHook(JsonVariant output, UserRole role, Confi
 {
   output["default_role"] = getRoleText(app_default_role);
 
-  if (role == ADMIN) {
+  if (role == ADMIN && purpose != ConfigPurpose::SHAREABLE) {
     output["admin_user"] = admin_user;
     output["admin_pass"] = admin_pass;
     output["guest_user"] = guest_user;

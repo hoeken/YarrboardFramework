@@ -41,7 +41,7 @@ void HTTPController::generateConfigHook(JsonVariant output, UserRole role, Confi
   output["app_enable_api"] = _app_enable_api;
   output["app_enable_ssl"] = _app_enable_ssl;
 
-  if (role == ADMIN) {
+  if (role == ADMIN && purpose != ConfigPurpose::SHAREABLE) {
     output["server_cert"] = _server_cert;
     output["server_key"] = _server_key;
   }
