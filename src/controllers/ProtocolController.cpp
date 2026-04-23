@@ -37,7 +37,7 @@ bool ProtocolController::setup()
   registerCommand(ADMIN, "set_general_config", this, &ProtocolController::handleSetGeneralConfig);
   registerCommand(ADMIN, "save_config", this, &ProtocolController::handleSaveConfig);
   registerCommand(ADMIN, "get_full_config", this, &ProtocolController::handleGetFullConfig);
-  registerCommand(ADMIN, "set_runtime_config", this, &ProtocolController::handleSetMiscellaneousConfig);
+  registerCommand(ADMIN, "set_misc_config", this, &ProtocolController::handleSetMiscellaneousConfig);
   registerCommand(ADMIN, "restart", this, &ProtocolController::handleRestart);
   registerCommand(ADMIN, "factory_reset", this, &ProtocolController::handleFactoryReset);
 
@@ -308,7 +308,7 @@ void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, Js
   else
     _app.ota.end();
 
-  generateSuccessJSON(output, "runtimeellaneous config saved.");
+  generateSuccessJSON(output, "Miscellaneous config saved.");
 }
 
 void ProtocolController::handleSaveConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
