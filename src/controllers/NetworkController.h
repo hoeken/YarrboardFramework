@@ -58,7 +58,7 @@ class NetworkController : public BaseController
     void setImprovDone(bool v) { improvDone = v; }
     const IPAddress& getApIP() const { return apIP; }
 
-    bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
+    void loadConfigHook(JsonVariantConst config) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
     void handleSetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);

@@ -81,10 +81,9 @@ bool NavicoController::setup()
   return true;
 }
 
-bool NavicoController::loadConfigHook(JsonVariant config, char* error, size_t len)
+void NavicoController::loadConfigHook(JsonVariantConst config)
 {
   _app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
-  return true;
 }
 
 void NavicoController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)

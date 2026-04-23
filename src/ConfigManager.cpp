@@ -101,14 +101,12 @@ bool ConfigManager::saveConfig(char* error, size_t len)
   return true;
 }
 
-bool ConfigManager::loadConfigHook(JsonVariant config, char* error, size_t len)
+void ConfigManager::loadConfigHook(JsonVariantConst config)
 {
   const char* v = config["name"] | _app.board_name;
   strlcpy(_board_name, v, sizeof(_board_name));
 
   _is_first_boot = config["is_first_boot"] | false;
-
-  return true;
 }
 
 // -------------------------------------------------------------------------
@@ -240,15 +238,12 @@ bool ConfigManager::loadV2Config(JsonVariant config, char* error, size_t len)
 
     // validate prunes invalid entries, so it's safe to load even on error.
     // we don't want a single bad config option to nuke the whole config loading.
-    if (!validateConfigHook(config[name], error, len)) {
+    if (!sanitizeConfigHook(config[name], error, len)) {
       YBP.println(error);
       result = false;
     }
 
-    if (!entry.controller->loadConfigHook(config[name], error, len)) {
-      YBP.println(error);
-      result = false;
-    }
+    entry.controller->loadConfigHook(config[name]);
   }
 
   return result;
@@ -266,6 +261,22 @@ bool ConfigManager::loadV1Config(JsonVariant root, char* error, size_t len)
     }
   }
 
+  if (root["board"].is<JsonObject>()) {
+    String arrayKeys[16];
+    int arrayKeyCount = 0;
+    for (JsonPair kv : root["board"].as<JsonObject>()) {
+      if (kv.value().is<JsonArray>() && arrayKeyCount < 16) {
+        arrayKeys[arrayKeyCount++] = kv.key().c_str();
+      }
+    }
+    for (int i = 0; i < arrayKeyCount; i++) {
+      const char* key = arrayKeys[i].c_str();
+      JsonArray arr = root["board"][key].as<JsonArray>();
+      JsonObject obj = root["board"][key].to<JsonObject>();
+      obj["channels"] = arr;
+    }
+  }
+
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
     JsonVariant sub;
@@ -274,10 +285,8 @@ bool ConfigManager::loadV1Config(JsonVariant root, char* error, size_t len)
     } else {
       sub = root["board"];
     }
-    if (!entry.controller->loadConfigHook(sub, error, len)) {
-      YBP.println(error);
-      result = false;
-    }
+
+    entry.controller->loadConfigHook(sub);
   }
 
   return result;

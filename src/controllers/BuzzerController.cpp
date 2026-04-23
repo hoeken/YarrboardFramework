@@ -786,11 +786,10 @@ bool BuzzerController::setup()
   return true;
 }
 
-bool BuzzerController::loadConfigHook(JsonVariant config, char* error, size_t len)
+void BuzzerController::loadConfigHook(JsonVariantConst config)
 {
   const char* v = config["startup_melody"] | _app.default_melody;
   strlcpy(_startup_melody, v, sizeof(_startup_melody));
-  return true;
 }
 
 void BuzzerController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)

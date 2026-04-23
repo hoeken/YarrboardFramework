@@ -84,7 +84,7 @@ void NTPController::generateStatsHook(JsonVariant output)
   output["ntp_time"] = getTime();
 }
 
-bool NTPController::loadConfigHook(JsonVariant config, char* error, size_t len)
+void NTPController::loadConfigHook(JsonVariantConst config)
 {
   const char* v;
 
@@ -96,7 +96,6 @@ bool NTPController::loadConfigHook(JsonVariant config, char* error, size_t len)
 
   _gmt_offset_sec = config["gmt_offset_sec"] | 0L;
   _daylight_offset_sec = config["daylight_offset_sec"] | 0;
-  return true;
 }
 
 void NTPController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)

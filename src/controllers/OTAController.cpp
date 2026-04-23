@@ -103,10 +103,9 @@ void OTAController::startOTA()
   doOTAUpdate = true;
 }
 
-bool OTAController::loadConfigHook(JsonVariant config, char* error, size_t len)
+void OTAController::loadConfigHook(JsonVariantConst config)
 {
   _enable_ota = config["app_enable_ota"] | _app.enable_arduino_ota;
-  return true;
 }
 
 void OTAController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)

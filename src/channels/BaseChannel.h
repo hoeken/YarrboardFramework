@@ -35,7 +35,8 @@ class BaseChannel
     void setKey(const char* key);
 
     virtual void init(uint8_t id);
-    virtual bool loadConfig(JsonVariantConst config, char* error, size_t err_size);
+    virtual bool sanitizeConfig(JsonVariant config, char* error, size_t err_size);
+    virtual void loadConfig(JsonVariantConst config);
     virtual void onConfigUpdatedHook() {}
     virtual void generateConfig(JsonVariant config, UserRole role, ConfigPurpose purpose);
     virtual void generateUpdate(JsonVariant output);

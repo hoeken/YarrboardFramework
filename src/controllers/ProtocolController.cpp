@@ -411,10 +411,9 @@ void ProtocolController::handleSetBrightness(JsonVariantConst input, JsonVariant
     return generateErrorJSON(output, "'brightness' is a required parameter.");
 }
 
-bool ProtocolController::loadConfigHook(JsonVariant config, char* error, size_t len)
+void ProtocolController::loadConfigHook(JsonVariantConst config)
 {
   _enable_serial = config["app_enable_serial"] | _app.enable_serial_api;
-  return true;
 }
 
 void ProtocolController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)

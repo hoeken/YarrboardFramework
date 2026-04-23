@@ -50,7 +50,7 @@ class ConfigManager : public BaseController
 
     // our personal hooks as a controller.
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
-    bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
+    void loadConfigHook(JsonVariantConst config) override;
 
     bool isFirstBoot() const { return _is_first_boot; }
     void setFirstBoot(bool v) { _is_first_boot = v; }

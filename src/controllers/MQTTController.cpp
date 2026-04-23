@@ -158,7 +158,7 @@ void MQTTController::generateStatsHook(JsonVariant output)
   output["mqtt_connected"] = isConnected();
 }
 
-bool MQTTController::loadConfigHook(JsonVariant config, char* error, size_t len)
+void MQTTController::loadConfigHook(JsonVariantConst config)
 {
   const char* v;
 
@@ -177,8 +177,6 @@ bool MQTTController::loadConfigHook(JsonVariant config, char* error, size_t len)
   _enable_mqtt_protocol = config["app_enable_mqtt_protocol"] | _app.enable_mqtt_protocol;
   _enable_ha_integration = config["app_enable_ha_integration"] | _app.enable_ha_integration;
   _use_hostname_as_mqtt_uuid = config["app_use_hostname_as_mqtt_uuid"] | _app.use_hostname_as_mqtt_uuid;
-
-  return true;
 }
 
 void MQTTController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)

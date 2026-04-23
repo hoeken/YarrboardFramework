@@ -50,7 +50,7 @@ void NetworkController::loop()
   }
 }
 
-bool NetworkController::loadConfigHook(JsonVariant config, char* error, size_t len)
+void NetworkController::loadConfigHook(JsonVariantConst config)
 {
   const char* v;
 
@@ -82,8 +82,6 @@ bool NetworkController::loadConfigHook(JsonVariant config, char* error, size_t l
 
   v = config["wifi_dns2"] | "";
   strlcpy(_wifi_dns2, v, sizeof(_wifi_dns2));
-
-  return true;
 }
 
 void NetworkController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)

@@ -84,7 +84,7 @@ class ProtocolController : public BaseController
 
     void incrementSentMessages();
 
-    bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
+    void loadConfigHook(JsonVariantConst config) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
   private:

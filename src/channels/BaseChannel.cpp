@@ -36,60 +36,69 @@ void BaseChannel::setKey(const char* key)
   strncpy(this->key, key, sizeof(this->key));
 }
 
-bool BaseChannel::loadConfig(JsonVariantConst config, char* error, size_t err_size)
+bool BaseChannel::sanitizeConfig(JsonVariant config, char* error, size_t err_size)
 {
-  // we need a valid object
-  if (!config.is<JsonObjectConst>()) {
-    strlcpy(error, "No JsonObject passed to loadConfig()", err_size);
+  bool valid = true;
+
+  if (!config.is<JsonObject>()) {
+    strlcpy(error, "No JsonObject passed to sanitizeConfig()", err_size);
     return false;
   }
 
-  // we need a valid id
-  if (config["id"])
-    this->id = (int)config["id"];
-  else {
+  if (!config["id"]) {
     strlcpy(error, "'id' is a required parameter for channel config.", err_size);
-    return false;
+    valid = false;
   }
 
-  // enabled.  missing defaults to false
-  this->isEnabled = false;
-  if (config["enabled"].is<bool>()) {
-    this->isEnabled = config["enabled"];
-  }
-
-  // every channel has a name
-  snprintf(this->name, sizeof(this->name), "Channel %d", this->id);
   if (config["name"]) {
-    if (strlen(config["name"]) >= sizeof(this->name)) {
+    if (strlen(config["name"].as<const char*>()) >= sizeof(this->name)) {
       snprintf(error, err_size, "Channel name max length %d characters", sizeof(this->name) - 1);
-      return false;
+      config.remove("name");
+      valid = false;
     }
-    strlcpy(this->name, config["name"], sizeof(this->name));
   }
 
-  // key - must not be an empty string.
-  snprintf(this->key, sizeof(this->key), "%d", this->id);
   const char* val = config["key"].as<const char*>();
-  if (val && *val && strlen(val)) {
-    if (strlen(config["key"]) >= sizeof(this->key)) {
+  if (val && *val) {
+    bool keyValid = true;
+    if (strlen(val) >= sizeof(this->key)) {
       snprintf(error, err_size, "Channel key max length %d characters", sizeof(this->key) - 1);
-      return false;
-    }
-
-    // gotta be alphanumeric plus dash or underscore
-    for (const char* p = val; *p; p++) {
-      if (!(isalnum((unsigned char)*p) || *p == '-' || *p == '_')) {
-        snprintf(error, err_size, "Channel key contains invalid character: '%c'", *p);
-        return false;
+      keyValid = false;
+    } else {
+      for (const char* p = val; *p; p++) {
+        if (!(isalnum((unsigned char)*p) || *p == '-' || *p == '_')) {
+          snprintf(error, err_size, "Channel key contains invalid character: '%c'", *p);
+          keyValid = false;
+          break;
+        }
       }
     }
-
-    // okay save it to our object
-    strlcpy(this->key, val, sizeof(this->key));
+    if (!keyValid) {
+      config.remove("key");
+      valid = false;
+    }
   }
 
-  return true;
+  return valid;
+}
+
+void BaseChannel::loadConfig(JsonVariantConst config)
+{
+  if (config["id"])
+    this->id = (int)config["id"];
+
+  this->isEnabled = false;
+  if (config["enabled"].is<bool>())
+    this->isEnabled = config["enabled"];
+
+  snprintf(this->name, sizeof(this->name), "Channel %d", this->id);
+  if (config["name"])
+    strlcpy(this->name, config["name"], sizeof(this->name));
+
+  snprintf(this->key, sizeof(this->key), "%d", this->id);
+  const char* val = config["key"].as<const char*>();
+  if (val && *val)
+    strlcpy(this->key, val, sizeof(this->key));
 }
 
 void BaseChannel::generateConfig(JsonVariant config, UserRole role, ConfigPurpose purpose)
