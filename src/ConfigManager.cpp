@@ -237,6 +237,12 @@ bool ConfigManager::loadV2Config(JsonVariant config, char* error, size_t len)
 
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
+
+    if (!validateConfigHook(config[name], error, len)) {
+      YBP.println(error);
+      result = false;
+    }
+
     if (!entry.controller->loadConfigHook(config[name], error, len)) {
       YBP.println(error);
       result = false;

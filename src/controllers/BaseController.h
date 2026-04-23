@@ -36,14 +36,10 @@ class BaseController
     const char* getName() const { return _name; }
 
     // Guest-level config hooks (pre-scoped to guest[controller->getName()])
+    virtual bool validateConfigHook(JsonVariant config, char* error, size_t len) { return true; }
     virtual bool loadConfigHook(JsonVariant config, char* error, size_t len) { return true; };
     virtual void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) {};
     virtual void generateCapabilitiesHook(JsonVariant config) {};
-
-    // Validation hooks — called before load and before save; may trim/clamp values
-    virtual bool validateConfigJSON(JsonVariant config, char* error, size_t len) { return true; }
-    virtual bool validateAdminConfigJSON(JsonVariant config, char* error, size_t len) { return true; }
-
     virtual void generateUpdateHook(JsonVariant output) {};
     virtual bool needsFastUpdate() { return false; }
     virtual void generateFastUpdateHook(JsonVariant output) {};
