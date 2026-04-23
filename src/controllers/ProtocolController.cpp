@@ -233,6 +233,9 @@ void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant outp
   output["free_heap"] = ESP.getFreeHeap();
   output["min_free_heap"] = ESP.getMinFreeHeap();
   output["max_alloc_heap"] = ESP.getMaxAllocHeap();
+  output["psram_size"] = ESP.getPsramSize();
+  output["free_psram"] = ESP.getFreePsram();
+  output["min_free_psram"] = ESP.getMinFreePsram();
   output["rssi"] = WiFi.RSSI();
 
   // what is our IP address?

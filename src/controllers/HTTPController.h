@@ -47,6 +47,7 @@ class HTTPController : public BaseController
     void loop() override;
 
     bool validateCertAndKey(const String& cert_pem, const String& key_pem);
+    bool generateSelfSignedCert(String& cert_pem_out, String& key_pem_out);
 
     bool loadConfigHook(JsonVariant config, char* error, size_t len) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
@@ -86,7 +87,9 @@ class HTTPController : public BaseController
     esp_err_t sendJsonResponse(PsychicResponse* response, JsonDocument& doc, const char* contentType = "application/json");
     void handleWebSocketMessage(PsychicWebSocketRequest* request, uint8_t* data, size_t len);
     esp_err_t handleGulpedFile(PsychicRequest* request, PsychicResponse* response);
+
     void handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleGenerateSelfSignedCert(JsonVariantConst input, JsonVariant output, ProtocolContext context);
 };
 
 #endif /* !YARR_HTTP_CONTROLLER_H */

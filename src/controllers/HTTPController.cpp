@@ -16,6 +16,9 @@
 #include "YarrboardDebug.h"
 #include "controllers/NavicoController.h"
 #include "controllers/ProtocolController.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/ecp.h"
+#include "mbedtls/entropy.h"
 #include "mbedtls/error.h"
 #include "mbedtls/pk.h"
 #include "mbedtls/x509_crt.h"
@@ -229,6 +232,7 @@ bool HTTPController::setup()
   });
 
   _app.protocol.registerCommand(ADMIN, "set_webserver_config", this, &HTTPController::handleSetWebServerConfig);
+  _app.protocol.registerCommand(ADMIN, "generate_self_signed_cert", this, &HTTPController::handleGenerateSelfSignedCert);
 
   esp_err_t err = server->start();
 
@@ -239,11 +243,25 @@ bool HTTPController::validateCertAndKey(const String& cert_pem, const String& ke
 {
   mbedtls_x509_crt cert;
   mbedtls_pk_context key;
+  mbedtls_entropy_context* entropy = (mbedtls_entropy_context*)malloc(sizeof(mbedtls_entropy_context));
+  mbedtls_ctr_drbg_context ctr_drbg;
   int ret;
   bool is_valid = false;
 
+  if (!entropy)
+    return false;
+
   mbedtls_x509_crt_init(&cert);
   mbedtls_pk_init(&key);
+  mbedtls_entropy_init(entropy);
+  mbedtls_ctr_drbg_init(&ctr_drbg);
+
+  const char* pers = "yarrboard_validate";
+  ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, entropy, (const unsigned char*)pers, strlen(pers));
+  if (ret != 0) {
+    YBP.printf("⚠️ Failed to seed RNG for validation. Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
 
   // 1. Parse the Certificate (PEM: length must include null terminator)
   ret = mbedtls_x509_crt_parse(&cert, (const unsigned char*)cert_pem.c_str(), cert_pem.length() + 1);
@@ -253,14 +271,15 @@ bool HTTPController::validateCertAndKey(const String& cert_pem, const String& ke
   }
 
   // 2. Parse the Private Key (PEM: length must include null terminator)
-  ret = mbedtls_pk_parse_key(&key, (const unsigned char*)key_pem.c_str(), key_pem.length() + 1, NULL, 0, NULL, NULL);
+  ret = mbedtls_pk_parse_key(&key, (const unsigned char*)key_pem.c_str(), key_pem.length() + 1, NULL, 0, mbedtls_ctr_drbg_random, &ctr_drbg);
   if (ret != 0) {
     YBP.printf("⚠️ Failed to parse private key. Error: -0x%04x\n", -ret);
     goto cleanup;
   }
 
   // 3. Check that the Certificate and Private Key match
-  ret = mbedtls_pk_check_pair(&cert.pk, &key, NULL, NULL);
+  // mbedtls 3.x requires an RNG for ECDSA check_pair (it does a sign+verify internally)
+  ret = mbedtls_pk_check_pair(&cert.pk, &key, mbedtls_ctr_drbg_random, &ctr_drbg);
   if (ret != 0) {
     YBP.printf("⚠️ Certificate and Private Key DO NOT MATCH! Error: -0x%04x\n", -ret);
     goto cleanup;
@@ -271,7 +290,117 @@ bool HTTPController::validateCertAndKey(const String& cert_pem, const String& ke
 cleanup:
   mbedtls_x509_crt_free(&cert);
   mbedtls_pk_free(&key);
+  mbedtls_entropy_free(entropy);
+  free(entropy);
+  mbedtls_ctr_drbg_free(&ctr_drbg);
   return is_valid;
+}
+
+bool HTTPController::generateSelfSignedCert(String& cert_pem_out, String& key_pem_out)
+{
+  mbedtls_pk_context key;
+  mbedtls_x509write_cert crt;
+  mbedtls_entropy_context entropy;
+  mbedtls_ctr_drbg_context ctr_drbg;
+  int ret;
+  bool success = false;
+
+  // EC cert + key PEM fit well within 2KB each
+  unsigned char* cert_buf = (unsigned char*)malloc(2048);
+  unsigned char* key_buf = (unsigned char*)malloc(2048);
+  if (!cert_buf || !key_buf) {
+    free(cert_buf);
+    free(key_buf);
+    return false;
+  }
+
+  mbedtls_pk_init(&key);
+  mbedtls_x509write_crt_init(&crt);
+  mbedtls_entropy_init(&entropy);
+  mbedtls_ctr_drbg_init(&ctr_drbg);
+  const char* pers = "yarrboard_tls";
+  ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, (const unsigned char*)pers, strlen(pers));
+  if (ret != 0) {
+    YBP.printf("⚠️ Failed to seed RNG. Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
+
+  // EC secp256r1 generates in ~1-2s on ESP32; RSA-2048 takes 10-30s
+  ret = mbedtls_pk_setup(&key, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY));
+  if (ret != 0) {
+    YBP.printf("⚠️ Failed to set up key context. Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
+
+  ret = mbedtls_ecp_gen_key(MBEDTLS_ECP_DP_SECP256R1, mbedtls_pk_ec(key), mbedtls_ctr_drbg_random, &ctr_drbg);
+  if (ret != 0) {
+    YBP.printf("⚠️ Failed to generate EC key. Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
+
+  mbedtls_x509write_crt_set_version(&crt, MBEDTLS_X509_CRT_VERSION_3);
+  mbedtls_x509write_crt_set_md_alg(&crt, MBEDTLS_MD_SHA256);
+  mbedtls_x509write_crt_set_subject_key(&crt, &key);
+  mbedtls_x509write_crt_set_issuer_key(&crt, &key);
+
+  ret = mbedtls_x509write_crt_set_subject_name(&crt, "CN=Yarrboard,O=Yarrboard,C=US");
+  if (ret != 0) {
+    YBP.printf("⚠️ Failed to set subject name. Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
+
+  ret = mbedtls_x509write_crt_set_issuer_name(&crt, "CN=Yarrboard,O=Yarrboard,C=US");
+  if (ret != 0) {
+    YBP.printf("⚠️ Failed to set issuer name. Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
+
+  {
+    unsigned char serial_raw[] = {0x01};
+    ret = mbedtls_x509write_crt_set_serial_raw(&crt, serial_raw, sizeof(serial_raw));
+  }
+  if (ret != 0) {
+    YBP.printf("⚠️ Failed to set serial. Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
+
+  // Hardcoded validity: ESP32 rarely has accurate RTC time at first boot
+  ret = mbedtls_x509write_crt_set_validity(&crt, "20240101000000", "20340101000000");
+  if (ret != 0) {
+    YBP.printf("⚠️ Failed to set validity. Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
+
+  ret = mbedtls_x509write_crt_set_basic_constraints(&crt, 0, -1);
+  if (ret != 0) {
+    YBP.printf("⚠️ Failed to set basic constraints. Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
+
+  ret = mbedtls_x509write_crt_pem(&crt, cert_buf, 2048, mbedtls_ctr_drbg_random, &ctr_drbg);
+  if (ret != 0) {
+    YBP.printf("⚠️ Failed to write certificate PEM. Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
+
+  ret = mbedtls_pk_write_key_pem(&key, key_buf, 2048);
+  if (ret != 0) {
+    YBP.printf("⚠️ Failed to write key PEM. Error: -0x%04x\n", -ret);
+    goto cleanup;
+  }
+
+  cert_pem_out = String((char*)cert_buf);
+  key_pem_out = String((char*)key_buf);
+  success = true;
+
+cleanup:
+  free(cert_buf);
+  free(key_buf);
+  mbedtls_pk_free(&key);
+  mbedtls_x509write_crt_free(&crt);
+  mbedtls_entropy_free(&entropy);
+  mbedtls_ctr_drbg_free(&ctr_drbg);
+  return success;
 }
 
 void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -297,6 +426,17 @@ void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVarian
   // restart the board.
   if (old_app_enable_ssl != _app_enable_ssl)
     ESP.restart();
+}
+
+void HTTPController::handleGenerateSelfSignedCert(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+{
+  String cert, key;
+  if (!generateSelfSignedCert(cert, key))
+    return _app.protocol.generateErrorJSON(output, "Failed to generate self-signed certificate");
+
+  output["msg"] = "self_signed_cert";
+  output["cert"] = cert;
+  output["key"] = key;
 }
 
 void HTTPController::loop()

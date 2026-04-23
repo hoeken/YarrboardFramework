@@ -1,0 +1,23 @@
+# Allow internal heap to overflow into PSRAM when exhausted.
+# Small allocations (<16KB) stay in fast internal SRAM; larger ones spill to PSRAM.
+# Silently ignored on targets without SPIRAM (C3/C5/C6/esp32).
+CONFIG_SPIRAM_USE_MALLOC=y
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=16384
+
+# Move WiFi and lwIP buffers to PSRAM, freeing ~100KB of internal RAM.
+# Silently ignored on targets without SPIRAM.
+CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
+
+# Move mbedTLS dynamic allocations to PSRAM.
+# Without this, each TLS session chews ~40-100KB of internal RAM plus two 16KB
+# record buffers, exhausting internal heap when multiple clients connect.
+# Has no effect on targets without SPIRAM (CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC
+# depends on SPIRAM in Kconfig, so it is silently ignored on C3/C5/C6/esp32).
+CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC=y
+
+# Use asymmetric record buffer sizes: full 16KB in (needed for receiving TLS
+# records from browsers) but only 4KB out (sufficient for JSON API responses).
+# Saves ~24KB of PSRAM per session vs the default symmetric 32KB allocation.
+CONFIG_MBEDTLS_ASYMMETRIC_CONTENT_LEN=y
+CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN=16384
+CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN=4096

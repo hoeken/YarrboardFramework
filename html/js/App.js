@@ -162,6 +162,7 @@
       $("#saveMQTTSettings").on('click', YB.App.saveMQTTSettings);
       $("#saveNetworkSettings").on('click', YB.App.saveNetworkSettings);
       $("#saveMiscellaneousSettings").on('click', YB.App.saveMiscellaneousSettings);
+      $("#server_cert_generate").on('click', YB.App.generateSelfSignedCert);
 
       // Mobile navbar collapse handler
       // Let the onclick handler execute first, then collapse the navbar
@@ -748,6 +749,16 @@
         server_cert: settings.server_cert,
         server_key: settings.server_key
       });
+    },
+
+    generateSelfSignedCert: function () {
+
+      $("#server_cert_generate").prop('disabled', true);
+
+      // okay, send it off.
+      YB.client.send({
+        cmd: "generate_self_signed_cert"
+      }, true);
     },
 
     getMQTTSettingsSchema: function () {
@@ -1443,6 +1454,9 @@
       $("#free_heap").html(YB.Util.formatBytes(msg.free_heap, 0));
       $("#min_free_heap").html(YB.Util.formatBytes(msg.min_free_heap, 0));
       $("#max_alloc_heap").html(YB.Util.formatBytes(msg.max_alloc_heap, 0));
+      $("#psram_size").html(YB.Util.formatBytes(msg.psram_size, 0));
+      $("#free_psram").html(YB.Util.formatBytes(msg.free_psram, 0));
+      $("#min_free_psram").html(YB.Util.formatBytes(msg.min_free_psram, 0));
 
       //our memory bar
       let memory_used = ((msg.heap_size / (msg.heap_size + msg.free_heap)) * 100).toFixed(2); //esp32-s3 512kb ram
@@ -1546,6 +1560,7 @@
 
       //hide/show these guys
       if (YB.config.http.app_enable_ssl) {
+        $("#server_cert_generate_container").show();
         $("#server_cert_container").show();
         $("#server_key_container").show();
       }
@@ -1553,10 +1568,12 @@
       //make it dynamic too
       $("#app_enable_ssl").off("change").change(function () {
         if ($("#app_enable_ssl").prop("checked")) {
+          $("#server_cert_generate_container").show();
           $("#server_cert_container").show();
           $("#server_key_container").show();
         }
         else {
+          $("#server_cert_generate_container").hide();
           $("#server_cert_container").hide();
           $("#server_key_container").hide();
         }
@@ -1621,6 +1638,14 @@
       YB.App.otaReloadId = setTimeout(function () {
         location.reload(true);
       }, 2500);
+    },
+
+    handleSelfSignedCertMessage: function (msg) {
+
+      $("#server_cert_generate").prop('disabled', false);
+      ``
+      $("#server_cert").val(msg.cert);
+      $("#server_key").val(msg.key);
     },
 
     handleErrorMessage: function (msg) {
@@ -1793,6 +1818,10 @@
                     href="https://github.com/hoeken/yarrboard#enable-ssl">documentation</a>
             </label>
             <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="mb-3" style="display: none" id="server_cert_generate_container">
+          <button id="server_cert_generate" class="btn btn-sm btn-primary">Generate Self Signed Certificate</button>
         </div>
 
         <div class="form-floating mb-3" style="display: none" id="server_cert_container">
@@ -2004,7 +2033,7 @@
   YB.App.onMessage("login", YB.App.handleLoginMessage);
   YB.App.onMessage("set_theme", YB.App.handleSetThemeMessage);
   YB.App.onMessage("set_brightness", YB.App.handleSetBrightnessMessage);
-
+  YB.App.onMessage("self_signed_cert", YB.App.handleSelfSignedCertMessage);
 
   //
   // Pages
