@@ -149,6 +149,8 @@ void ConfigManager::generateConfigHook(JsonVariant output, UserRole role, Config
     output["is_first_boot"] = _is_first_boot;
   else if (purpose == ConfigPurpose::UI_CONFIG)
     output["brightness"] = getGlobalBrightness();
+  else if (purpose == ConfigPurpose::SHAREABLE)
+    output["is_first_boot"] = true;
 }
 
 // -------------------------------------------------------------------------

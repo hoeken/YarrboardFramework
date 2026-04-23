@@ -378,7 +378,7 @@
         }
       });
 
-      //download handler
+      //download handler - full config.
       document.getElementById('configurationDownload').addEventListener('click', () => {
         const text = document.getElementById('configurationTextarea').value;
         const blob = new Blob([text], { type: 'application/json' });
@@ -387,11 +387,18 @@
         a.href = url;
         const today = new Date();
         const dateStr = today.toISOString().split('T')[0];
-        a.download = `${YB.config.network.hostname}_${YB.config.network.uuid}_${dateStr}_config.json`;
+        a.download = `${YB.config.network.local_hostname}_${YB.config.network.uuid}_${dateStr}_config.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+      });
+
+      //download handler - shareable
+      document.getElementById('configurationShareable').addEventListener('click', () => {
+        YB.client.send({
+          "cmd": "get_shareable_config"
+        });
       });
 
       YB.App.addConfigurationDragDropHandler();
@@ -1508,6 +1515,25 @@
       textarea.value = prettyJSON;
     },
 
+    handleShareableConfigMessage: function (msg) {
+      // YB.log("shareable config");
+      // console.log(msg);
+
+      //generate our download
+      const text = JSON.stringify(msg.config, null, 2); // 2-space indentation
+      const blob = new Blob([text], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
+      a.download = `${YB.config.network.local_hostname}_${YB.config.network.uuid}_${dateStr}_shareable_config.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+
     handleAdminConfigMessage: function () {
 
       //update some ui stuff
@@ -2027,6 +2053,7 @@
   YB.App.onMessage("update", YB.App.handleUpdateMessage);
   YB.App.onMessage("stats", YB.App.handleStatsMessage);
   YB.App.onMessage("full_config", YB.App.handleFullConfigMessage);
+  YB.App.onMessage("shareable_config", YB.App.handleShareableConfigMessage);
   YB.App.onMessage("ota_progress", YB.App.handleOTAProgressMessage);
   YB.App.onMessage("ota_finished", YB.App.handleOTAFinishedMessage);
   YB.App.onMessage("error", YB.App.handleErrorMessage);

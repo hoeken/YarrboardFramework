@@ -37,6 +37,7 @@ bool ProtocolController::setup()
   registerCommand(ADMIN, "set_general_config", this, &ProtocolController::handleSetGeneralConfig);
   registerCommand(ADMIN, "save_config", this, &ProtocolController::handleSaveConfig);
   registerCommand(ADMIN, "get_full_config", this, &ProtocolController::handleGetFullConfig);
+  registerCommand(ADMIN, "get_shareable_config", this, &ProtocolController::handleGetShareableConfig);
   registerCommand(ADMIN, "set_misc_config", this, &ProtocolController::handleSetMiscellaneousConfig);
   registerCommand(ADMIN, "restart", this, &ProtocolController::handleRestart);
   registerCommand(ADMIN, "factory_reset", this, &ProtocolController::handleFactoryReset);
@@ -263,6 +264,12 @@ void ProtocolController::handleGetFullConfig(JsonVariantConst input, JsonVariant
 {
   output["msg"] = "full_config";
   _cfg.generateConfig(output["config"].to<JsonObject>(), context.role, ConfigPurpose::FIRMWARE);
+}
+
+void ProtocolController::handleGetShareableConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+{
+  output["msg"] = "shareable_config";
+  _cfg.generateConfig(output["config"].to<JsonObject>(), context.role, ConfigPurpose::SHAREABLE);
 }
 
 void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
