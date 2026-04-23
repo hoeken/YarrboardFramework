@@ -753,7 +753,7 @@
 
     generateSelfSignedCert: function () {
 
-      $("#server_cert_generate").prop('disabled', true);
+      $("#server_cert_generate").disable();
 
       // okay, send it off.
       YB.client.send({
@@ -1034,17 +1034,17 @@
 
     checkForUpdates: function () {
       //did we get a config yet?
-      if (YB.yarrboard) {
+      if (YB.config.yarrboard) {
         //dont look up firmware if we're in development mode.
-        if (YB.yarrboard.is_development) {
+        if (YB.config.yarrboard.is_development) {
           $("#firmware_checking").html("Development Mode, automatic firmware checking disabled.")
           return;
         }
 
         //check them if we got em.
-        if (YB.yarrboard.firmware_manifest_url && YB.yarrboard.firmware_manifest_url.length) {
+        if (YB.config.yarrboard.firmware_manifest_url && YB.config.yarrboard.firmware_manifest_url.length) {
           $.ajax({
-            url: YB.yarrboard.firmware_manifest_url,
+            url: YB.config.yarrboard.firmware_manifest_url,
             cache: false,
             dataType: "json"
           })
@@ -1064,7 +1064,7 @@
       //did we get anything?
       let data;
       for (let firmware of jdata)
-        if (firmware.type == YB.yarrboard.hardware_version)
+        if (firmware.type == YB.config.yarrboard.hardware_version)
           data = firmware;
 
       if (!data) {
@@ -1075,7 +1075,7 @@
       $("#firmware_checking").hide();
 
       //do we have a new version?
-      if (YB.Util.compareVersions(data.version, YB.yarrboard.firmware_version)) {
+      if (YB.Util.compareVersions(data.version, YB.config.yarrboard.firmware_version)) {
 
         //big changelogs are saved as markdown files.
         if (data.changelog) {
@@ -1306,8 +1306,8 @@
       if (YB.config.debug.has_coredump)
         YB.App.showAdminAlert(/*html*/ `
           <p>Oops, looks like Yarrboard crashed.</p>
-          <p>Please download the <a href="/coredump.bin" target="_blank">coredump</a> and report it to our <a href="${YB.yarrboard.git_url}/issues">Github Issue Tracker</a> along with the following information:</p>
-          <ul><li>Firmware: ${YB.yarrboard.firmware_version}</li><li>Hardware: ${YB.yarrboard.hardware_version}</li></ul>
+          <p>Please download the <a href="/coredump.bin" target="_blank">coredump</a> and report it to our <a href="${YB.config.yarrboard.git_url}/issues">Github Issue Tracker</a> along with the following information:</p>
+          <ul><li>Firmware: ${YB.config.yarrboard.firmware_version}</li><li>Hardware: ${YB.config.yarrboard.hardware_version}</li></ul>
         `, "danger");
 
       //send our boot log
@@ -1324,11 +1324,11 @@
       YB.App.updateBoardName(YB.config.config.name);
 
       //all our versions
-      $("#firmware_version").html(`v${YB.yarrboard.firmware_version}`);
+      $("#firmware_version").html(`v${YB.config.yarrboard.firmware_version}`);
 
       //do we have git configured?
-      if (YB.yarrboard.git_hash) {
-        let clean_hash = YB.yarrboard.git_hash;
+      if (YB.config.yarrboard.git_hash) {
+        let clean_hash = YB.config.yarrboard.git_hash;
         let is_dirty = false;
         if (clean_hash.endsWith("-dirty")) {
           is_dirty = true;
@@ -1338,28 +1338,28 @@
         if (is_dirty)
           short_hash += "-dirty";
 
-        if (YB.yarrboard.git_url)
-          $("#git_hash").html(`<a href="${YB.yarrboard.git_url}/commit/${clean_hash}">${short_hash}</a>`);
+        if (YB.config.yarrboard.git_url)
+          $("#git_hash").html(`<a href="${YB.config.yarrboard.git_url}/commit/${clean_hash}">${short_hash}</a>`);
         else
           $("#git_hash").html(`${short_hash}`);
       }
 
       //various other component versions
-      $("#build_time").html(YB.yarrboard.build_time);
-      if (YB.yarrboard.hardware_url && YB.yarrboard.hardware_url.length)
-        $("#hardware_version").html(`<a href="${YB.yarrboard.hardware_url}">${YB.yarrboard.hardware_version}</a>`);
+      $("#build_time").html(YB.config.yarrboard.build_time);
+      if (YB.config.yarrboard.hardware_url && YB.config.yarrboard.hardware_url.length)
+        $("#hardware_version").html(`<a href="${YB.config.yarrboard.hardware_url}">${YB.config.yarrboard.hardware_version}</a>`);
       else
-        $("#hardware_version").html(YB.yarrboard.hardware_version);
-      $("#esp_idf_version").html(`${YB.yarrboard.esp_idf_version}`);
-      $("#arduino_version").html(`v${YB.yarrboard.arduino_version}`);
-      $("#yarrboard_framework_version").html(`v${YB.yarrboard.yarrboard_framework_version}`);
-      $("#psychic_http_version").html(`v${YB.yarrboard.psychic_http_version}`);
+        $("#hardware_version").html(YB.config.yarrboard.hardware_version);
+      $("#esp_idf_version").html(`${YB.config.yarrboard.esp_idf_version}`);
+      $("#arduino_version").html(`v${YB.config.yarrboard.arduino_version}`);
+      $("#yarrboard_framework_version").html(`v${YB.config.yarrboard.yarrboard_framework_version}`);
+      $("#psychic_http_version").html(`v${YB.config.yarrboard.psychic_http_version}`);
       $("#yarrboard_client_version").html(`v${YarrboardClient.version}`);
 
       //update our footer
       $('#projectName')
-        .attr('href', YB.yarrboard.project_url)
-        .text(YB.yarrboard.project_name);
+        .attr('href', YB.config.yarrboard.project_url)
+        .text(YB.config.yarrboard.project_name);
       $('#year').text(new Date().getFullYear());
 
       //show some info about restarts
@@ -1642,7 +1642,7 @@
 
     handleSelfSignedCertMessage: function (msg) {
 
-      $("#server_cert_generate").prop('disabled', false);
+      $("#server_cert_generate").enable();
       ``
       $("#server_cert").val(msg.cert);
       $("#server_key").val(msg.key);

@@ -46,6 +46,7 @@ class ConfigManager : public BaseController
 
     // JSON Generation
     void generateConfig(JsonVariant output, UserRole role, ConfigPurpose purpose);
+    void generateCapabilities(JsonVariant output);
 
     // our personal hooks as a controller.
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;

@@ -212,8 +212,8 @@ void ProtocolController::handleGetConfig(JsonVariantConst input, JsonVariant out
   output["msg"] = "config";
 
   // v2 config sections
-  _app.generateAppConfig(output);
   _cfg.generateConfig(output["config"].to<JsonObject>(), context.role, ConfigPurpose::UI_CONFIG);
+  _cfg.generateCapabilities(output);
 }
 
 void ProtocolController::handleGetStats(JsonVariantConst input, JsonVariant output, ProtocolContext context)
@@ -263,7 +263,6 @@ void ProtocolController::handleGetFullConfig(JsonVariantConst input, JsonVariant
 {
   output["msg"] = "full_config";
   _cfg.generateConfig(output["config"].to<JsonObject>(), context.role, ConfigPurpose::FIRMWARE);
-  _app.generateAppConfig(output["config"]);
 }
 
 void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)

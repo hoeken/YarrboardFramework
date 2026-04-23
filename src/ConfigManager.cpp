@@ -129,6 +129,18 @@ void ConfigManager::generateConfig(JsonVariant output, UserRole role, ConfigPurp
   }
 }
 
+void ConfigManager::generateCapabilities(JsonVariant output)
+{
+  JsonVariant capabilities = output["capabilities"].to<JsonObject>();
+  for (const auto& entry : _app.getControllers()) {
+    const char* name = entry.controller->getName();
+    entry.controller->generateCapabilitiesHook(capabilities[name].to<JsonObject>());
+
+    if (capabilities[name].as<JsonObject>().size() == 0)
+      capabilities.remove(name);
+  }
+}
+
 void ConfigManager::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
   output["name"] = _board_name;

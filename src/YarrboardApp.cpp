@@ -22,12 +22,14 @@ YarrboardApp::YarrboardApp() : config(*this),
                                mqtt(*this),
                                ota(*this),
                                ntp(*this),
+                               yarrboard(*this),
                                networkLogger(protocol),
                                loopSpeed(100, 1000),
                                framerateAvg(10, 10000)
 
 {
   registerController(debug, 10);
+  registerController(yarrboard, 15);
   registerController(config, 20);
   registerController(network, 30);
   registerController(ntp, 40);
@@ -214,36 +216,4 @@ void YarrboardApp::playMelody(const char* melody)
   BuzzerController* buzzer = static_cast<BuzzerController*>(getController("buzzer"));
   if (buzzer)
     buzzer->playMelodyByName(melody);
-}
-
-void YarrboardApp::generateAppConfig(JsonVariant output)
-{
-  JsonVariant app = output["yarrboard"].to<JsonObject>();
-  app["firmware_version"] = firmware_version;
-  app["hardware_version"] = hardware_version;
-  app["hardware_url"] = hardware_url;
-  app["project_name"] = project_name;
-  app["project_url"] = project_url;
-  app["git_url"] = git_url;
-  app["firmware_manifest_url"] = ota.firmware_manifest_url;
-  app["esp_idf_version"] = esp_get_idf_version();
-  app["arduino_version"] = ESP_ARDUINO_VERSION_STR;
-  app["psychic_http_version"] = PSYCHIC_VERSION_STR;
-  app["yarrboard_framework_version"] = YARRBOARD_VERSION_STR;
-#ifdef GIT_HASH
-  app["git_hash"] = GIT_HASH;
-#endif
-#ifdef BUILD_TIME
-  app["build_time"] = BUILD_TIME;
-#endif
-  app["is_development"] = YB_IS_DEVELOPMENT;
-
-  JsonVariant capabilities = output["capabilities"].to<JsonObject>();
-  for (const auto& entry : _controllers) {
-    const char* name = entry.controller->getName();
-    entry.controller->generateCapabilitiesHook(capabilities[name].to<JsonObject>());
-
-    if (capabilities[name].as<JsonObject>().size() == 0)
-      capabilities.remove(name);
-  }
 }

@@ -28,6 +28,7 @@
 #include "controllers/OTAController.h"
 #include "controllers/ProtocolController.h"
 #include "controllers/RGBController.h"
+#include "controllers/YarrboardController.h"
 
 #include <cstring>         // For strcmp
 #include <etl/algorithm.h> // For finding/removing
@@ -87,6 +88,7 @@ class YarrboardApp
     MQTTController mqtt;
     OTAController ota;
     NTPController ntp;
+    YarrboardController yarrboard;
 
     YarrboardApp();
 
@@ -113,8 +115,6 @@ class YarrboardApp
 
     ConfigManager& getConfig() { return config; }
     const ConfigManager& getConfig() const { return config; }
-
-    void generateAppConfig(JsonVariant output);
 
     void setStatusColor(uint8_t r, uint8_t g, uint8_t b);
     void setStatusColor(const CRGB& color);
