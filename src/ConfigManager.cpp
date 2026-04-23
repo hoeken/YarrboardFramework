@@ -286,6 +286,10 @@ bool ConfigManager::loadV1Config(JsonVariant root, char* error, size_t len)
       sub = root["board"];
     }
 
+    if (!entry.controller->sanitizeConfigHook(sub, error, len)) {
+      YBP.println(error);
+      result = false;
+    }
     entry.controller->loadConfigHook(sub);
   }
 

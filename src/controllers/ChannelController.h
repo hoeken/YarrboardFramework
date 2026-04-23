@@ -71,6 +71,9 @@ class ChannelController : public BaseController
                 }
               }
             }
+
+            // sanitize each object too
+            ch.sanitizeConfig(ch_config, error, len);
           }
         }
       }
@@ -78,7 +81,7 @@ class ChannelController : public BaseController
       return ret;
     }
 
-    bool loadConfigHook(JsonVariant config, char* error, size_t len) override
+    void loadConfigHook(JsonVariant config) override
     {
       JsonArray channels = config["channels"].as<JsonArray>();
 
@@ -86,182 +89,180 @@ class ChannelController : public BaseController
       for (auto& ch : _channels) {
         for (JsonVariant ch_config : channels) {
           if (ch_config["id"] == ch.id) {
-            ch.sanitizeConfig(ch_config, error, len);
             ch.loadConfig(ch_config);
           }
         }
+      }
+    }
 
-        return true;
-      };
+    void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override
+    {
+      JsonArray channels = output["channels"].to<JsonArray>();
+      for (auto& ch : _channels) {
+        JsonObject jo = channels.add<JsonObject>();
+        ch.generateConfig(jo, role, purpose);
+      }
+    };
 
-      void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override
-      {
-        JsonArray channels = output["channels"].to<JsonArray>();
-        for (auto& ch : _channels) {
-          JsonObject jo = channels.add<JsonObject>();
-          ch.generateConfig(jo, role, purpose);
-        }
-      };
+    void generateCapabilitiesHook(JsonVariant output) override
+    {
+      output["count"] = _channels.size();
+    };
 
-      void generateCapabilitiesHook(JsonVariant output) override
-      {
-        output["count"] = _channels.size();
-      };
+    void handleConfigCommand(JsonVariant input, JsonVariant output)
+    {
+      char error[128];
 
-      void handleConfigCommand(JsonVariant input, JsonVariant output)
-      {
-        char error[128];
+      // load our channel
+      auto* ch = lookupChannel(input, output);
+      if (!ch)
+        return;
 
-        // load our channel
-        auto* ch = lookupChannel(input, output);
-        if (!ch)
-          return;
-
-        if (!input["config"].is<JsonObject>()) {
-          snprintf(error, sizeof(error), "'config' is required parameter");
-          return _app.protocol.generateErrorJSON(output, error);
-        }
-
-        if (!ch->sanitizeConfig(input["config"], error, sizeof(error))) {
-          return _app.protocol.generateErrorJSON(output, error);
-        }
-
-        ch->loadConfig(input["config"]);
-
-        // write it to file
-        if (!_app.config.saveConfig(error, sizeof(error)))
-          return _app.protocol.generateErrorJSON(output, error);
-
-        ch->onConfigUpdatedHook();
+      if (!input["config"].is<JsonObject>()) {
+        snprintf(error, sizeof(error), "'config' is required parameter");
+        return _app.protocol.generateErrorJSON(output, error);
       }
 
-      void generateUpdateHook(JsonVariant output) override
-      {
-        JsonArray channels = output[_name].to<JsonArray>();
-        for (auto& ch : _channels) {
+      if (!ch->sanitizeConfig(input["config"], error, sizeof(error))) {
+        return _app.protocol.generateErrorJSON(output, error);
+      }
+
+      ch->loadConfig(input["config"]);
+
+      // write it to file
+      if (!_app.config.saveConfig(error, sizeof(error)))
+        return _app.protocol.generateErrorJSON(output, error);
+
+      ch->onConfigUpdatedHook();
+    }
+
+    void generateUpdateHook(JsonVariant output) override
+    {
+      JsonArray channels = output[_name].to<JsonArray>();
+      for (auto& ch : _channels) {
+        JsonObject jo = channels.add<JsonObject>();
+        ch.generateUpdate(jo);
+      }
+    }
+
+    bool needsFastUpdate() override
+    {
+      for (auto& ch : _channels) {
+        if (ch.sendFastUpdate)
+          return true;
+      }
+
+      return false;
+    }
+
+    void generateFastUpdateHook(JsonVariant output) override
+    {
+      JsonArray channels = output[_name].to<JsonArray>();
+      for (auto& ch : _channels) {
+        if (ch.sendFastUpdate) {
           JsonObject jo = channels.add<JsonObject>();
           ch.generateUpdate(jo);
+          ch.sendFastUpdate = false;
         }
       }
+    }
 
-      bool needsFastUpdate() override
-      {
-        for (auto& ch : _channels) {
-          if (ch.sendFastUpdate)
-            return true;
-        }
-
-        return false;
-      }
-
-      void generateFastUpdateHook(JsonVariant output) override
-      {
-        JsonArray channels = output[_name].to<JsonArray>();
-        for (auto& ch : _channels) {
-          if (ch.sendFastUpdate) {
-            JsonObject jo = channels.add<JsonObject>();
-            ch.generateUpdate(jo);
-            ch.sendFastUpdate = false;
-          }
+    void mqttUpdateHook(MQTTController* mqtt) override
+    {
+      for (auto& ch : _channels) {
+        if (ch.isEnabled) {
+          ch.mqttUpdate(mqtt);
         }
       }
+    }
 
-      void mqttUpdateHook(MQTTController * mqtt) override
-      {
-        for (auto& ch : _channels) {
-          if (ch.isEnabled) {
-            ch.mqttUpdate(mqtt);
-          }
+    void haUpdateHook(MQTTController* mqtt) override
+    {
+      for (auto& ch : _channels) {
+        if (ch.isEnabled) {
+          ch.haPublishAvailable(mqtt);
+          ch.haPublishState(mqtt);
         }
       }
+    }
 
-      void haUpdateHook(MQTTController * mqtt) override
-      {
-        for (auto& ch : _channels) {
-          if (ch.isEnabled) {
-            ch.haPublishAvailable(mqtt);
-            ch.haPublishState(mqtt);
-          }
-        }
+    void haGenerateDiscoveryHook(JsonVariant components, const char* uuid, MQTTController* mqtt) override
+    {
+      for (auto& ch : _channels) {
+        if (ch.isEnabled)
+          ch.haGenerateDiscovery(components, uuid, mqtt);
       }
+    }
 
-      void haGenerateDiscoveryHook(JsonVariant components, const char* uuid, MQTTController* mqtt) override
-      {
-        for (auto& ch : _channels) {
-          if (ch.isEnabled)
-            ch.haGenerateDiscovery(components, uuid, mqtt);
-        }
+    ChannelType* getChannelById(uint8_t id)
+    {
+      for (auto& ch : _channels) {
+        if (ch.id == id)
+          return &ch;
       }
+      return nullptr;
+    }
 
-      ChannelType* getChannelById(uint8_t id)
-      {
-        for (auto& ch : _channels) {
-          if (ch.id == id)
-            return &ch;
-        }
-        return nullptr;
+    ChannelType* getChannelByKey(const char* key)
+    {
+      for (auto& ch : _channels) {
+        if (ch.key && key && !strcmp(key, ch.key))
+          return &ch;
       }
+      return nullptr;
+    }
 
-      ChannelType* getChannelByKey(const char* key)
-      {
-        for (auto& ch : _channels) {
-          if (ch.key && key && !strcmp(key, ch.key))
-            return &ch;
-        }
-        return nullptr;
-      }
+    ChannelType* lookupChannel(JsonVariantConst input, JsonVariant output)
+    {
+      // Prefer 'id' if present
+      JsonVariantConst vId = input["id"];
+      JsonVariantConst vKey = input["key"];
 
-      ChannelType* lookupChannel(JsonVariantConst input, JsonVariant output)
-      {
-        // Prefer 'id' if present
-        JsonVariantConst vId = input["id"];
-        JsonVariantConst vKey = input["key"];
+      if (!vId.isNull()) {
+        unsigned int id = 0;
 
-        if (!vId.isNull()) {
-          unsigned int id = 0;
-
-          if (vId.is<unsigned int>()) {
-            // direct integer
-            id = vId.as<unsigned int>();
-          } else if (vId.is<const char*>()) {
-            // string, attempt to parse
-            const char* idStr = vId.as<const char*>();
-            char* endPtr = nullptr;
-            id = strtoul(idStr, &endPtr, 10);
-            if (endPtr == idStr || *endPtr != '\0') {
-              ProtocolController::generateErrorJSON(output, "Parameter 'id' must be an integer or numeric string");
-              return nullptr;
-            }
-          } else {
+        if (vId.is<unsigned int>()) {
+          // direct integer
+          id = vId.as<unsigned int>();
+        } else if (vId.is<const char*>()) {
+          // string, attempt to parse
+          const char* idStr = vId.as<const char*>();
+          char* endPtr = nullptr;
+          id = strtoul(idStr, &endPtr, 10);
+          if (endPtr == idStr || *endPtr != '\0') {
             ProtocolController::generateErrorJSON(output, "Parameter 'id' must be an integer or numeric string");
             return nullptr;
           }
-
-          ChannelType* ch = getChannelById(id);
-          if (!ch) {
-            ProtocolController::generateErrorJSON(output, "Invalid channel id");
-            return nullptr;
-          }
-          return ch;
+        } else {
+          ProtocolController::generateErrorJSON(output, "Parameter 'id' must be an integer or numeric string");
+          return nullptr;
         }
 
-        if (!vKey.isNull()) {
-          if (!vKey.is<const char*>()) {
-            ProtocolController::generateErrorJSON(output, "Parameter 'key' must be a string");
-            return nullptr;
-          }
-          const char* key = vKey.as<const char*>();
-          ChannelType* ch = getChannelByKey(key);
-          if (!ch) {
-            ProtocolController::generateErrorJSON(output, "Invalid channel key");
-            return nullptr;
-          }
-          return ch;
+        ChannelType* ch = getChannelById(id);
+        if (!ch) {
+          ProtocolController::generateErrorJSON(output, "Invalid channel id");
+          return nullptr;
         }
-
-        ProtocolController::generateErrorJSON(output, "You must pass in either 'id' or 'key' as a required parameter");
-        return nullptr;
+        return ch;
       }
-    };
+
+      if (!vKey.isNull()) {
+        if (!vKey.is<const char*>()) {
+          ProtocolController::generateErrorJSON(output, "Parameter 'key' must be a string");
+          return nullptr;
+        }
+        const char* key = vKey.as<const char*>();
+        ChannelType* ch = getChannelByKey(key);
+        if (!ch) {
+          ProtocolController::generateErrorJSON(output, "Invalid channel key");
+          return nullptr;
+        }
+        return ch;
+      }
+
+      ProtocolController::generateErrorJSON(output, "You must pass in either 'id' or 'key' as a required parameter");
+      return nullptr;
+    }
+};
 
 #endif
