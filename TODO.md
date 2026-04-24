@@ -1,5 +1,11 @@
 ## v3.0.0
 
+* rename app_enable_* to foo_enabled in json configs.
+  * sanitize rename (or add/remove)
+  * load+generate use new name
+  * client ui use new name
+* move YarrboardApp.enable_foo to controller.default_foo_enabled
+
 * implement more sanitizeConfig() on different params
 * more testing of everything:
   * shareable config

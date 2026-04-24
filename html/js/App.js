@@ -760,7 +760,7 @@
 
     generateSelfSignedCert: function () {
 
-      $("#server_cert_generate").disable();
+      $("#server_cert_generate").prop("disabled", true);
 
       // okay, send it off.
       YB.client.send({
@@ -1668,7 +1668,7 @@
 
     handleSelfSignedCertMessage: function (msg) {
 
-      $("#server_cert_generate").enable();
+      $("#server_cert_generate").prop("disabled", false);
       ``
       $("#server_cert").val(msg.cert);
       $("#server_key").val(msg.key);

@@ -253,14 +253,52 @@ bool ConfigManager::loadV1Config(JsonVariant root, char* error, size_t len)
 {
   bool result = true;
 
-  for (const char* section : {"app", "network"}) {
-    if (root[section].is<JsonObject>()) {
-      for (JsonPair kv : root[section].as<JsonObject>()) {
-        root["board"][kv.key()] = kv.value();
-      }
-    }
+  // Map v1 board/app/network sections to v2 top-level sections
+  root["config"]["name"] = root["board"]["name"];
+  root["config"]["is_first_boot"] = root["app"]["is_first_boot"];
+
+  // root["network"] keys are identical between v1 and v2 — no remapping needed
+
+  root["ntp"]["gmt_offset_sec"] = root["app"]["gmt_offset_sec"];
+  root["ntp"]["daylight_offset_sec"] = root["app"]["daylight_offset_sec"];
+  root["ntp"]["ntp_server1"] = root["app"]["ntp_server1"];
+  root["ntp"]["ntp_server2"] = root["app"]["ntp_server2"];
+
+  root["http"]["app_enable_api"] = root["app"]["app_enable_api"];
+  root["http"]["app_enable_ssl"] = root["app"]["app_enable_ssl"];
+  root["http"]["server_cert"] = root["app"]["server_cert"];
+  root["http"]["server_key"] = root["app"]["server_key"];
+
+  root["protocol"]["app_enable_serial"] = root["app"]["app_enable_serial"];
+
+  root["auth"]["default_role"] = root["app"]["default_role"];
+  root["auth"]["admin_user"] = root["app"]["admin_user"];
+  root["auth"]["admin_pass"] = root["app"]["admin_pass"];
+  root["auth"]["guest_user"] = root["app"]["guest_user"];
+  root["auth"]["guest_pass"] = root["app"]["guest_pass"];
+
+  root["ota"]["app_enable_ota"] = root["app"]["app_enable_ota"];
+
+  root["mqtt"]["app_enable_mqtt"] = root["app"]["app_enable_mqtt"];
+  root["mqtt"]["app_enable_mqtt_protocol"] = root["app"]["app_enable_mqtt_protocol"];
+  root["mqtt"]["app_enable_ha_integration"] = root["app"]["app_enable_ha_integration"];
+  root["mqtt"]["app_use_hostname_as_mqtt_uuid"] = root["app"]["app_use_hostname_as_mqtt_uuid"];
+  root["mqtt"]["mqtt_server"] = root["app"]["mqtt_server"];
+  root["mqtt"]["mqtt_user"] = root["app"]["mqtt_user"];
+  root["mqtt"]["mqtt_pass"] = root["app"]["mqtt_pass"];
+  root["mqtt"]["mqtt_cert"] = root["app"]["mqtt_cert"];
+
+  root["navico"]["app_enable_mfd"] = root["app"]["app_enable_mfd"];
+  root["buzzer"]["startup_melody"] = root["app"]["startup_melody"];
+
+  if (root["board"]["brineomatic"].is<JsonObject>()) {
+    JsonDocument tempDoc;
+    tempDoc.set(root["board"]["brineomatic"]);
+    root["brineomatic"].set(tempDoc.as<JsonObject>());
+    root["board"].remove("brineomatic");
   }
 
+  // re-wrap channel arrays in new style/
   if (root["board"].is<JsonObject>()) {
     String arrayKeys[16];
     int arrayKeyCount = 0;
@@ -273,25 +311,34 @@ bool ConfigManager::loadV1Config(JsonVariant root, char* error, size_t len)
       const char* key = arrayKeys[i].c_str();
       JsonDocument tempDoc;
       tempDoc.set(root["board"][key]);
-      JsonObject obj = root["board"][key].to<JsonObject>();
-      obj["channels"].set(tempDoc.as<JsonArray>());
+      root[key]["channels"].set(tempDoc.as<JsonArray>());
     }
   }
 
+  root.remove("melodies");
+  root.remove("board");
+  root.remove("app");
+
+  // for debugging only.
+  // size_t jsonSize = measureJson(root);
+  // char* configStr = (char*)malloc(jsonSize + 1);
+  // if (configStr != NULL) {
+  //   configStr[jsonSize] = '\0';
+  //   serializeJson(root, configStr, jsonSize + 1);
+  //   YBP.println(configStr);
+  //   free(configStr);
+  // }
+  // delay(5000);
+
+  // call each controllers sanitize and load.
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
-    JsonVariant sub;
-    if (root["board"].is<JsonObject>() && !root["board"][name].isNull()) {
-      sub = root["board"][name];
-    } else {
-      sub = root["board"];
-    }
 
-    if (!entry.controller->sanitizeConfigHook(sub, error, len)) {
+    if (!entry.controller->sanitizeConfigHook(root[name], error, len)) {
       YBP.println(error);
       result = false;
     }
-    entry.controller->loadConfigHook(sub);
+    entry.controller->loadConfigHook(root[name]);
   }
 
   return result;
