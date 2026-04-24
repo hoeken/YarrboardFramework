@@ -92,7 +92,7 @@ class RGBController : public RGBControllerInterface
         return;
 
       _leds[c].setRGB(r, g, b);
-      _showIfReady();
+      FastLED.show();
     }
 
     void setPixelColor(uint16_t c, const CRGB& color) override
@@ -101,18 +101,10 @@ class RGBController : public RGBControllerInterface
         return;
 
       _leds[c] = color;
-      _showIfReady();
+      FastLED.show();
     }
 
   private:
-    void _showIfReady()
-    {
-      if (millis() - _lastRGBUpdateMillis > 100) {
-        FastLED.show();
-        _lastRGBUpdateMillis = millis();
-      }
-    }
-
     unsigned long _lastRGBUpdateMillis = 0;
     CRGB* _leds = nullptr;
     uint16_t _numLeds;

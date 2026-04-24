@@ -4,8 +4,6 @@
 
 * more testing of everything:
   * shareable config
-  * v1 config
-  * v2 config
   * delete random bits of config
 
 * update FrothFET and SendIt with new framework

@@ -303,6 +303,8 @@ void NetworkController::startServices()
 
 void NetworkController::setupImprov()
 {
+  _app.setStatusColor(CRGB::Blue);
+
   YBP.println("First Boot: starting Improv");
 
   String device_url = "http://";
