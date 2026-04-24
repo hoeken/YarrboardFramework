@@ -786,6 +786,19 @@ bool BuzzerController::setup()
   return true;
 }
 
+bool BuzzerController::sanitizeConfigHook(JsonVariant config, char* error, size_t len)
+{
+  if (config["startup_melody"]) {
+    const char* melody = config["startup_melody"];
+    if (!hasMelody(melody)) {
+      snprintf(error, len, "Invalid startup_melody '%s'", melody);
+      config.remove("startup_melody");
+      return false;
+    }
+  }
+  return true;
+}
+
 void BuzzerController::loadConfigHook(JsonVariantConst config)
 {
   const char* v = config["startup_melody"] | _app.default_melody;
@@ -809,6 +822,18 @@ void BuzzerController::generateMelodyJSON(JsonVariant output)
   output["melodies"][0] = "NONE";
   for (size_t i = 0; i < _melodyCount; i++)
     output["melodies"][i + 1] = _melodyTable[i].name;
+}
+
+bool BuzzerController::hasMelody(const char* melody)
+{
+  if (!strcmp(melody, "NONE"))
+    return true;
+
+  for (size_t i = 0; i < _melodyCount; i++) {
+    if (!strcmp(melody, _melodyTable[i].name))
+      return true;
+  }
+  return false;
 }
 
 bool BuzzerController::playMelodyByName(const char* melody)

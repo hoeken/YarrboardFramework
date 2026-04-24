@@ -343,6 +343,19 @@ void AuthController::handleSetAuthenticationConfig(JsonVariantConst input, JsonV
     ProtocolController::generateErrorJSON(output, error);
 }
 
+bool AuthController::sanitizeConfigHook(JsonVariant config, char* error, size_t len)
+{
+  if (config["default_role"]) {
+    const char* v = config["default_role"];
+    if (strcmp(v, "nobody") && strcmp(v, "admin") && strcmp(v, "guest")) {
+      snprintf(error, len, "Invalid default_role '%s', must be nobody, admin, or guest", v);
+      config.remove("default_role");
+      return false;
+    }
+  }
+  return true;
+}
+
 void AuthController::loadConfigHook(JsonVariantConst config)
 {
   strlcpy(admin_user, config["admin_user"] | _app.default_admin_user, sizeof(admin_user));

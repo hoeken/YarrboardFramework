@@ -41,13 +41,14 @@ class OTAController : public BaseController
     bool validate_firmware = true;
     const char* public_key = "";
 
+    bool sanitizeConfigHook(JsonVariant config, char* error, size_t len) override;
     void loadConfigHook(JsonVariantConst config) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
-    bool isEnabled() const { return _enable_ota; }
-    void setEnabled(bool v) { _enable_ota = v; }
+    bool isEnabled() const { return _arduino_ota_enabled; }
+    void setEnabled(bool v) { _arduino_ota_enabled = v; }
 
   private:
-    bool _enable_ota = false;
+    bool _arduino_ota_enabled = false;
     esp32FOTA* FOTA = nullptr;
     CryptoMemAsset* MyPubKey = nullptr;
     bool doOTAUpdate = false;

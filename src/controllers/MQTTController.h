@@ -43,10 +43,11 @@ class MQTTController : public BaseController
     void handleSetMQTTConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void generateStatsHook(JsonVariant output) override;
 
+    bool sanitizeConfigHook(JsonVariant config, char* error, size_t len) override;
     void loadConfigHook(JsonVariantConst config) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
-    bool isEnabled() const { return _enable_mqtt; }
+    bool isEnabled() const { return _enabled; }
 
   private:
     PsychicMqttClient mqttClient;
@@ -55,10 +56,10 @@ class MQTTController : public BaseController
     bool _pendingHaDiscovery = false;
     bool _commandTopicRegistered = false;
 
-    bool _enable_mqtt = false;
-    bool _enable_mqtt_protocol = false;
-    bool _enable_ha_integration = false;
-    bool _use_hostname_as_mqtt_uuid = true;
+    bool _enabled = false;
+    bool _protocol_enabled = false;
+    bool _ha_integration_enabled = false;
+    bool _use_hostname_as_uuid = true;
 
     char _mqtt_server[YB_MQTT_SERVER_LENGTH] = "";
     char _mqtt_user[YB_USERNAME_LENGTH] = "";

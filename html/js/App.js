@@ -702,19 +702,19 @@
     getWebServerSettingsSchema: function () {
       return {
         // checkboxes
-        app_enable_mfd: {},
-        app_enable_api: {},
-        app_enable_ssl: {},
+        enabled: {},
+        api_enabled: {},
+        ssl_enabled: {},
 
         // required only if SSL is enabled
         server_cert: function (value, attrs) {
-          if (attrs.app_enable_ssl) {
+          if (attrs.ssl_enabled) {
             return { presence: { allowEmpty: false, message: "^is required when SSL is enabled" } };
           }
           return {};
         },
         server_key: function (value, attrs) {
-          if (attrs.app_enable_ssl) {
+          if (attrs.ssl_enabled) {
             return { presence: { allowEmpty: false, message: "^is required when SSL is enabled" } };
           }
           return {};
@@ -725,9 +725,9 @@
     saveWebServerSettings: function () {
       // pull our form data
       const settings = {
-        app_enable_mfd: $("#app_enable_mfd").prop("checked"),
-        app_enable_api: $("#app_enable_api").prop("checked"),
-        app_enable_ssl: $("#app_enable_ssl").prop("checked"),
+        enabled: $("#navico_enabled").prop("checked"),
+        api_enabled: $("#http_api_enabled").prop("checked"),
+        ssl_enabled: $("#http_ssl_enabled").prop("checked"),
         server_cert: $("#server_cert").val().trim(),
         server_key: $("#server_key").val().trim()
       };
@@ -750,9 +750,9 @@
       // okay, send it off.
       YB.client.send({
         cmd: "set_webserver_config",
-        app_enable_mfd: settings.app_enable_mfd,
-        app_enable_api: settings.app_enable_api,
-        app_enable_ssl: settings.app_enable_ssl,
+        enabled: settings.enabled,
+        api_enabled: settings.api_enabled,
+        ssl_enabled: settings.ssl_enabled,
         server_cert: settings.server_cert,
         server_key: settings.server_key
       });
@@ -771,14 +771,14 @@
     getMQTTSettingsSchema: function () {
       return {
         //checkboxes
-        app_enable_mqtt: {},
-        app_enable_mqtt_protocol: {},
-        app_enable_ha_integration: {},
-        app_use_hostname_as_mqtt_uuid: {},
+        enabled: {},
+        protocol_enabled: {},
+        ha_integration_enabled: {},
+        use_hostname_as_uuid: {},
 
         // required if MQTT is enabled; must be protocol://host[:port]
         mqtt_server: function (value, attrs) {
-          if (!attrs.app_enable_mqtt) return {};
+          if (!attrs.enabled) return {};
           return {
             presence: { allowEmpty: false, message: "^is required when MQTT is enabled" },
             format: {
@@ -805,10 +805,10 @@
     saveMQTTSettings: function () {
       // pull our form data
       const settings = {
-        app_enable_mqtt: $("#app_enable_mqtt").prop("checked"),
-        app_enable_mqtt_protocol: $("#app_enable_mqtt_protocol").prop("checked"),
-        app_enable_ha_integration: $("#app_enable_ha_integration").prop("checked"),
-        app_use_hostname_as_mqtt_uuid: $("#app_use_hostname_as_mqtt_uuid").prop("checked"),
+        enabled: $("#mqtt_enabled").prop("checked"),
+        protocol_enabled: $("#mqtt_protocol_enabled").prop("checked"),
+        ha_integration_enabled: $("#mqtt_ha_integration_enabled").prop("checked"),
+        use_hostname_as_uuid: $("#mqtt_use_hostname_as_uuid").prop("checked"),
         mqtt_server: $("#mqtt_server").val().trim(),
         mqtt_user: $("#mqtt_user").val().trim(),
         mqtt_pass: $("#mqtt_pass").val().trim(),
@@ -831,15 +831,15 @@
       YB.Util.flashClass($("#saveMQTTSettings"), "btn-success");
 
       //we dont need a full config refresh
-      YB.config.mqtt.enable_mqtt = settings.app_enable_mqtt;
+      YB.config.mqtt.enabled = settings.enabled;
 
       // okay, send it off
       YB.client.send({
         cmd: "set_mqtt_config",
-        app_enable_mqtt: settings.app_enable_mqtt,
-        app_enable_mqtt_protocol: settings.app_enable_mqtt_protocol,
-        app_enable_ha_integration: settings.app_enable_ha_integration,
-        app_use_hostname_as_mqtt_uuid: settings.app_use_hostname_as_mqtt_uuid,
+        enabled: settings.enabled,
+        protocol_enabled: settings.protocol_enabled,
+        ha_integration_enabled: settings.ha_integration_enabled,
+        use_hostname_as_uuid: settings.use_hostname_as_uuid,
         mqtt_server: settings.mqtt_server,
         mqtt_user: settings.mqtt_user,
         mqtt_pass: settings.mqtt_pass,
@@ -984,16 +984,16 @@
 
     getMiscSettingsSchema: function () {
       return {
-        app_enable_serial: {},
-        app_enable_ota: {}
+        serial_enabled: {},
+        arduino_ota_enabled: {}
       };
     },
 
     saveMiscellaneousSettings: function () {
       // pull our form data
       const settings = {
-        app_enable_serial: $("#app_enable_serial").prop("checked"),
-        app_enable_ota: $("#app_enable_ota").prop("checked")
+        serial_enabled: $("#protocol_serial_enabled").prop("checked"),
+        arduino_ota_enabled: $("#ota_arduino_ota_enabled").prop("checked")
       };
 
       // validate it
@@ -1014,8 +1014,8 @@
       // send it off
       YB.client.send({
         cmd: "set_misc_config",
-        app_enable_serial: settings.app_enable_serial,
-        app_enable_ota: settings.app_enable_ota
+        serial_enabled: settings.serial_enabled,
+        arduino_ota_enabled: settings.arduino_ota_enabled
       });
     },
 
@@ -1482,7 +1482,7 @@
       $("#ip_address").html(msg.ip_address);
 
       //our mqtt?
-      if (YB.config.mqtt.app_enable_mqtt) {
+      if (YB.config.mqtt.enabled) {
         if (msg.mqtt_connected)
           $("#mqtt_status").html(`<span class="text-success">Connected</span>`);
         else
@@ -1555,10 +1555,10 @@
       $("#guest_pass").val(YB.config.auth.guest_pass);
       $("#default_role").val(YB.config.auth.default_role);
       $("#default_role").off("change").change(function () { YB.App.toggleRolePasswords($(this).val()) });
-      $("#app_enable_mfd").prop("checked", YB.config.navico.app_enable_mfd);
-      $("#app_enable_api").prop("checked", YB.config.http.app_enable_api);
-      $("#app_enable_serial").prop("checked", YB.config.protocol.app_enable_serial);
-      $("#app_enable_ota").prop("checked", YB.config.ota.app_enable_ota);
+      $("#navico_enabled").prop("checked", YB.config.navico.enabled);
+      $("#http_api_enabled").prop("checked", YB.config.http.api_enabled);
+      $("#protocol_serial_enabled").prop("checked", YB.config.protocol.serial_enabled);
+      $("#ota_arduino_ota_enabled").prop("checked", YB.config.ota.arduino_ota_enabled);
 
       $("#wifi_mode").val(YB.config.network.wifi_mode);
       $("#wifi_ssid").val(YB.config.network.wifi_ssid);
@@ -1580,20 +1580,20 @@
       });
 
       //for our ssl stuff
-      $("#app_enable_ssl").prop("checked", YB.config.http.app_enable_ssl);
+      $("#http_ssl_enabled").prop("checked", YB.config.http.ssl_enabled);
       $("#server_cert").val(YB.config.http.server_cert);
       $("#server_key").val(YB.config.http.server_key);
 
       //hide/show these guys
-      if (YB.config.http.app_enable_ssl) {
+      if (YB.config.http.ssl_enabled) {
         $("#server_cert_generate_container").show();
         $("#server_cert_container").show();
         $("#server_key_container").show();
       }
 
       //make it dynamic too
-      $("#app_enable_ssl").off("change").change(function () {
-        if ($("#app_enable_ssl").prop("checked")) {
+      $("#http_ssl_enabled").off("change").change(function () {
+        if ($("#http_ssl_enabled").prop("checked")) {
           $("#server_cert_generate_container").show();
           $("#server_cert_container").show();
           $("#server_key_container").show();
@@ -1606,27 +1606,27 @@
       });
 
       //for our mqtt stuff
-      $("#app_enable_mqtt").prop("checked", YB.config.mqtt.app_enable_mqtt);
-      $("#app_enable_mqtt_protocol").prop("checked", YB.config.mqtt.app_enable_mqtt_protocol);
-      $("#app_enable_ha_integration").prop("checked", YB.config.mqtt.app_enable_ha_integration);
-      $("#app_use_hostname_as_mqtt_uuid").prop("checked", YB.config.mqtt.app_use_hostname_as_mqtt_uuid);
+      $("#mqtt_enabled").prop("checked", YB.config.mqtt.enabled);
+      $("#mqtt_protocol_enabled").prop("checked", YB.config.mqtt.protocol_enabled);
+      $("#mqtt_ha_integration_enabled").prop("checked", YB.config.mqtt.ha_integration_enabled);
+      $("#mqtt_use_hostname_as_uuid").prop("checked", YB.config.mqtt.use_hostname_as_uuid);
       $("#mqtt_server").val(YB.config.mqtt.mqtt_server);
       $("#mqtt_user").val(YB.config.mqtt.mqtt_user);
       $("#mqtt_pass").val(YB.config.mqtt.mqtt_pass);
       $("#mqtt_cert").val(YB.config.mqtt.mqtt_cert);
 
       //hide/show these guys
-      if (YB.config.mqtt.app_enable_mqtt) {
+      if (YB.config.mqtt.enabled) {
         $(".mqtt_field").show();
       }
 
       //make it dynamic too
-      $("#app_enable_mqtt").off("change").change(function () {
-        if ($("#app_enable_mqtt").prop("checked")) {
+      $("#mqtt_enabled").off("change").change(function () {
+        if ($("#mqtt_enabled").prop("checked")) {
           $(".mqtt_field").show();
         }
         else {
-          $("#app_enable_ha_integration").prop("checked", false);
+          $("#mqtt_ha_integration_enabled").prop("checked", false);
           $(".mqtt_field").hide();
         }
       });
@@ -1820,8 +1820,8 @@
     generateHTTPSettingsUI: function () {
       return /* html */ `
         <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="app_enable_api" checked>
-            <label class="form-check-label" for="app_enable_api">
+            <input class="form-check-input" type="checkbox" id="http_api_enabled" checked>
+            <label class="form-check-label" for="http_api_enabled">
                 Enable Web API - <a
                     href="https://github.com/hoeken/yarrboard#web-api-protocol">documentation</a>
             </label>
@@ -1829,8 +1829,8 @@
         </div>
 
         <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="app_enable_mfd" checked>
-            <label class="form-check-label" for="app_enable_mfd">
+            <input class="form-check-input" type="checkbox" id="navico_enabled" checked>
+            <label class="form-check-label" for="navico_enabled">
                 Enable MFD Integration - <a
                     href="https://github.com/hoeken/yarrboard#mfd-integration">documentation</a>
             </label>
@@ -1838,8 +1838,8 @@
         </div>
 
         <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="app_enable_ssl" checked>
-            <label class="form-check-label" for="app_enable_ssl">
+            <input class="form-check-input" type="checkbox" id="http_ssl_enabled" checked>
+            <label class="form-check-label" for="http_ssl_enabled">
                 Enable SSL / HTTPS Encryption - <a
                     href="https://github.com/hoeken/yarrboard#enable-ssl">documentation</a>
             </label>
@@ -1872,8 +1872,8 @@
     generateMQTTSettingsUI: function () {
       return /* html */ `
         <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="app_enable_mqtt" checked>
-            <label class="form-check-label" for="app_enable_mqtt">
+            <input class="form-check-input" type="checkbox" id="mqtt_enabled" checked>
+            <label class="form-check-label" for="mqtt_enabled">
                 Enable MQTT Publishing - <a
                     href="https://github.com/hoeken/yarrboard#enable-mqtt">documentation</a>
             </label>
@@ -1881,16 +1881,16 @@
         </div>
 
         <div class="form-check form-switch mb-3 mqtt_field" style="display: none">
-            <input class="form-check-input" type="checkbox" id="app_use_hostname_as_mqtt_uuid" checked>
-            <label class="form-check-label" for="app_use_hostname_as_mqtt_uuid">
+            <input class="form-check-input" type="checkbox" id="mqtt_use_hostname_as_uuid" checked>
+            <label class="form-check-label" for="mqtt_use_hostname_as_uuid">
                 Use local hostname as MQTT Unique ID
             </label>
             <div class="invalid-feedback"></div>
         </div>
 
         <div class="form-check form-switch mb-3 mqtt_field" style="display: none">
-            <input class="form-check-input" type="checkbox" id="app_enable_mqtt_protocol" checked>
-            <label class="form-check-label" for="app_enable_mqtt_protocol">
+            <input class="form-check-input" type="checkbox" id="mqtt_protocol_enabled" checked>
+            <label class="form-check-label" for="mqtt_protocol_enabled">
                 Enable protocol over MQTT (eg. allow json commands to
                 /yarrboard/{hostname|uuid}/command)
             </label>
@@ -1898,8 +1898,8 @@
         </div>
 
         <div class="form-check form-switch mb-3 mqtt_field" style="display: none">
-            <input class="form-check-input" type="checkbox" id="app_enable_ha_integration" checked>
-            <label class="form-check-label" for="app_enable_ha_integration">
+            <input class="form-check-input" type="checkbox" id="mqtt_ha_integration_enabled" checked>
+            <label class="form-check-label" for="mqtt_ha_integration_enabled">
                 Enable Home Assistant Integration - <a
                     href="https://github.com/hoeken/yarrboard#enable-ha">documentation</a>
             </label>
@@ -2018,16 +2018,16 @@
     generateMiscSettingsUI: function () {
       return /* html */ `
         <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="app_enable_ota" checked>
-            <label class="form-check-label" for="app_enable_ota">
+            <input class="form-check-input" type="checkbox" id="ota_arduino_ota_enabled" checked>
+            <label class="form-check-label" for="ota_arduino_ota_enabled">
                 Enable Arduino OTA - for development w/ VSCode
             </label>
             <div class="invalid-feedback"></div>
         </div>
 
         <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="app_enable_serial" checked>
-            <label class="form-check-label" for="app_enable_serial">
+            <input class="form-check-input" type="checkbox" id="protocol_serial_enabled" checked>
+            <label class="form-check-label" for="protocol_serial_enabled">
                 Enable Serial / USB API - <a
                     href="https://github.com/hoeken/yarrboard#serial-api-protocol">documentation</a>
             </label>

@@ -29,9 +29,19 @@ HTTPController::HTTPController(YarrboardApp& app) : BaseController(app, "http")
 
 bool HTTPController::sanitizeConfigHook(JsonVariant config, char* error, size_t len)
 {
-  if (config["app_enable_ssl"] && !validateCertAndKey(config["server_cert"].as<String>(), config["server_key"].as<String>())) {
-    snprintf(error, len, "Invalid SSL certificate or key");
+  if (config["app_enable_api"].is<bool>()) {
+    config["api_enabled"] = config["app_enable_api"].as<bool>();
+    config.remove("app_enable_api");
+  }
+
+  if (config["app_enable_ssl"].is<bool>()) {
+    config["ssl_enabled"] = config["app_enable_ssl"].as<bool>();
     config.remove("app_enable_ssl");
+  }
+
+  if (config["ssl_enabled"] && !validateCertAndKey(config["server_cert"].as<String>(), config["server_key"].as<String>())) {
+    snprintf(error, len, "Invalid SSL certificate or key");
+    config.remove("ssl_enabled");
     config.remove("server_cert");
     config.remove("server_key");
 
@@ -43,16 +53,16 @@ bool HTTPController::sanitizeConfigHook(JsonVariant config, char* error, size_t 
 
 void HTTPController::loadConfigHook(JsonVariantConst config)
 {
-  _app_enable_api = config["app_enable_api"] | _app.enable_http_api;
-  _app_enable_ssl = config["app_enable_ssl"] | _app.enable_ssl;
+  _api_enabled = config["api_enabled"] | _app.enable_http_api;
+  _ssl_enabled = config["ssl_enabled"] | _app.enable_ssl;
   _server_cert = config["server_cert"] | "";
   _server_key = config["server_key"] | "";
 }
 
 void HTTPController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
-  output["app_enable_api"] = _app_enable_api;
-  output["app_enable_ssl"] = _app_enable_ssl;
+  output["api_enabled"] = _api_enabled;
+  output["ssl_enabled"] = _ssl_enabled;
 
   if (role == ADMIN && purpose != ConfigPurpose::SHAREABLE) {
     output["server_cert"] = _server_cert;
@@ -113,7 +123,7 @@ bool HTTPController::setup()
   }
 
   // do we want secure or not?
-  if (_app_enable_ssl && _server_cert.length() && _server_key.length()) {
+  if (_ssl_enabled && _server_cert.length() && _server_key.length()) {
     if (validateCertAndKey(_server_cert, _server_key)) {
       server = new PsychicHttpsServer(443);
       server->setCertificate(_server_cert.c_str(), _server_key.c_str());
@@ -418,17 +428,17 @@ cleanup:
 
 void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
-  bool old_app_enable_ssl = _app_enable_ssl;
+  bool old_ssl_enabled = _ssl_enabled;
 
   NavicoController* navico = static_cast<NavicoController*>(_app.getController("navico"));
   if (navico)
-    navico->setMfdEnabled(input["app_enable_mfd"] | _app.enable_mfd);
-  _app_enable_api = input["app_enable_api"] | _app.enable_http_api;
-  _app_enable_ssl = input["app_enable_ssl"] | _app_enable_ssl;
+    navico->setEnabled(input["enabled"] | _app.enable_mfd);
+  _api_enabled = input["api_enabled"] | _api_enabled;
+  _ssl_enabled = input["ssl_enabled"] | _ssl_enabled;
   _server_cert = input["server_cert"] | _server_cert.c_str();
   _server_key = input["server_key"] | _server_key.c_str();
 
-  if (_app_enable_ssl && !validateCertAndKey(_server_cert, _server_key))
+  if (_ssl_enabled && !validateCertAndKey(_server_cert, _server_key))
     return _app.protocol.generateErrorJSON(output, "Invalid SSL certificate or key");
 
   // save it to file.
@@ -437,7 +447,7 @@ void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVarian
     return _app.protocol.generateErrorJSON(output, error);
 
   // restart the board.
-  if (old_app_enable_ssl != _app_enable_ssl)
+  if (old_ssl_enabled != _ssl_enabled)
     ESP.restart();
 }
 
@@ -514,7 +524,7 @@ esp_err_t HTTPController::handleWebServerRequest(JsonVariant input, PsychicReque
   if (request->hasParam("pass"))
     input["pass"] = request->getParam("pass")->value();
 
-  if (_app_enable_api) {
+  if (_api_enabled) {
     _app.auth.isApiClientLoggedIn(input);
 
     ProtocolContext context;

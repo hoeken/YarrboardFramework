@@ -54,8 +54,10 @@ class BuzzerController : public BaseController
     const char* getStartupMelody() const { return _startup_melody; }
     void setStartupMelody(const char* melody) { strlcpy(_startup_melody, melody, sizeof(_startup_melody)); }
 
+    bool hasMelody(const char* melody);
     bool playMelodyByName(const char* melody);
     void generateMelodyJSON(JsonVariant output);
+    bool sanitizeConfigHook(JsonVariant config, char* error, size_t len) override;
 
     void handlePlaySound(JsonVariantConst input, JsonVariant output, ProtocolContext context);
 

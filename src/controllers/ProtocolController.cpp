@@ -20,7 +20,7 @@
 
 ProtocolController::ProtocolController(YarrboardApp& app) : BaseController(app, "protocol")
 {
-  _enable_serial = app.enable_serial_api;
+  _serial_enabled = app.enable_serial_api;
 }
 
 bool ProtocolController::setup()
@@ -78,7 +78,7 @@ void ProtocolController::loop()
   }
 
   // any serial port customers?
-  if (_enable_serial) {
+  if (_serial_enabled) {
     if (Serial.available() > 0)
       handleSerialJson();
   }
@@ -305,8 +305,8 @@ void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, Js
 {
   char error[128] = "Unknown";
 
-  _enable_serial = input["app_enable_serial"] | _app.enable_serial_api;
-  _app.ota.setEnabled(input["app_enable_ota"] | _app.enable_arduino_ota);
+  _serial_enabled = input["serial_enabled"] | _app.enable_serial_api;
+  _app.ota.setEnabled(input["arduino_ota_enabled"] | _app.enable_arduino_ota);
 
   // save it to file.
   if (!_cfg.saveConfig(error, sizeof(error)))
@@ -411,15 +411,25 @@ void ProtocolController::handleSetBrightness(JsonVariantConst input, JsonVariant
     return generateErrorJSON(output, "'brightness' is a required parameter.");
 }
 
+bool ProtocolController::sanitizeConfigHook(JsonVariant config, char* error, size_t len)
+{
+  if (config["app_enable_serial"].is<bool>()) {
+    config["serial_enabled"] = config["app_enable_serial"].as<bool>();
+    config.remove("app_enable_serial");
+  }
+
+  return true;
+}
+
 void ProtocolController::loadConfigHook(JsonVariantConst config)
 {
-  _enable_serial = config["app_enable_serial"] | _app.enable_serial_api;
+  _serial_enabled = config["serial_enabled"] | _app.enable_serial_api;
 }
 
 void ProtocolController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
   if (role == ADMIN)
-    output["app_enable_serial"] = _enable_serial;
+    output["serial_enabled"] = _serial_enabled;
 }
 
 void ProtocolController::generateErrorJSON(JsonVariant output, const char* error)
@@ -504,6 +514,6 @@ void ProtocolController::sendToAll(const char* jsonString, UserRole min_receiver
 {
   _app.http.sendToAllWebsockets(jsonString, min_receiver_role);
 
-  if (_enable_serial && _app.auth.getSerialRole() >= min_receiver_role)
+  if (_serial_enabled && _app.auth.getSerialRole() >= min_receiver_role)
     Serial.println(jsonString);
 }

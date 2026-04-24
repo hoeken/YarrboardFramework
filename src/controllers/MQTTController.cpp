@@ -47,7 +47,7 @@ bool MQTTController::setup()
   // haDiscovery() calls mqtt->onTopic() which does push_back on _onMessageUserCallbacks.
   // Calling push_back while PsychicMqttClient::_onMessage is iterating that same vector
   // can trigger a reallocation, invalidating the iterator and causing a crash.
-  if (_enable_ha_integration) {
+  if (_ha_integration_enabled) {
     mqttClient.onTopic("homeassistant/status", 0, [&](const char* topic, const char* payload, int retain, int qos, bool dup) {
       if (!strcmp(payload, "online"))
         _pendingHaDiscovery = true;
@@ -60,7 +60,7 @@ bool MQTTController::setup()
 bool MQTTController::connect(bool waitBlocking)
 {
   // are we enabled?
-  if (!_enable_mqtt)
+  if (!_enabled)
     return true;
 
   // Mark as first try so onError() can broadcast to ADMIN on failure.
@@ -104,7 +104,7 @@ void MQTTController::loop()
 
   // deferred HA discovery: triggered by homeassistant/status callback but run
   // here (outside _onMessage iteration) to avoid invalidating the callback vector.
-  if (_pendingHaDiscovery && _enable_ha_integration) {
+  if (_pendingHaDiscovery && _ha_integration_enabled) {
     _pendingHaDiscovery = false;
     haDiscovery();
   }
@@ -117,7 +117,7 @@ void MQTTController::loop()
     }
 
     // separately update our Home Assistant status
-    if (_enable_ha_integration) {
+    if (_ha_integration_enabled) {
       for (const auto& entry : _app.getControllers()) {
         entry.controller->haUpdateHook(this);
       }
@@ -129,10 +129,10 @@ void MQTTController::loop()
 
 void MQTTController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
-  _enable_mqtt = input["app_enable_mqtt"];
-  _enable_mqtt_protocol = input["app_enable_mqtt_protocol"];
-  _enable_ha_integration = input["app_enable_ha_integration"];
-  _use_hostname_as_mqtt_uuid = input["app_use_hostname_as_mqtt_uuid"];
+  _enabled = input["enabled"];
+  _protocol_enabled = input["protocol_enabled"];
+  _ha_integration_enabled = input["ha_integration_enabled"];
+  _use_hostname_as_uuid = input["use_hostname_as_uuid"];
 
   strlcpy(_mqtt_server, input["mqtt_server"] | "", sizeof(_mqtt_server));
   strlcpy(_mqtt_user, input["mqtt_user"] | "", sizeof(_mqtt_user));
@@ -145,7 +145,7 @@ void MQTTController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant out
     return _app.protocol.generateErrorJSON(output, error);
 
   // init our mqtt
-  if (_enable_mqtt) {
+  if (_enabled) {
     disconnect(); // reset our connection.
     if (!connect())
       return _app.protocol.generateErrorJSON(output, "Error connecting to MQTT server.");
@@ -156,6 +156,31 @@ void MQTTController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant out
 void MQTTController::generateStatsHook(JsonVariant output)
 {
   output["mqtt_connected"] = isConnected();
+}
+
+bool MQTTController::sanitizeConfigHook(JsonVariant config, char* error, size_t len)
+{
+  if (config["app_enable_mqtt"].is<bool>()) {
+    config["enabled"] = config["app_enable_mqtt"].as<bool>();
+    config.remove("app_enable_mqtt");
+  }
+
+  if (config["app_enable_mqtt_protocol"].is<bool>()) {
+    config["protocol_enabled"] = config["app_enable_mqtt_protocol"].as<bool>();
+    config.remove("app_enable_mqtt_protocol");
+  }
+
+  if (config["app_enable_ha_integration"].is<bool>()) {
+    config["ha_integration_enabled"] = config["app_enable_ha_integration"].as<bool>();
+    config.remove("app_enable_ha_integration");
+  }
+
+  if (config["app_use_hostname_as_mqtt_uuid"].is<bool>()) {
+    config["use_hostname_as_uuid"] = config["app_use_hostname_as_mqtt_uuid"].as<bool>();
+    config.remove("app_use_hostname_as_mqtt_uuid");
+  }
+
+  return true;
 }
 
 void MQTTController::loadConfigHook(JsonVariantConst config)
@@ -173,18 +198,18 @@ void MQTTController::loadConfigHook(JsonVariantConst config)
 
   _mqtt_cert = config["mqtt_cert"] | "";
 
-  _enable_mqtt = config["app_enable_mqtt"] | _app.enable_mqtt;
-  _enable_mqtt_protocol = config["app_enable_mqtt_protocol"] | _app.enable_mqtt_protocol;
-  _enable_ha_integration = config["app_enable_ha_integration"] | _app.enable_ha_integration;
-  _use_hostname_as_mqtt_uuid = config["app_use_hostname_as_mqtt_uuid"] | _app.use_hostname_as_mqtt_uuid;
+  _enabled = config["enabled"] | _app.enable_mqtt;
+  _protocol_enabled = config["protocol_enabled"] | _app.enable_mqtt_protocol;
+  _ha_integration_enabled = config["ha_integration_enabled"] | _app.enable_ha_integration;
+  _use_hostname_as_uuid = config["use_hostname_as_uuid"] | _app.use_hostname_as_mqtt_uuid;
 }
 
 void MQTTController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
-  output["app_enable_mqtt"] = _enable_mqtt;
-  output["app_enable_mqtt_protocol"] = _enable_mqtt_protocol;
-  output["app_enable_ha_integration"] = _enable_ha_integration;
-  output["app_use_hostname_as_mqtt_uuid"] = _use_hostname_as_mqtt_uuid;
+  output["enabled"] = _enabled;
+  output["protocol_enabled"] = _protocol_enabled;
+  output["ha_integration_enabled"] = _ha_integration_enabled;
+  output["use_hostname_as_uuid"] = _use_hostname_as_uuid;
 
   if (role == ADMIN && purpose != ConfigPurpose::SHAREABLE) {
     output["mqtt_server"] = _mqtt_server;
@@ -234,7 +259,7 @@ void MQTTController::publish(const char* topic, const char* payload, bool use_pr
 void MQTTController::receiveMessage(const char* topic, const char* payload, int retain, int qos, bool dup)
 {
   // only if we're enabled.
-  if (!_enable_mqtt_protocol)
+  if (!_protocol_enabled)
     return;
 
   JsonDocument input;
@@ -285,7 +310,7 @@ void MQTTController::onConnect(bool sessionPresent)
   // clear first connection flag on successful connection
   _firstConnection = false;
 
-  if (_enable_ha_integration)
+  if (_ha_integration_enabled)
     haDiscovery();
 
   // Register the command topic once; PsychicMqttClient resubscribes automatically
@@ -346,7 +371,7 @@ void MQTTController::_onErrorStatic(esp_mqtt_error_codes_t error)
 
 const char* MQTTController::getBoardKey()
 {
-  if (_use_hostname_as_mqtt_uuid)
+  if (_use_hostname_as_uuid)
     return _app.network.getLocalHostname();
   else
     return _app.network.getUUID();

@@ -57,15 +57,16 @@ class HTTPController : public BaseController
     void registerGulpedFile(const GulpedFile* file, const char* path = nullptr);
     void registerGulpedFiles(const GulpedFile* files[], int count);
     PsychicHttpServer* getServer() { return server; }
-    bool isSSLEnabled() const { return _app_enable_ssl; }
-    bool isAPIEnabled() const { return _app_enable_api; }
+
+    bool isSSLEnabled() const { return _ssl_enabled; }
+    bool isAPIEnabled() const { return _api_enabled; }
 
     std::atomic<unsigned int> websocketClientCount{0};
     std::atomic<unsigned int> httpClientCount{0};
 
   private:
-    bool _app_enable_api = false;
-    bool _app_enable_ssl = false;
+    bool _api_enabled = false;
+    bool _ssl_enabled = false;
     String _server_cert;
     String _server_key;
 

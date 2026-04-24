@@ -30,14 +30,15 @@ class NavicoController : public BaseController
     void loop() override;
     bool setup() override;
 
+    bool sanitizeConfigHook(JsonVariant config, char* error, size_t len) override;
     void loadConfigHook(JsonVariantConst config) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
-    bool isMfdEnabled() const { return _app_enable_mfd; }
-    void setMfdEnabled(bool v) { _app_enable_mfd = v; }
+    bool isEnabled() const { return _enabled; }
+    void setEnabled(bool v) { _enabled = v; }
 
   private:
-    bool _app_enable_mfd;
+    bool _enabled;
     unsigned long _lastPublishMillis = 0;
     static constexpr int kPublishPort = 2053;
     IPAddress _multicastGroupIp;

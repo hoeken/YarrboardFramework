@@ -18,12 +18,12 @@
 NavicoController::NavicoController(YarrboardApp& app) : BaseController(app, "navico"),
                                                         _multicastGroupIp(239, 2, 1, 1)
 {
-  _app_enable_mfd = app.enable_mfd;
+  _enabled = app.enable_mfd;
 }
 
 void NavicoController::loop()
 {
-  if (!_app_enable_mfd)
+  if (!_enabled)
     return;
 
   if (millis() - _lastPublishMillis > 10000) {
@@ -81,12 +81,22 @@ bool NavicoController::setup()
   return true;
 }
 
+bool NavicoController::sanitizeConfigHook(JsonVariant config, char* error, size_t len)
+{
+  if (config["app_enable_mfd"].is<bool>()) {
+    config["enabled"] = config["app_enable_mfd"].as<bool>();
+    config.remove("app_enable_mfd");
+  }
+
+  return true;
+}
+
 void NavicoController::loadConfigHook(JsonVariantConst config)
 {
-  _app_enable_mfd = config["app_enable_mfd"] | _app.enable_mfd;
+  _enabled = config["enabled"] | _app.enable_mfd;
 }
 
 void NavicoController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
-  output["app_enable_mfd"] = _app_enable_mfd;
+  output["enabled"] = _enabled;
 }
