@@ -745,27 +745,31 @@ BuzzerController::BuzzerController(YarrboardApp& app) : BaseController(app, "buz
   strlcpy(_startup_melody, app.default_melody, sizeof(_startup_melody));
 }
 
-bool BuzzerController::setup()
+void BuzzerController::setActive(bool active)
 {
-  _app.protocol.registerCommand(GUEST, "play_sound", this, &BuzzerController::handlePlaySound);
+  _isActive = active;
 
-  pinMode(buzzerPin, OUTPUT);
-
-  if (!isActive) {
-    // LEDC once
-    if (!ledcAttach(buzzerPin, 1000, LEDC_RES_BITS)) {
-      YBP.println("Error attaching buzzer to LEDC channel.");
-      return false;
-    }
-  }
-
-  // pick the right melody table now that isActive is settled
-  if (isActive) {
+  if (_isActive) {
     _melodyTable = activeMelodyTable;
     _melodyCount = activeMelodyCount;
   } else {
     _melodyTable = passiveMelodyTable;
     _melodyCount = passiveMelodyCount;
+  }
+}
+
+bool BuzzerController::setup()
+{
+  _app.protocol.registerCommand(GUEST, "play_sound", this, &BuzzerController::handlePlaySound);
+
+  pinMode(_buzzerPin, OUTPUT);
+
+  if (!_isActive) {
+    // LEDC once
+    if (!ledcAttach(_buzzerPin, 1000, LEDC_RES_BITS)) {
+      YBP.println("Error attaching buzzer to LEDC channel.");
+      return false;
+    }
   }
 
   // shh.
@@ -813,7 +817,7 @@ void BuzzerController::generateConfigHook(JsonVariant output, UserRole role, Con
 void BuzzerController::generateCapabilitiesHook(JsonVariant config)
 {
   config["buzzer"] = true;
-  config["buzzer_is_active"] = isActive;
+  config["buzzer_is_active"] = _isActive;
   generateMelodyJSON(config);
 };
 
@@ -938,10 +942,10 @@ void BuzzerController::handlePlaySound(JsonVariantConst input, JsonVariant outpu
 // ---------- Low-level helpers ----------
 void BuzzerController::buzzerMute()
 {
-  if (isActive)
-    digitalWrite(buzzerPin, LOW);
+  if (_isActive)
+    digitalWrite(_buzzerPin, LOW);
   else
-    ledcWrite(buzzerPin, 0);
+    ledcWrite(_buzzerPin, 0);
 }
 
 void BuzzerController::buzzerTone(uint16_t freqHz)
@@ -949,10 +953,10 @@ void BuzzerController::buzzerTone(uint16_t freqHz)
   if (freqHz == 0) {
     buzzerMute(); // rest
   } else {
-    if (isActive) {
-      digitalWrite(buzzerPin, HIGH);
+    if (_isActive) {
+      digitalWrite(_buzzerPin, HIGH);
     } else {
-      ledcWriteTone(buzzerPin, freqHz); // hardware retune
+      ledcWriteTone(_buzzerPin, freqHz); // hardware retune
     }
   }
 }
