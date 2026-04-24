@@ -238,7 +238,7 @@ bool ConfigManager::loadV2Config(JsonVariant config, char* error, size_t len)
 
     // validate prunes invalid entries, so it's safe to load even on error.
     // we don't want a single bad config option to nuke the whole config loading.
-    if (!sanitizeConfigHook(config[name], error, len)) {
+    if (!entry.controller->sanitizeConfigHook(config[name], error, len)) {
       YBP.println(error);
       result = false;
     }
