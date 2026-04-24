@@ -725,12 +725,15 @@
     saveWebServerSettings: function () {
       // pull our form data
       const settings = {
-        enabled: $("#navico_enabled").prop("checked"),
         api_enabled: $("#http_api_enabled").prop("checked"),
         ssl_enabled: $("#http_ssl_enabled").prop("checked"),
         server_cert: $("#server_cert").val().trim(),
         server_key: $("#server_key").val().trim()
       };
+
+      // navico is optional
+      if (YB.capabilities.navico)
+        settings["navico_enabled"] = $("#navico_enabled").prop("checked");
 
       // validate it
       const errors = validate(settings, YB.App.getWebServerSettingsSchema());
@@ -750,7 +753,7 @@
       // okay, send it off.
       YB.client.send({
         cmd: "set_webserver_config",
-        enabled: settings.enabled,
+        navico_enabled: settings.enabled,
         api_enabled: settings.api_enabled,
         ssl_enabled: settings.ssl_enabled,
         server_cert: settings.server_cert,
@@ -1538,9 +1541,11 @@
       YB.App.updateRoleUI();
       YB.App.toggleRolePasswords(YB.config.auth.default_role);
 
-      console.log(YB.capabilities);
-      if (YB.capabilities.navico)
+      //mfd controller is optional
+      if (YB.capabilities.navico) {
+        $("#navico_enabled").prop("checked", YB.config.navico.enabled);
         $("#navico_enabled_container").show();
+      }
 
       //for our melodies
       if (YB.capabilities.buzzer && YB.capabilities.buzzer.melodies) {
@@ -1555,7 +1560,6 @@
       $("#guest_pass").val(YB.config.auth.guest_pass);
       $("#default_role").val(YB.config.auth.default_role);
       $("#default_role").off("change").change(function () { YB.App.toggleRolePasswords($(this).val()) });
-      $("#navico_enabled").prop("checked", YB.config.navico.enabled);
       $("#http_api_enabled").prop("checked", YB.config.http.api_enabled);
       $("#protocol_serial_enabled").prop("checked", YB.config.protocol.serial_enabled);
       $("#ota_arduino_ota_enabled").prop("checked", YB.config.ota.arduino_ota_enabled);

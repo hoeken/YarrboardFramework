@@ -437,7 +437,7 @@ void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVarian
 
   NavicoController* navico = static_cast<NavicoController*>(_app.getController("navico"));
   if (navico)
-    navico->setEnabled(input["enabled"] | navico->defaults.enabled);
+    navico->setEnabled(input["navico_enabled"] | navico->defaults.enabled);
 
   _config.api_enabled = input["api_enabled"] | _config.api_enabled;
   _config.ssl_enabled = input["ssl_enabled"] | _config.ssl_enabled;
