@@ -97,7 +97,12 @@ void NavicoController::loadConfigHook(JsonVariantConst config)
   _config.enabled = config["enabled"] | defaults.enabled;
 }
 
-void NavicoController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
+void NavicoController::generateConfigHook(JsonVariant config, UserRole role, ConfigPurpose purpose)
 {
-  output["enabled"] = _config.enabled;
+  config["enabled"] = _config.enabled;
+}
+
+void NavicoController::generateCapabilitiesHook(JsonVariant config)
+{
+  config["available"] = true;
 }

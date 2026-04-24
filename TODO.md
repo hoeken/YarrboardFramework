@@ -2,6 +2,8 @@
 
 * check and see if controllers are using sanitizeConfig() in the command handlers or re-validating themselves.
 
+* fix settings links to more documentation
+
 * more testing of everything:
   * shareable config
   * delete random bits of config

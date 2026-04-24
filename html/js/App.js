@@ -1383,8 +1383,6 @@
 
       YB.App.applyMFDVisibility();
 
-      YB.Util.populateMelodySelector($("#startup_melody"));
-
       if (YB.App.role == "admin")
         YB.App.handleAdminConfigMessage();
 
@@ -1540,15 +1538,17 @@
       YB.App.updateRoleUI();
       YB.App.toggleRolePasswords(YB.config.auth.default_role);
 
+      console.log(YB.capabilities);
+      if (YB.capabilities.navico)
+        $("#navico_enabled_container").show();
+
       //for our melodies
-      if (YB.capabilities.buzzer) {
-        if (YB.capabilities.buzzer.melodies)
-          $('#startup_melody').val(YB.config.buzzer.startup_melody);
-        else
-          $("#startup_melody").parent().hide();
+      if (YB.capabilities.buzzer && YB.capabilities.buzzer.melodies) {
+        YB.Util.populateMelodySelector($("#startup_melody"));
+        $('#startup_melody').val(YB.config.buzzer.startup_melody);
+        $("#startup_melody_container").show();
       }
 
-      //YB.log(msg);
       $("#admin_user").val(YB.config.auth.admin_user);
       $("#admin_pass").val(YB.config.auth.admin_pass);
       $("#guest_user").val(YB.config.auth.guest_user);
@@ -1757,7 +1757,7 @@
             <label for="board_name">Board Name</label>
             <div class="invalid-feedback"></div>
         </div>
-        <div class="form-floating mb-3">
+        <div id="startup_melody_container" class="form-floating mb-3" style="display: none">
             <select id="startup_melody" class="form-select" aria-label="Startup Melody">
             </select>
             <label for="default_role">Startup Melody</label>
@@ -1828,7 +1828,7 @@
             <div class="invalid-feedback"></div>
         </div>
 
-        <div class="form-check form-switch mb-3">
+        <div id="navico_enabled_container" class="form-check form-switch mb-3" style="display: none">
             <input class="form-check-input" type="checkbox" id="navico_enabled" checked>
             <label class="form-check-label" for="navico_enabled">
                 Enable MFD Integration - <a
