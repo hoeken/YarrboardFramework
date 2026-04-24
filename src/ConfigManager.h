@@ -56,6 +56,7 @@ class ConfigManager : public BaseController
     void generateCapabilities(JsonVariant output);
 
     // our personal hooks as a controller.
+    bool sanitizeConfigHook(JsonVariant config, char* error, size_t len) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
     void loadConfigHook(JsonVariantConst config) override;
 

@@ -189,6 +189,19 @@ bool MQTTController::sanitizeConfigHook(JsonVariant config, char* error, size_t 
     config.remove("app_use_hostname_as_mqtt_uuid");
   }
 
+  if (config["mqtt_server"] && strlen(config["mqtt_server"] | "") > YB_MQTT_SERVER_LENGTH - 1) {
+    snprintf(error, len, "mqtt_server too long (max %d chars), will be truncated", YB_MQTT_SERVER_LENGTH - 1);
+    return false;
+  }
+  if (config["mqtt_user"] && strlen(config["mqtt_user"] | "") > YB_USERNAME_LENGTH - 1) {
+    snprintf(error, len, "mqtt_user too long (max %d chars), will be truncated", YB_USERNAME_LENGTH - 1);
+    return false;
+  }
+  if (config["mqtt_pass"] && strlen(config["mqtt_pass"] | "") > YB_PASSWORD_LENGTH - 1) {
+    snprintf(error, len, "mqtt_pass too long (max %d chars), will be truncated", YB_PASSWORD_LENGTH - 1);
+    return false;
+  }
+
   return true;
 }
 

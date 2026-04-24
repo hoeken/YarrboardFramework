@@ -356,6 +356,24 @@ bool AuthController::sanitizeConfigHook(JsonVariant config, char* error, size_t 
       return false;
     }
   }
+
+  if (config["admin_user"] && strlen(config["admin_user"] | "") > YB_USERNAME_LENGTH - 1) {
+    snprintf(error, len, "admin_user too long (max %d chars), will be truncated", YB_USERNAME_LENGTH - 1);
+    return false;
+  }
+  if (config["admin_pass"] && strlen(config["admin_pass"] | "") > YB_PASSWORD_LENGTH - 1) {
+    snprintf(error, len, "admin_pass too long (max %d chars), will be truncated", YB_PASSWORD_LENGTH - 1);
+    return false;
+  }
+  if (config["guest_user"] && strlen(config["guest_user"] | "") > YB_USERNAME_LENGTH - 1) {
+    snprintf(error, len, "guest_user too long (max %d chars), will be truncated", YB_USERNAME_LENGTH - 1);
+    return false;
+  }
+  if (config["guest_pass"] && strlen(config["guest_pass"] | "") > YB_PASSWORD_LENGTH - 1) {
+    snprintf(error, len, "guest_pass too long (max %d chars), will be truncated", YB_PASSWORD_LENGTH - 1);
+    return false;
+  }
+
   return true;
 }
 

@@ -61,6 +61,46 @@ void NetworkController::loop()
   }
 }
 
+bool NetworkController::sanitizeConfigHook(JsonVariant config, char* error, size_t len)
+{
+  if (config["wifi_mode"]) {
+    const char* v = config["wifi_mode"];
+    if (strcmp(v, "ap") && strcmp(v, "client")) {
+      snprintf(error, len, "Invalid wifi_mode '%s', must be 'ap' or 'client'", v);
+      config.remove("wifi_mode");
+      return false;
+    }
+  }
+
+  if (config["wifi_ssid"] && strlen(config["wifi_ssid"] | "") > YB_WIFI_SSID_LENGTH - 1) {
+    snprintf(error, len, "wifi_ssid too long (max %d chars), will be truncated", YB_WIFI_SSID_LENGTH - 1);
+    return false;
+  }
+  if (config["wifi_pass"] && strlen(config["wifi_pass"] | "") > YB_WIFI_PASSWORD_LENGTH - 1) {
+    snprintf(error, len, "wifi_pass too long (max %d chars), will be truncated", YB_WIFI_PASSWORD_LENGTH - 1);
+    return false;
+  }
+  if (config["local_hostname"] && strlen(config["local_hostname"] | "") > YB_HOSTNAME_LENGTH - 1) {
+    snprintf(error, len, "local_hostname too long (max %d chars), will be truncated", YB_HOSTNAME_LENGTH - 1);
+    return false;
+  }
+
+  IPAddress ip;
+  const char* ip_fields[] = {"wifi_static_ip", "wifi_gateway", "wifi_subnet", "wifi_dns1", "wifi_dns2"};
+  for (const char* field : ip_fields) {
+    if (config[field]) {
+      const char* v = config[field] | "";
+      if (strlen(v) > 0 && !ip.fromString(v)) {
+        snprintf(error, len, "Invalid IPv4 address for '%s': '%s'", field, v);
+        config.remove(field);
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 void NetworkController::loadConfigHook(JsonVariantConst config)
 {
   const char* v;

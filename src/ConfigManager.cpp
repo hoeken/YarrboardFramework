@@ -103,6 +103,16 @@ bool ConfigManager::saveConfig(char* error, size_t len)
   return true;
 }
 
+bool ConfigManager::sanitizeConfigHook(JsonVariant config, char* error, size_t len)
+{
+  if (config["name"] && strlen(config["name"] | "") > YB_BOARD_NAME_LENGTH - 1) {
+    snprintf(error, len, "name too long (max %d chars), will be truncated", YB_BOARD_NAME_LENGTH - 1);
+    return false;
+  }
+
+  return true;
+}
+
 void ConfigManager::loadConfigHook(JsonVariantConst config)
 {
   const char* v = config["name"] | defaults.board_name;

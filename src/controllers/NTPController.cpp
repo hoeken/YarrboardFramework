@@ -89,6 +89,20 @@ void NTPController::generateStatsHook(JsonVariant output)
   output["ntp_time"] = getTime();
 }
 
+bool NTPController::sanitizeConfigHook(JsonVariant config, char* error, size_t len)
+{
+  if (config["ntp_server1"] && strlen(config["ntp_server1"] | "") > YB_NTP_SERVER_LENGTH - 1) {
+    snprintf(error, len, "ntp_server1 too long (max %d chars), will be truncated", YB_NTP_SERVER_LENGTH - 1);
+    return false;
+  }
+  if (config["ntp_server2"] && strlen(config["ntp_server2"] | "") > YB_NTP_SERVER_LENGTH - 1) {
+    snprintf(error, len, "ntp_server2 too long (max %d chars), will be truncated", YB_NTP_SERVER_LENGTH - 1);
+    return false;
+  }
+
+  return true;
+}
+
 void NTPController::loadConfigHook(JsonVariantConst config)
 {
   const char* v;

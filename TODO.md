@@ -1,6 +1,6 @@
 ## v3.0.0
 
-* implement more sanitizeConfig() on different params
+* check and see if controllers are using sanitizeConfig() in the command handlers or re-validating themselves.
 
 * more testing of everything:
   * shareable config
