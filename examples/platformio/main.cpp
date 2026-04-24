@@ -41,8 +41,8 @@ void setup()
 {
   yba.http.registerGulpedFiles(gulpedFiles, gulpedFilesCount);
 
-  yba.board_name = "Framework Test";
-  yba.default_hostname = "yarrboard";
+  yba.setDefaultBoardName("Framework Test");
+  yba.setDefaultHostname("yarrboard");
   yba.firmware_version = YARRBOARD_VERSION_STR;
   yba.hardware_version = YB_HARDWARE_VERSION;
   yba.manufacturer = "Test Manufacturer";

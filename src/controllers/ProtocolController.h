@@ -32,6 +32,10 @@ typedef enum {
   YBP_MODE_MQTT
 } YBMode;
 
+struct ProtocolConfig {
+    bool serial_enabled;
+};
+
 class YarrboardApp;
 class ConfigManager;
 
@@ -48,6 +52,8 @@ using ProtocolMessageHandler = std::function<void(JsonVariantConst, JsonVariant,
 class ProtocolController : public BaseController
 {
   public:
+    ProtocolConfig defaults;
+
     ProtocolController(YarrboardApp& app);
 
     bool setup() override;
@@ -89,7 +95,8 @@ class ProtocolController : public BaseController
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
   private:
-    bool _serial_enabled;
+    ProtocolConfig _config;
+
     unsigned long previousMessageMillis = 0;
     unsigned long previousFastUpdateMillis = 0;
     unsigned int receivedMessages = 0;

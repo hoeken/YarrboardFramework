@@ -25,6 +25,11 @@
 
 HTTPController::HTTPController(YarrboardApp& app) : BaseController(app, "http")
 {
+  defaults.api_enabled = false;
+  defaults.ssl_enabled = false;
+  defaults.server_cert = "";
+  defaults.server_key = "";
+  _config = defaults;
 }
 
 bool HTTPController::sanitizeConfigHook(JsonVariant config, char* error, size_t len)
@@ -53,20 +58,20 @@ bool HTTPController::sanitizeConfigHook(JsonVariant config, char* error, size_t 
 
 void HTTPController::loadConfigHook(JsonVariantConst config)
 {
-  _api_enabled = config["api_enabled"] | _app.enable_http_api;
-  _ssl_enabled = config["ssl_enabled"] | _app.enable_ssl;
-  _server_cert = config["server_cert"] | "";
-  _server_key = config["server_key"] | "";
+  _config.api_enabled = config["api_enabled"] | defaults.api_enabled;
+  _config.ssl_enabled = config["ssl_enabled"] | defaults.ssl_enabled;
+  _config.server_cert = config["server_cert"] | defaults.server_cert.c_str();
+  _config.server_key = config["server_key"] | defaults.server_key.c_str();
 }
 
 void HTTPController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
-  output["api_enabled"] = _api_enabled;
-  output["ssl_enabled"] = _ssl_enabled;
+  output["api_enabled"] = _config.api_enabled;
+  output["ssl_enabled"] = _config.ssl_enabled;
 
   if (role == ADMIN && purpose != ConfigPurpose::SHAREABLE) {
-    output["server_cert"] = _server_cert;
-    output["server_key"] = _server_key;
+    output["server_cert"] = _config.server_cert;
+    output["server_key"] = _config.server_key;
   }
 }
 
@@ -123,10 +128,10 @@ bool HTTPController::setup()
   }
 
   // do we want secure or not?
-  if (_ssl_enabled && _server_cert.length() && _server_key.length()) {
-    if (validateCertAndKey(_server_cert, _server_key)) {
+  if (_config.ssl_enabled && _config.server_cert.length() && _config.server_key.length()) {
+    if (validateCertAndKey(_config.server_cert, _config.server_key)) {
       server = new PsychicHttpsServer(443);
-      server->setCertificate(_server_cert.c_str(), _server_key.c_str());
+      server->setCertificate(_config.server_cert.c_str(), _config.server_key.c_str());
     } else {
       server = new PsychicHttpServer(80);
       YBP.println("⚠️ HTTP SSL Certificate invalid, falling back to plain HTTP");
@@ -428,17 +433,17 @@ cleanup:
 
 void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
-  bool old_ssl_enabled = _ssl_enabled;
+  bool old_ssl_enabled = _config.ssl_enabled;
 
   NavicoController* navico = static_cast<NavicoController*>(_app.getController("navico"));
   if (navico)
-    navico->setEnabled(input["enabled"] | _app.enable_mfd);
-  _api_enabled = input["api_enabled"] | _api_enabled;
-  _ssl_enabled = input["ssl_enabled"] | _ssl_enabled;
-  _server_cert = input["server_cert"] | _server_cert.c_str();
-  _server_key = input["server_key"] | _server_key.c_str();
+    navico->setEnabled(input["enabled"] | navico->defaults.enabled);
+  _config.api_enabled = input["api_enabled"] | _config.api_enabled;
+  _config.ssl_enabled = input["ssl_enabled"] | _config.ssl_enabled;
+  _config.server_cert = input["server_cert"] | _config.server_cert.c_str();
+  _config.server_key = input["server_key"] | _config.server_key.c_str();
 
-  if (_ssl_enabled && !validateCertAndKey(_server_cert, _server_key))
+  if (_config.ssl_enabled && !validateCertAndKey(_config.server_cert, _config.server_key))
     return _app.protocol.generateErrorJSON(output, "Invalid SSL certificate or key");
 
   // save it to file.
@@ -447,7 +452,7 @@ void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVarian
     return _app.protocol.generateErrorJSON(output, error);
 
   // restart the board.
-  if (old_ssl_enabled != _ssl_enabled)
+  if (old_ssl_enabled != _config.ssl_enabled)
     ESP.restart();
 }
 
@@ -524,7 +529,7 @@ esp_err_t HTTPController::handleWebServerRequest(JsonVariant input, PsychicReque
   if (request->hasParam("pass"))
     input["pass"] = request->getParam("pass")->value();
 
-  if (_api_enabled) {
+  if (_config.api_enabled) {
     _app.auth.isApiClientLoggedIn(input);
 
     ProtocolContext context;

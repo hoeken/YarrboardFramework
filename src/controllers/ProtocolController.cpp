@@ -20,7 +20,8 @@
 
 ProtocolController::ProtocolController(YarrboardApp& app) : BaseController(app, "protocol")
 {
-  _serial_enabled = app.enable_serial_api;
+  defaults.serial_enabled = false;
+  _config = defaults;
 }
 
 bool ProtocolController::setup()
@@ -78,7 +79,7 @@ void ProtocolController::loop()
   }
 
   // any serial port customers?
-  if (_serial_enabled) {
+  if (_config.serial_enabled) {
     if (Serial.available() > 0)
       handleSerialJson();
   }
@@ -284,13 +285,13 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
     return generateErrorJSON(output, error);
   }
 
-  _cfg.setBoardName(input["board_name"] | _app.board_name);
+  _cfg.setBoardName(input["board_name"] | _cfg.defaults.board_name);
 
   BuzzerController* buzzer = static_cast<BuzzerController*>(_app.getController("buzzer"));
   if (buzzer && input["startup_melody"].is<const char*>())
     buzzer->setStartupMelody(input["startup_melody"]);
   else if (buzzer)
-    buzzer->setStartupMelody(_app.default_melody);
+    buzzer->setStartupMelody(buzzer->defaults.startup_melody);
 
   // save it to file.
   char error[128];
@@ -305,8 +306,8 @@ void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, Js
 {
   char error[128] = "Unknown";
 
-  _serial_enabled = input["serial_enabled"] | _app.enable_serial_api;
-  _app.ota.setEnabled(input["arduino_ota_enabled"] | _app.enable_arduino_ota);
+  _config.serial_enabled = input["serial_enabled"] | defaults.serial_enabled;
+  _app.ota.setEnabled(input["arduino_ota_enabled"] | _app.ota.defaults.arduino_ota_enabled);
 
   // save it to file.
   if (!_cfg.saveConfig(error, sizeof(error)))
@@ -423,13 +424,13 @@ bool ProtocolController::sanitizeConfigHook(JsonVariant config, char* error, siz
 
 void ProtocolController::loadConfigHook(JsonVariantConst config)
 {
-  _serial_enabled = config["serial_enabled"] | _app.enable_serial_api;
+  _config.serial_enabled = config["serial_enabled"] | defaults.serial_enabled;
 }
 
 void ProtocolController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
   if (role == ADMIN)
-    output["serial_enabled"] = _serial_enabled;
+    output["serial_enabled"] = _config.serial_enabled;
 }
 
 void ProtocolController::generateErrorJSON(JsonVariant output, const char* error)
@@ -514,6 +515,6 @@ void ProtocolController::sendToAll(const char* jsonString, UserRole min_receiver
 {
   _app.http.sendToAllWebsockets(jsonString, min_receiver_role);
 
-  if (_serial_enabled && _app.auth.getSerialRole() >= min_receiver_role)
+  if (_config.serial_enabled && _app.auth.getSerialRole() >= min_receiver_role)
     Serial.println(jsonString);
 }

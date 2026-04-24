@@ -21,6 +21,17 @@ NetworkController::NetworkController(YarrboardApp& app) : BaseController(app, "n
                                                           improvSerial(&Serial),
                                                           apIP(192, 168, 4, 1)
 {
+  strlcpy(defaults.wifi_ssid, YB_DEFAULT_AP_SSID, sizeof(defaults.wifi_ssid));
+  strlcpy(defaults.wifi_pass, YB_DEFAULT_AP_PASS, sizeof(defaults.wifi_pass));
+  strlcpy(defaults.wifi_mode, YB_DEFAULT_AP_MODE, sizeof(defaults.wifi_mode));
+  strlcpy(defaults.local_hostname, "yarrboard", sizeof(defaults.local_hostname));
+  defaults.wifi_use_static_ip = false;
+  defaults.wifi_static_ip[0] = '\0';
+  defaults.wifi_gateway[0] = '\0';
+  defaults.wifi_subnet[0] = '\0';
+  defaults.wifi_dns1[0] = '\0';
+  defaults.wifi_dns2[0] = '\0';
+  _config = defaults;
 }
 
 bool NetworkController::setup()
@@ -54,34 +65,34 @@ void NetworkController::loadConfigHook(JsonVariantConst config)
 {
   const char* v;
 
-  v = config["local_hostname"] | _app.default_hostname;
-  strlcpy(_local_hostname, v, sizeof(_local_hostname));
+  v = config["local_hostname"] | defaults.local_hostname;
+  strlcpy(_config.local_hostname, v, sizeof(_config.local_hostname));
 
-  v = config["wifi_ssid"] | YB_DEFAULT_AP_SSID;
-  strlcpy(_wifi_ssid, v, sizeof(_wifi_ssid));
+  v = config["wifi_ssid"] | defaults.wifi_ssid;
+  strlcpy(_config.wifi_ssid, v, sizeof(_config.wifi_ssid));
 
-  v = config["wifi_pass"] | YB_DEFAULT_AP_PASS;
-  strlcpy(_wifi_pass, v, sizeof(_wifi_pass));
+  v = config["wifi_pass"] | defaults.wifi_pass;
+  strlcpy(_config.wifi_pass, v, sizeof(_config.wifi_pass));
 
-  v = config["wifi_mode"] | YB_DEFAULT_AP_MODE;
-  strlcpy(_wifi_mode, v, sizeof(_wifi_mode));
+  v = config["wifi_mode"] | defaults.wifi_mode;
+  strlcpy(_config.wifi_mode, v, sizeof(_config.wifi_mode));
 
-  _wifi_use_static_ip = config["wifi_use_static_ip"] | false;
+  _config.wifi_use_static_ip = config["wifi_use_static_ip"] | defaults.wifi_use_static_ip;
 
-  v = config["wifi_static_ip"] | "";
-  strlcpy(_wifi_static_ip, v, sizeof(_wifi_static_ip));
+  v = config["wifi_static_ip"] | defaults.wifi_static_ip;
+  strlcpy(_config.wifi_static_ip, v, sizeof(_config.wifi_static_ip));
 
-  v = config["wifi_gateway"] | "";
-  strlcpy(_wifi_gateway, v, sizeof(_wifi_gateway));
+  v = config["wifi_gateway"] | defaults.wifi_gateway;
+  strlcpy(_config.wifi_gateway, v, sizeof(_config.wifi_gateway));
 
-  v = config["wifi_subnet"] | "";
-  strlcpy(_wifi_subnet, v, sizeof(_wifi_subnet));
+  v = config["wifi_subnet"] | defaults.wifi_subnet;
+  strlcpy(_config.wifi_subnet, v, sizeof(_config.wifi_subnet));
 
-  v = config["wifi_dns1"] | "";
-  strlcpy(_wifi_dns1, v, sizeof(_wifi_dns1));
+  v = config["wifi_dns1"] | defaults.wifi_dns1;
+  strlcpy(_config.wifi_dns1, v, sizeof(_config.wifi_dns1));
 
-  v = config["wifi_dns2"] | "";
-  strlcpy(_wifi_dns2, v, sizeof(_wifi_dns2));
+  v = config["wifi_dns2"] | defaults.wifi_dns2;
+  strlcpy(_config.wifi_dns2, v, sizeof(_config.wifi_dns2));
 }
 
 void NetworkController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
@@ -90,31 +101,31 @@ void NetworkController::generateConfigHook(JsonVariant output, UserRole role, Co
     output["uuid"] = getUUID();
   }
 
-  output["local_hostname"] = _local_hostname;
+  output["local_hostname"] = _config.local_hostname;
 
   if (role == ADMIN) {
 
     if (purpose != ConfigPurpose::SHAREABLE) {
-      output["wifi_ssid"] = _wifi_ssid;
-      output["wifi_pass"] = _wifi_pass;
+      output["wifi_ssid"] = _config.wifi_ssid;
+      output["wifi_pass"] = _config.wifi_pass;
     }
 
-    output["wifi_mode"] = _wifi_mode;
-    output["wifi_use_static_ip"] = _wifi_use_static_ip;
-    output["wifi_static_ip"] = _wifi_static_ip;
-    output["wifi_gateway"] = _wifi_gateway;
-    output["wifi_subnet"] = _wifi_subnet;
-    output["wifi_dns1"] = _wifi_dns1;
-    output["wifi_dns2"] = _wifi_dns2;
+    output["wifi_mode"] = _config.wifi_mode;
+    output["wifi_use_static_ip"] = _config.wifi_use_static_ip;
+    output["wifi_static_ip"] = _config.wifi_static_ip;
+    output["wifi_gateway"] = _config.wifi_gateway;
+    output["wifi_subnet"] = _config.wifi_subnet;
+    output["wifi_dns1"] = _config.wifi_dns1;
+    output["wifi_dns2"] = _config.wifi_dns2;
   }
 }
 
 void NetworkController::setupWifi()
 {
   // which mode do we want?
-  if (!strcmp(_wifi_mode, "client")) {
+  if (!strcmp(_config.wifi_mode, "client")) {
     // try and connect
-    if (connectToWifi(_wifi_ssid, _wifi_pass))
+    if (connectToWifi(_config.wifi_ssid, _config.wifi_pass))
       startServices();
     else
       waitForBootPress();
@@ -122,7 +133,7 @@ void NetworkController::setupWifi()
   // default to AP mode.
   else {
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(_wifi_ssid, _wifi_pass);
+    WiFi.softAP(_config.wifi_ssid, _config.wifi_pass);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
 
     YBP.print("AP IP address: ");
@@ -187,20 +198,20 @@ bool NetworkController::connectToWifi(const char* ssid, const char* pass)
   WiFi.setSleep(false); // optional but usually helps reliability
 
   // apply static IP config before connecting, if requested
-  if (_wifi_use_static_ip && strlen(_wifi_static_ip) > 0) {
+  if (_config.wifi_use_static_ip && strlen(_config.wifi_static_ip) > 0) {
     IPAddress ip, gw, sn, dns1, dns2;
-    if (ip.fromString(_wifi_static_ip) &&
-        gw.fromString(_wifi_gateway) &&
-        sn.fromString(_wifi_subnet)) {
-      dns1.fromString(strlen(_wifi_dns1) > 0 ? _wifi_dns1 : _wifi_gateway);
-      dns2.fromString(strlen(_wifi_dns2) > 0 ? _wifi_dns2 : _wifi_gateway);
+    if (ip.fromString(_config.wifi_static_ip) &&
+        gw.fromString(_config.wifi_gateway) &&
+        sn.fromString(_config.wifi_subnet)) {
+      dns1.fromString(strlen(_config.wifi_dns1) > 0 ? _config.wifi_dns1 : _config.wifi_gateway);
+      dns2.fromString(strlen(_config.wifi_dns2) > 0 ? _config.wifi_dns2 : _config.wifi_gateway);
       WiFi.config(ip, gw, sn, dns1, dns2);
       YBP.printf("[WiFi] Static IP: %s / GW: %s / SN: %s / DNS1: %s / DNS2: %s\n",
-        _wifi_static_ip,
-        _wifi_gateway,
-        _wifi_subnet,
-        strlen(_wifi_dns1) > 0 ? _wifi_dns1 : _wifi_gateway,
-        strlen(_wifi_dns2) > 0 ? _wifi_dns2 : _wifi_gateway);
+        _config.wifi_static_ip,
+        _config.wifi_gateway,
+        _config.wifi_subnet,
+        strlen(_config.wifi_dns1) > 0 ? _config.wifi_dns1 : _config.wifi_gateway,
+        strlen(_config.wifi_dns2) > 0 ? _config.wifi_dns2 : _config.wifi_gateway);
     } else {
       YBP.println("[WiFi] Static IP config invalid, falling back to DHCP");
     }
@@ -213,7 +224,7 @@ bool NetworkController::connectToWifi(const char* ssid, const char* pass)
 
   YBP.print("[WiFi] Connecting to ");
   YBP.println(ssid);
-  WiFi.setHostname(_local_hostname);
+  WiFi.setHostname(_config.local_hostname);
   WiFi.begin(ssid, pass);
 
   // attempt to connect
@@ -262,7 +273,7 @@ void NetworkController::startMDNS()
     delay(100);
   }
   _mdnsStarted = true;
-  if (!MDNS.begin(_local_hostname)) {
+  if (!MDNS.begin(_config.local_hostname)) {
     YBP.println("[mDNS] Error starting mDNS");
   } else {
     MDNS.addService("http", "tcp", 80);
@@ -273,7 +284,7 @@ void NetworkController::startMDNS()
 void NetworkController::startServices()
 {
   YBP.print("Hostname: ");
-  YBP.print(_local_hostname);
+  YBP.print(_config.local_hostname);
   YBP.println(".local");
 
   // Restart mDNS whenever WiFi re-associates and gets an IP, so the .local
@@ -295,7 +306,7 @@ void NetworkController::setupImprov()
   YBP.println("First Boot: starting Improv");
 
   String device_url = "http://";
-  device_url.concat(_local_hostname);
+  device_url.concat(_config.local_hostname);
   device_url.concat(".local");
 
   WiFi.mode(WIFI_STA);
@@ -374,9 +385,9 @@ void NetworkController::_handleImprovConnected(const char* ssid, const char* pas
   YBP.printf("Improv Successful: %s / %s\n", ssid, password);
 
   // save our creds
-  strlcpy(_wifi_mode, "client", sizeof(_wifi_mode));
-  strlcpy(_wifi_ssid, ssid, sizeof(_wifi_ssid));
-  strlcpy(_wifi_pass, password, sizeof(_wifi_pass));
+  strlcpy(_config.wifi_mode, "client", sizeof(_config.wifi_mode));
+  strlcpy(_config.wifi_ssid, ssid, sizeof(_config.wifi_ssid));
+  strlcpy(_config.wifi_pass, password, sizeof(_config.wifi_pass));
 
   // we're connected now.
   _cfg.setFirstBoot(false);
@@ -449,26 +460,26 @@ void NetworkController::handleSetNetworkConfig(JsonVariantConst input, JsonVaria
 
   // Snapshot current state so we can roll back if the new wifi connection fails
   char old_hostname[YB_HOSTNAME_LENGTH];
-  bool old_use_static_ip = _wifi_use_static_ip;
+  bool old_use_static_ip = _config.wifi_use_static_ip;
   char old_static_ip[YB_IP_ADDRESS_LENGTH];
   char old_gateway[YB_IP_ADDRESS_LENGTH];
   char old_subnet[YB_IP_ADDRESS_LENGTH];
   char old_dns1[YB_IP_ADDRESS_LENGTH];
   char old_dns2[YB_IP_ADDRESS_LENGTH];
-  strlcpy(old_hostname, _local_hostname, sizeof(old_hostname));
-  strlcpy(old_static_ip, _wifi_static_ip, sizeof(old_static_ip));
-  strlcpy(old_gateway, _wifi_gateway, sizeof(old_gateway));
-  strlcpy(old_subnet, _wifi_subnet, sizeof(old_subnet));
-  strlcpy(old_dns1, _wifi_dns1, sizeof(old_dns1));
-  strlcpy(old_dns2, _wifi_dns2, sizeof(old_dns2));
+  strlcpy(old_hostname, _config.local_hostname, sizeof(old_hostname));
+  strlcpy(old_static_ip, _config.wifi_static_ip, sizeof(old_static_ip));
+  strlcpy(old_gateway, _config.wifi_gateway, sizeof(old_gateway));
+  strlcpy(old_subnet, _config.wifi_subnet, sizeof(old_subnet));
+  strlcpy(old_dns1, _config.wifi_dns1, sizeof(old_dns1));
+  strlcpy(old_dns2, _config.wifi_dns2, sizeof(old_dns2));
 
-  strlcpy(_local_hostname, input["local_hostname"] | _app.default_hostname, sizeof(_local_hostname));
-  _wifi_use_static_ip = new_use_static_ip;
-  strlcpy(_wifi_static_ip, input["wifi_static_ip"] | "", sizeof(_wifi_static_ip));
-  strlcpy(_wifi_gateway, input["wifi_gateway"] | "", sizeof(_wifi_gateway));
-  strlcpy(_wifi_subnet, input["wifi_subnet"] | "", sizeof(_wifi_subnet));
-  strlcpy(_wifi_dns1, input["wifi_dns1"] | "", sizeof(_wifi_dns1));
-  strlcpy(_wifi_dns2, input["wifi_dns2"] | "", sizeof(_wifi_dns2));
+  strlcpy(_config.local_hostname, input["local_hostname"] | defaults.local_hostname, sizeof(_config.local_hostname));
+  _config.wifi_use_static_ip = new_use_static_ip;
+  strlcpy(_config.wifi_static_ip, input["wifi_static_ip"] | "", sizeof(_config.wifi_static_ip));
+  strlcpy(_config.wifi_gateway, input["wifi_gateway"] | "", sizeof(_config.wifi_gateway));
+  strlcpy(_config.wifi_subnet, input["wifi_subnet"] | "", sizeof(_config.wifi_subnet));
+  strlcpy(_config.wifi_dns1, input["wifi_dns1"] | "", sizeof(_config.wifi_dns1));
+  strlcpy(_config.wifi_dns2, input["wifi_dns2"] | "", sizeof(_config.wifi_dns2));
 
   if (!strcmp(new_wifi_mode, "client")) {
     if (strcmp(new_wifi_ssid, getWifiSSID()) || strcmp(new_wifi_pass, getWifiPass())) {
@@ -477,20 +488,20 @@ void NetworkController::handleSetNetworkConfig(JsonVariantConst input, JsonVaria
         if (!strcmp(getWifiMode(), "ap"))
           WiFi.softAPdisconnect();
 
-        strlcpy(_wifi_mode, new_wifi_mode, sizeof(_wifi_mode));
-        strlcpy(_wifi_ssid, new_wifi_ssid, sizeof(_wifi_ssid));
-        strlcpy(_wifi_pass, new_wifi_pass, sizeof(_wifi_pass));
+        strlcpy(_config.wifi_mode, new_wifi_mode, sizeof(_config.wifi_mode));
+        strlcpy(_config.wifi_ssid, new_wifi_ssid, sizeof(_config.wifi_ssid));
+        strlcpy(_config.wifi_pass, new_wifi_pass, sizeof(_config.wifi_pass));
 
         if (!_cfg.saveConfig(error, sizeof(error)))
           return _app.protocol.generateErrorJSON(output, error);
       } else {
-        strlcpy(_local_hostname, old_hostname, sizeof(_local_hostname));
-        _wifi_use_static_ip = old_use_static_ip;
-        strlcpy(_wifi_static_ip, old_static_ip, sizeof(_wifi_static_ip));
-        strlcpy(_wifi_gateway, old_gateway, sizeof(_wifi_gateway));
-        strlcpy(_wifi_subnet, old_subnet, sizeof(_wifi_subnet));
-        strlcpy(_wifi_dns1, old_dns1, sizeof(_wifi_dns1));
-        strlcpy(_wifi_dns2, old_dns2, sizeof(_wifi_dns2));
+        strlcpy(_config.local_hostname, old_hostname, sizeof(_config.local_hostname));
+        _config.wifi_use_static_ip = old_use_static_ip;
+        strlcpy(_config.wifi_static_ip, old_static_ip, sizeof(_config.wifi_static_ip));
+        strlcpy(_config.wifi_gateway, old_gateway, sizeof(_config.wifi_gateway));
+        strlcpy(_config.wifi_subnet, old_subnet, sizeof(_config.wifi_subnet));
+        strlcpy(_config.wifi_dns1, old_dns1, sizeof(_config.wifi_dns1));
+        strlcpy(_config.wifi_dns2, old_dns2, sizeof(_config.wifi_dns2));
         connectToWifi(getWifiSSID(), getWifiPass());
         startServices();
         return _app.protocol.generateErrorJSON(output, "Can't connect to new WiFi.");
@@ -500,9 +511,9 @@ void NetworkController::handleSetNetworkConfig(JsonVariantConst input, JsonVaria
         return _app.protocol.generateErrorJSON(output, error);
     }
   } else {
-    strlcpy(_wifi_mode, new_wifi_mode, sizeof(_wifi_mode));
-    strlcpy(_wifi_ssid, new_wifi_ssid, sizeof(_wifi_ssid));
-    strlcpy(_wifi_pass, new_wifi_pass, sizeof(_wifi_pass));
+    strlcpy(_config.wifi_mode, new_wifi_mode, sizeof(_config.wifi_mode));
+    strlcpy(_config.wifi_ssid, new_wifi_ssid, sizeof(_config.wifi_ssid));
+    strlcpy(_config.wifi_pass, new_wifi_pass, sizeof(_config.wifi_pass));
 
     setupWifi();
 

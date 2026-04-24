@@ -15,14 +15,16 @@
 #include "YarrboardDebug.h"
 
 ConfigManager::ConfigManager(YarrboardApp& app) : BaseController(app, "config"),
-                                                  _app(app),
-                                                  _is_first_boot(true)
+                                                  _app(app)
 {
+  strlcpy(defaults.board_name, "Yarrboard", sizeof(defaults.board_name));
+  defaults.is_first_boot = true;
+  _config = defaults;
 }
 
 bool ConfigManager::setup()
 {
-  strlcpy(_board_name, _app.board_name, sizeof(_board_name));
+  strlcpy(_config.board_name, defaults.board_name, sizeof(_config.board_name));
 
   _schema_version = 2;
 
@@ -34,7 +36,7 @@ bool ConfigManager::setup()
     return false;
   }
 
-  _is_first_boot = true;
+  _config.is_first_boot = true;
 
   char error[YB_ERROR_LENGTH] = "";
 
@@ -103,10 +105,10 @@ bool ConfigManager::saveConfig(char* error, size_t len)
 
 void ConfigManager::loadConfigHook(JsonVariantConst config)
 {
-  const char* v = config["name"] | _app.board_name;
-  strlcpy(_board_name, v, sizeof(_board_name));
+  const char* v = config["name"] | defaults.board_name;
+  strlcpy(_config.board_name, v, sizeof(_config.board_name));
 
-  _is_first_boot = config["is_first_boot"] | false;
+  _config.is_first_boot = config["is_first_boot"] | defaults.is_first_boot;
 }
 
 // -------------------------------------------------------------------------
@@ -141,10 +143,10 @@ void ConfigManager::generateCapabilities(JsonVariant output)
 
 void ConfigManager::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
-  output["name"] = _board_name;
+  output["name"] = _config.board_name;
 
   if (purpose == ConfigPurpose::FIRMWARE)
-    output["is_first_boot"] = _is_first_boot;
+    output["is_first_boot"] = _config.is_first_boot;
   else if (purpose == ConfigPurpose::UI_CONFIG)
     output["brightness"] = getGlobalBrightness();
   else if (purpose == ConfigPurpose::SHAREABLE)

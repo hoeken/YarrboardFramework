@@ -19,12 +19,18 @@
 #include <ArduinoJson.h>
 #include <WiFi.h>
 
+struct NavicoConfig {
+    bool enabled;
+};
+
 class YarrboardApp;
 class ConfigManager;
 
 class NavicoController : public BaseController
 {
   public:
+    NavicoConfig defaults;
+
     NavicoController(YarrboardApp& app);
 
     void loop() override;
@@ -34,11 +40,11 @@ class NavicoController : public BaseController
     void loadConfigHook(JsonVariantConst config) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
-    bool isEnabled() const { return _enabled; }
-    void setEnabled(bool v) { _enabled = v; }
+    bool isEnabled() const { return _config.enabled; }
+    void setEnabled(bool v) { _config.enabled = v; }
 
   private:
-    bool _enabled;
+    NavicoConfig _config;
     unsigned long _lastPublishMillis = 0;
     static constexpr int kPublishPort = 2053;
     IPAddress _multicastGroupIp;

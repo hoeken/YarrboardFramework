@@ -20,6 +20,15 @@ MQTTController* MQTTController::_instance = nullptr;
 
 MQTTController::MQTTController(YarrboardApp& app) : BaseController(app, "mqtt")
 {
+  defaults.enabled = false;
+  defaults.protocol_enabled = false;
+  defaults.ha_integration_enabled = false;
+  defaults.use_hostname_as_uuid = true;
+  strlcpy(defaults.mqtt_server, "", sizeof(defaults.mqtt_server));
+  strlcpy(defaults.mqtt_user, "", sizeof(defaults.mqtt_user));
+  strlcpy(defaults.mqtt_pass, "", sizeof(defaults.mqtt_pass));
+  defaults.mqtt_cert = "";
+  _config = defaults;
 }
 
 bool MQTTController::setup()
@@ -47,7 +56,7 @@ bool MQTTController::setup()
   // haDiscovery() calls mqtt->onTopic() which does push_back on _onMessageUserCallbacks.
   // Calling push_back while PsychicMqttClient::_onMessage is iterating that same vector
   // can trigger a reallocation, invalidating the iterator and causing a crash.
-  if (_ha_integration_enabled) {
+  if (_config.ha_integration_enabled) {
     mqttClient.onTopic("homeassistant/status", 0, [&](const char* topic, const char* payload, int retain, int qos, bool dup) {
       if (!strcmp(payload, "online"))
         _pendingHaDiscovery = true;
@@ -60,7 +69,7 @@ bool MQTTController::setup()
 bool MQTTController::connect(bool waitBlocking)
 {
   // are we enabled?
-  if (!_enabled)
+  if (!_config.enabled)
     return true;
 
   // Mark as first try so onError() can broadcast to ADMIN on failure.
@@ -69,11 +78,11 @@ bool MQTTController::connect(bool waitBlocking)
   // If reconnect logic is ever added to loop(), revisit this flag.
   _firstConnection = true;
 
-  mqttClient.setServer(_mqtt_server);
-  mqttClient.setCredentials(_mqtt_user, _mqtt_pass);
+  mqttClient.setServer(_config.mqtt_server);
+  mqttClient.setCredentials(_config.mqtt_user, _config.mqtt_pass);
 
-  if (_mqtt_cert.length())
-    mqttClient.setCACert(_mqtt_cert.c_str());
+  if (_config.mqtt_cert.length())
+    mqttClient.setCACert(_config.mqtt_cert.c_str());
 
   mqttClient.connect();
 
@@ -104,7 +113,7 @@ void MQTTController::loop()
 
   // deferred HA discovery: triggered by homeassistant/status callback but run
   // here (outside _onMessage iteration) to avoid invalidating the callback vector.
-  if (_pendingHaDiscovery && _ha_integration_enabled) {
+  if (_pendingHaDiscovery && _config.ha_integration_enabled) {
     _pendingHaDiscovery = false;
     haDiscovery();
   }
@@ -117,7 +126,7 @@ void MQTTController::loop()
     }
 
     // separately update our Home Assistant status
-    if (_ha_integration_enabled) {
+    if (_config.ha_integration_enabled) {
       for (const auto& entry : _app.getControllers()) {
         entry.controller->haUpdateHook(this);
       }
@@ -129,15 +138,15 @@ void MQTTController::loop()
 
 void MQTTController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
-  _enabled = input["enabled"];
-  _protocol_enabled = input["protocol_enabled"];
-  _ha_integration_enabled = input["ha_integration_enabled"];
-  _use_hostname_as_uuid = input["use_hostname_as_uuid"];
+  _config.enabled = input["enabled"];
+  _config.protocol_enabled = input["protocol_enabled"];
+  _config.ha_integration_enabled = input["ha_integration_enabled"];
+  _config.use_hostname_as_uuid = input["use_hostname_as_uuid"];
 
-  strlcpy(_mqtt_server, input["mqtt_server"] | "", sizeof(_mqtt_server));
-  strlcpy(_mqtt_user, input["mqtt_user"] | "", sizeof(_mqtt_user));
-  strlcpy(_mqtt_pass, input["mqtt_pass"] | "", sizeof(_mqtt_pass));
-  _mqtt_cert = input["mqtt_cert"].as<String>();
+  strlcpy(_config.mqtt_server, input["mqtt_server"] | "", sizeof(_config.mqtt_server));
+  strlcpy(_config.mqtt_user, input["mqtt_user"] | "", sizeof(_config.mqtt_user));
+  strlcpy(_config.mqtt_pass, input["mqtt_pass"] | "", sizeof(_config.mqtt_pass));
+  _config.mqtt_cert = input["mqtt_cert"].as<String>();
 
   // save it to file.
   char error[128] = "Unknown";
@@ -145,7 +154,7 @@ void MQTTController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant out
     return _app.protocol.generateErrorJSON(output, error);
 
   // init our mqtt
-  if (_enabled) {
+  if (_config.enabled) {
     disconnect(); // reset our connection.
     if (!connect())
       return _app.protocol.generateErrorJSON(output, "Error connecting to MQTT server.");
@@ -188,34 +197,34 @@ void MQTTController::loadConfigHook(JsonVariantConst config)
   const char* v;
 
   v = config["mqtt_server"] | "";
-  strlcpy(_mqtt_server, v, sizeof(_mqtt_server));
+  strlcpy(_config.mqtt_server, v, sizeof(_config.mqtt_server));
 
   v = config["mqtt_user"] | "";
-  strlcpy(_mqtt_user, v, sizeof(_mqtt_user));
+  strlcpy(_config.mqtt_user, v, sizeof(_config.mqtt_user));
 
   v = config["mqtt_pass"] | "";
-  strlcpy(_mqtt_pass, v, sizeof(_mqtt_pass));
+  strlcpy(_config.mqtt_pass, v, sizeof(_config.mqtt_pass));
 
-  _mqtt_cert = config["mqtt_cert"] | "";
+  _config.mqtt_cert = config["mqtt_cert"] | "";
 
-  _enabled = config["enabled"] | _app.enable_mqtt;
-  _protocol_enabled = config["protocol_enabled"] | _app.enable_mqtt_protocol;
-  _ha_integration_enabled = config["ha_integration_enabled"] | _app.enable_ha_integration;
-  _use_hostname_as_uuid = config["use_hostname_as_uuid"] | _app.use_hostname_as_mqtt_uuid;
+  _config.enabled = config["enabled"] | defaults.enabled;
+  _config.protocol_enabled = config["protocol_enabled"] | defaults.protocol_enabled;
+  _config.ha_integration_enabled = config["ha_integration_enabled"] | defaults.ha_integration_enabled;
+  _config.use_hostname_as_uuid = config["use_hostname_as_uuid"] | defaults.use_hostname_as_uuid;
 }
 
 void MQTTController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
-  output["enabled"] = _enabled;
-  output["protocol_enabled"] = _protocol_enabled;
-  output["ha_integration_enabled"] = _ha_integration_enabled;
-  output["use_hostname_as_uuid"] = _use_hostname_as_uuid;
+  output["enabled"] = _config.enabled;
+  output["protocol_enabled"] = _config.protocol_enabled;
+  output["ha_integration_enabled"] = _config.ha_integration_enabled;
+  output["use_hostname_as_uuid"] = _config.use_hostname_as_uuid;
 
   if (role == ADMIN && purpose != ConfigPurpose::SHAREABLE) {
-    output["mqtt_server"] = _mqtt_server;
-    output["mqtt_user"] = _mqtt_user;
-    output["mqtt_pass"] = _mqtt_pass; // intentional plaintext
-    output["mqtt_cert"] = _mqtt_cert; // intentional plaintext
+    output["mqtt_server"] = _config.mqtt_server;
+    output["mqtt_user"] = _config.mqtt_user;
+    output["mqtt_pass"] = _config.mqtt_pass; // intentional plaintext
+    output["mqtt_cert"] = _config.mqtt_cert; // intentional plaintext
   }
 }
 
@@ -259,7 +268,7 @@ void MQTTController::publish(const char* topic, const char* payload, bool use_pr
 void MQTTController::receiveMessage(const char* topic, const char* payload, int retain, int qos, bool dup)
 {
   // only if we're enabled.
-  if (!_protocol_enabled)
+  if (!_config.protocol_enabled)
     return;
 
   JsonDocument input;
@@ -310,7 +319,7 @@ void MQTTController::onConnect(bool sessionPresent)
   // clear first connection flag on successful connection
   _firstConnection = false;
 
-  if (_ha_integration_enabled)
+  if (_config.ha_integration_enabled)
     haDiscovery();
 
   // Register the command topic once; PsychicMqttClient resubscribes automatically
@@ -371,7 +380,7 @@ void MQTTController::_onErrorStatic(esp_mqtt_error_codes_t error)
 
 const char* MQTTController::getBoardKey()
 {
-  if (_use_hostname_as_uuid)
+  if (_config.use_hostname_as_uuid)
     return _app.network.getLocalHostname();
   else
     return _app.network.getUUID();

@@ -21,12 +21,18 @@
 #define DISABLE_ALL_LIBRARY_WARNINGS
 #include <esp32FOTA.hpp>
 
+struct OTAConfig {
+    bool arduino_ota_enabled;
+};
+
 class YarrboardApp;
 class ConfigManager;
 
 class OTAController : public BaseController
 {
   public:
+    OTAConfig defaults;
+
     OTAController(YarrboardApp& app);
     ~OTAController();
 
@@ -44,11 +50,12 @@ class OTAController : public BaseController
     bool sanitizeConfigHook(JsonVariant config, char* error, size_t len) override;
     void loadConfigHook(JsonVariantConst config) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
-    bool isEnabled() const { return _arduino_ota_enabled; }
-    void setEnabled(bool v) { _arduino_ota_enabled = v; }
+    bool isEnabled() const { return _config.arduino_ota_enabled; }
+    void setEnabled(bool v) { _config.arduino_ota_enabled = v; }
 
   private:
-    bool _arduino_ota_enabled = false;
+    OTAConfig _config;
+
     esp32FOTA* FOTA = nullptr;
     CryptoMemAsset* MyPubKey = nullptr;
     bool doOTAUpdate = false;

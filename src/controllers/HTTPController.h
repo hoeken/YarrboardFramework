@@ -35,12 +35,21 @@ typedef struct {
     size_t len;
 } WebsocketRequest;
 
+struct HTTPConfig {
+    bool api_enabled;
+    bool ssl_enabled;
+    String server_cert;
+    String server_key;
+};
+
 class YarrboardApp;
 class ConfigManager;
 
 class HTTPController : public BaseController
 {
   public:
+    HTTPConfig defaults;
+
     HTTPController(YarrboardApp& app);
 
     bool setup() override;
@@ -58,17 +67,14 @@ class HTTPController : public BaseController
     void registerGulpedFiles(const GulpedFile* files[], int count);
     PsychicHttpServer* getServer() { return server; }
 
-    bool isSSLEnabled() const { return _ssl_enabled; }
-    bool isAPIEnabled() const { return _api_enabled; }
+    bool isSSLEnabled() const { return _config.ssl_enabled; }
+    bool isAPIEnabled() const { return _config.api_enabled; }
 
     std::atomic<unsigned int> websocketClientCount{0};
     std::atomic<unsigned int> httpClientCount{0};
 
   private:
-    bool _api_enabled = false;
-    bool _ssl_enabled = false;
-    String _server_cert;
-    String _server_key;
+    HTTPConfig _config;
 
     PsychicHttpServer* server = nullptr;
     PsychicWebSocketHandler websocketHandler;

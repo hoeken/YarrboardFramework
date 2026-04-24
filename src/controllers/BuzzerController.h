@@ -35,6 +35,10 @@ struct Melody {
 #define BUZZER_DUTY          512
 #define MELODY_ENTRY(x)      {#x, x, sizeof(x) / sizeof(Note)}
 
+struct BuzzerConfig {
+    char startup_melody[YB_MELODY_LENGTH];
+};
+
 class YarrboardApp;
 class ConfigManager;
 
@@ -44,6 +48,8 @@ void BuzzerTask(void* pv);
 class BuzzerController : public BaseController
 {
   public:
+    BuzzerConfig defaults;
+
     BuzzerController(YarrboardApp& app);
 
     bool setup() override;
@@ -52,8 +58,8 @@ class BuzzerController : public BaseController
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
     void generateCapabilitiesHook(JsonVariant config) override;
 
-    const char* getStartupMelody() const { return _startup_melody; }
-    void setStartupMelody(const char* melody) { strlcpy(_startup_melody, melody, sizeof(_startup_melody)); }
+    const char* getStartupMelody() const { return _config.startup_melody; }
+    void setStartupMelody(const char* melody) { strlcpy(_config.startup_melody, melody, sizeof(_config.startup_melody)); }
 
     bool hasMelody(const char* melody);
     bool playMelodyByName(const char* melody);
@@ -72,7 +78,7 @@ class BuzzerController : public BaseController
   private:
     byte _buzzerPin = 0;
     bool _isActive = false;
-    char _startup_melody[YB_MELODY_LENGTH];
+    BuzzerConfig _config;
 
     const Melody* _melodyTable = nullptr;
     size_t _melodyCount = 0;

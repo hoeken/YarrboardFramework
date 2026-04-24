@@ -25,9 +25,19 @@
 class YarrboardApp;
 class ConfigManager;
 
+struct AuthConfig {
+    char admin_user[YB_USERNAME_LENGTH];
+    char admin_pass[YB_PASSWORD_LENGTH];
+    char guest_user[YB_USERNAME_LENGTH];
+    char guest_pass[YB_PASSWORD_LENGTH];
+    UserRole default_role;
+};
+
 class AuthController : public BaseController
 {
   public:
+    AuthConfig defaults;
+
     AuthController(YarrboardApp& app);
 
     bool setup() override;
@@ -62,14 +72,9 @@ class AuthController : public BaseController
 
   private:
     bool is_serial_authenticated = false;
+    AuthConfig _config;
 
-    char admin_user[YB_USERNAME_LENGTH];
-    char admin_pass[YB_PASSWORD_LENGTH];
-    char guest_user[YB_USERNAME_LENGTH];
-    char guest_pass[YB_PASSWORD_LENGTH];
-    UserRole app_default_role;
     UserRole serial_role;
-
     etl::vector<AuthenticatedClient, YB_CLIENT_LIMIT> authenticatedClients;
 
     bool addClientToAuthList(int socket, UserRole role);

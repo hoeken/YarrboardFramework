@@ -47,7 +47,6 @@ class YarrboardApp
         bool operator<(const ControllerEntry& other) const { return order < other.order; }
     };
 
-    const char* board_name = "Yarrboard";
     const char* firmware_version = "Unknown";
     const char* hardware_version = "Unknown";
     const char* manufacturer = "Unknown";
@@ -57,27 +56,7 @@ class YarrboardApp
     const char* project_url = "https://github.com/hoeken/yarrboard";
     const char* git_url = "";
 
-    const char* default_hostname = "yarrboard";
-    const char* default_admin_user = "admin";
-    const char* default_admin_pass = "admin";
-    const char* default_guest_user = "guest";
-    const char* default_guest_pass = "guest";
-
     uint32_t update_interval = 500;
-
-    bool enable_mfd = false;
-    bool enable_http_api = false;
-    bool enable_serial_api = false;
-    bool enable_arduino_ota = false;
-    bool enable_ssl = false;
-    bool enable_mqtt = false;
-    bool enable_mqtt_protocol = false;
-    bool enable_ha_integration = false;
-    bool use_hostname_as_mqtt_uuid = true;
-
-    UserRole default_role = NOBODY;
-    const char* default_melody = "STARTUP";
-    uint32_t config_version = 1;
 
     ConfigManager config;
     DebugController debug;
@@ -115,6 +94,9 @@ class YarrboardApp
 
     ConfigManager& getConfig() { return config; }
     const ConfigManager& getConfig() const { return config; }
+
+    void setDefaultBoardName(const char* name) { strlcpy(config.defaults.board_name, name, sizeof(config.defaults.board_name)); }
+    void setDefaultHostname(const char* hostname) { strlcpy(network.defaults.local_hostname, hostname, sizeof(network.defaults.local_hostname)); }
 
     void setStatusColor(uint8_t r, uint8_t g, uint8_t b);
     void setStatusColor(const CRGB& color);

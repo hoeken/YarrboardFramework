@@ -19,6 +19,8 @@ OTAController* OTAController::_instance = nullptr;
 
 OTAController::OTAController(YarrboardApp& app) : BaseController(app, "ota")
 {
+  defaults.arduino_ota_enabled = false;
+  _config = defaults;
 }
 
 OTAController::~OTAController()
@@ -33,7 +35,7 @@ bool OTAController::setup()
 
   _app.protocol.registerCommand(ADMIN, "ota_start", this, &OTAController::handleOTAStart);
 
-  if (_arduino_ota_enabled) {
+  if (_config.arduino_ota_enabled) {
     ArduinoOTA.setHostname(_app.network.getLocalHostname());
     ArduinoOTA.setPort(3232);
     ArduinoOTA.setPassword(_app.auth.getAdminPass());
@@ -70,7 +72,7 @@ void OTAController::loop()
     doOTAUpdate = false;
   }
 
-  if (_arduino_ota_enabled) {
+  if (_config.arduino_ota_enabled) {
     ArduinoOTA.handle();
   }
 }
@@ -85,8 +87,8 @@ void OTAController::handleOTAStart(JsonVariantConst input, JsonVariant output, P
 
 void OTAController::end()
 {
-  // called after config disables OTA, so _arduino_ota_enabled is already false here
-  if (!_arduino_ota_enabled)
+  // called after config disables OTA, so _config.arduino_ota_enabled is already false here
+  if (!_config.arduino_ota_enabled)
     ArduinoOTA.end();
 }
 
@@ -115,12 +117,12 @@ bool OTAController::sanitizeConfigHook(JsonVariant config, char* error, size_t l
 
 void OTAController::loadConfigHook(JsonVariantConst config)
 {
-  _arduino_ota_enabled = config["arduino_ota_enabled"] | _app.enable_arduino_ota;
+  _config.arduino_ota_enabled = config["arduino_ota_enabled"] | defaults.arduino_ota_enabled;
 }
 
 void OTAController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
-  output["arduino_ota_enabled"] = _arduino_ota_enabled;
+  output["arduino_ota_enabled"] = _config.arduino_ota_enabled;
 }
 
 void OTAController::_updateBeginFailCallback(int partition)

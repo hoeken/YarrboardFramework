@@ -1,8 +1,7 @@
 ## v3.0.0
 
-* move YarrboardApp.enable_foo to controller.default_foo_enabled
-
 * implement more sanitizeConfig() on different params
+
 * more testing of everything:
   * shareable config
   * v1 config

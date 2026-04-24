@@ -20,12 +20,21 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
+struct NTPConfig {
+    char ntp_server1[YB_NTP_SERVER_LENGTH];
+    char ntp_server2[YB_NTP_SERVER_LENGTH];
+    long gmt_offset_sec;
+    int daylight_offset_sec;
+};
+
 class YarrboardApp;
 class ConfigManager;
 
 class NTPController : public BaseController
 {
   public:
+    NTPConfig defaults;
+
     NTPController(YarrboardApp& app);
 
     bool setup() override;
@@ -41,10 +50,7 @@ class NTPController : public BaseController
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
   private:
-    char _ntp_server1[YB_NTP_SERVER_LENGTH] = "pool.ntp.org";
-    char _ntp_server2[YB_NTP_SERVER_LENGTH] = "time.nist.gov";
-    long _gmt_offset_sec = 0;
-    int _daylight_offset_sec = 0;
+    NTPConfig _config;
 
     bool ntp_is_ready = false;
     bool _ntpStarted = false;

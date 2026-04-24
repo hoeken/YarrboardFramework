@@ -19,12 +19,25 @@
 #include <ArduinoJson.h>
 #include <PsychicMqttClient.h>
 
+struct MQTTConfig {
+    bool enabled;
+    bool protocol_enabled;
+    bool ha_integration_enabled;
+    bool use_hostname_as_uuid;
+    char mqtt_server[YB_MQTT_SERVER_LENGTH];
+    char mqtt_user[YB_USERNAME_LENGTH];
+    char mqtt_pass[YB_PASSWORD_LENGTH];
+    String mqtt_cert;
+};
+
 class YarrboardApp;
 class ConfigManager;
 
 class MQTTController : public BaseController
 {
   public:
+    MQTTConfig defaults;
+
     MQTTController(YarrboardApp& app);
 
     bool setup() override;
@@ -47,7 +60,7 @@ class MQTTController : public BaseController
     void loadConfigHook(JsonVariantConst config) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
-    bool isEnabled() const { return _enabled; }
+    bool isEnabled() const { return _config.enabled; }
 
   private:
     PsychicMqttClient mqttClient;
@@ -56,15 +69,7 @@ class MQTTController : public BaseController
     bool _pendingHaDiscovery = false;
     bool _commandTopicRegistered = false;
 
-    bool _enabled = false;
-    bool _protocol_enabled = false;
-    bool _ha_integration_enabled = false;
-    bool _use_hostname_as_uuid = true;
-
-    char _mqtt_server[YB_MQTT_SERVER_LENGTH] = "";
-    char _mqtt_user[YB_USERNAME_LENGTH] = "";
-    char _mqtt_pass[YB_PASSWORD_LENGTH] = "";
-    String _mqtt_cert = "";
+    MQTTConfig _config;
 
     void haDiscovery();
     void receiveMessage(const char* topic, const char* payload, int retain, int qos, bool dup);

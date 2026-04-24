@@ -22,6 +22,11 @@
 #include <LittleFS.h>
 #include <Preferences.h>
 
+struct ConfigManagerConfig {
+    bool is_first_boot;
+    char board_name[YB_BOARD_NAME_LENGTH];
+};
+
 class YarrboardApp;
 
 class ConfigManager : public BaseController
@@ -29,6 +34,8 @@ class ConfigManager : public BaseController
   public:
     // Public to allow controllers direct access to the ESP32 Preferences API.
     Preferences preferences;
+
+    ConfigManagerConfig defaults;
 
     ConfigManager(YarrboardApp& app);
 
@@ -52,11 +59,11 @@ class ConfigManager : public BaseController
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
     void loadConfigHook(JsonVariantConst config) override;
 
-    bool isFirstBoot() const { return _is_first_boot; }
-    void setFirstBoot(bool v) { _is_first_boot = v; }
+    bool isFirstBoot() const { return _config.is_first_boot; }
+    void setFirstBoot(bool v) { _config.is_first_boot = v; }
 
-    const char* getBoardName() const { return _board_name; }
-    void setBoardName(const char* name) { strlcpy(_board_name, name, sizeof(_board_name)); }
+    const char* getBoardName() const { return _config.board_name; }
+    void setBoardName(const char* name) { strlcpy(_config.board_name, name, sizeof(_config.board_name)); }
 
     const String& getAppTheme() const { return _app_theme; }
     void setAppTheme(const String& theme) { _app_theme = theme; }
@@ -68,8 +75,9 @@ class ConfigManager : public BaseController
 
   private:
     YarrboardApp& _app;
-    bool _is_first_boot;
-    char _board_name[YB_BOARD_NAME_LENGTH];
+
+    ConfigManagerConfig _config;
+
     String _app_theme = "light";
     float _global_brightness = 1.0;
     uint32_t _schema_version = 2;

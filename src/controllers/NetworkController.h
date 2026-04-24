@@ -24,12 +24,27 @@
 #include <ImprovWiFiLibrary.h>
 #include <WiFi.h>
 
+struct NetworkConfig {
+    char wifi_ssid[YB_WIFI_SSID_LENGTH];
+    char wifi_pass[YB_WIFI_PASSWORD_LENGTH];
+    char wifi_mode[YB_WIFI_MODE_LENGTH];
+    char local_hostname[YB_HOSTNAME_LENGTH];
+    bool wifi_use_static_ip;
+    char wifi_static_ip[YB_IP_ADDRESS_LENGTH];
+    char wifi_gateway[YB_IP_ADDRESS_LENGTH];
+    char wifi_subnet[YB_IP_ADDRESS_LENGTH];
+    char wifi_dns1[YB_IP_ADDRESS_LENGTH];
+    char wifi_dns2[YB_IP_ADDRESS_LENGTH];
+};
+
 class YarrboardApp;
 class ConfigManager;
 
 class NetworkController : public BaseController
 {
   public:
+    NetworkConfig defaults;
+
     NetworkController(YarrboardApp& app);
 
     bool setup() override;
@@ -43,16 +58,16 @@ class NetworkController : public BaseController
 
     const char* getUUID() const { return _uuid; }
 
-    const char* getWifiSSID() const { return _wifi_ssid; }
-    const char* getWifiPass() const { return _wifi_pass; }
-    const char* getWifiMode() const { return _wifi_mode; }
-    const char* getLocalHostname() const { return _local_hostname; }
-    bool getWifiUseStaticIP() const { return _wifi_use_static_ip; }
-    const char* getWifiStaticIP() const { return _wifi_static_ip; }
-    const char* getWifiGateway() const { return _wifi_gateway; }
-    const char* getWifiSubnet() const { return _wifi_subnet; }
-    const char* getWifiDNS1() const { return _wifi_dns1; }
-    const char* getWifiDNS2() const { return _wifi_dns2; }
+    const char* getWifiSSID() const { return _config.wifi_ssid; }
+    const char* getWifiPass() const { return _config.wifi_pass; }
+    const char* getWifiMode() const { return _config.wifi_mode; }
+    const char* getLocalHostname() const { return _config.local_hostname; }
+    bool getWifiUseStaticIP() const { return _config.wifi_use_static_ip; }
+    const char* getWifiStaticIP() const { return _config.wifi_static_ip; }
+    const char* getWifiGateway() const { return _config.wifi_gateway; }
+    const char* getWifiSubnet() const { return _config.wifi_subnet; }
+    const char* getWifiDNS1() const { return _config.wifi_dns1; }
+    const char* getWifiDNS2() const { return _config.wifi_dns2; }
 
     bool isImprovDone() const { return improvDone; }
     void setImprovDone(bool v) { improvDone = v; }
@@ -64,17 +79,9 @@ class NetworkController : public BaseController
     void handleSetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
 
   private:
+    NetworkConfig _config;
+
     char _uuid[YB_UUID_LENGTH] = {};
-    char _wifi_ssid[YB_WIFI_SSID_LENGTH] = YB_DEFAULT_AP_SSID;
-    char _wifi_pass[YB_WIFI_PASSWORD_LENGTH] = YB_DEFAULT_AP_PASS;
-    char _wifi_mode[YB_WIFI_MODE_LENGTH] = YB_DEFAULT_AP_MODE;
-    char _local_hostname[YB_HOSTNAME_LENGTH] = {};
-    bool _wifi_use_static_ip = false;
-    char _wifi_static_ip[YB_IP_ADDRESS_LENGTH] = {};
-    char _wifi_gateway[YB_IP_ADDRESS_LENGTH] = {};
-    char _wifi_subnet[YB_IP_ADDRESS_LENGTH] = {};
-    char _wifi_dns1[YB_IP_ADDRESS_LENGTH] = {};
-    char _wifi_dns2[YB_IP_ADDRESS_LENGTH] = {};
     IPAddress apIP;
     bool improvDone = false;
 

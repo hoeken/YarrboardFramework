@@ -18,6 +18,11 @@ NTPController* NTPController::_instance = nullptr;
 
 NTPController::NTPController(YarrboardApp& app) : BaseController(app, "ntp")
 {
+  strlcpy(defaults.ntp_server1, "pool.ntp.org", sizeof(defaults.ntp_server1));
+  strlcpy(defaults.ntp_server2, "time.nist.gov", sizeof(defaults.ntp_server2));
+  defaults.gmt_offset_sec = 0;
+  defaults.daylight_offset_sec = 0;
+  _config = defaults;
 }
 
 bool NTPController::setup()
@@ -40,7 +45,7 @@ void NTPController::loop()
 
 void NTPController::_startNTP()
 {
-  configTime(_gmt_offset_sec, _daylight_offset_sec, _ntp_server1, _ntp_server2);
+  configTime(_config.gmt_offset_sec, _config.daylight_offset_sec, _config.ntp_server1, _config.ntp_server2);
   _ntpStarted = true;
 }
 
@@ -88,23 +93,23 @@ void NTPController::loadConfigHook(JsonVariantConst config)
 {
   const char* v;
 
-  v = config["ntp_server1"] | "pool.ntp.org";
-  strlcpy(_ntp_server1, v, sizeof(_ntp_server1));
+  v = config["ntp_server1"] | defaults.ntp_server1;
+  strlcpy(_config.ntp_server1, v, sizeof(_config.ntp_server1));
 
-  v = config["ntp_server2"] | "time.nist.gov";
-  strlcpy(_ntp_server2, v, sizeof(_ntp_server2));
+  v = config["ntp_server2"] | defaults.ntp_server2;
+  strlcpy(_config.ntp_server2, v, sizeof(_config.ntp_server2));
 
-  _gmt_offset_sec = config["gmt_offset_sec"] | 0L;
-  _daylight_offset_sec = config["daylight_offset_sec"] | 0;
+  _config.gmt_offset_sec = config["gmt_offset_sec"] | defaults.gmt_offset_sec;
+  _config.daylight_offset_sec = config["daylight_offset_sec"] | defaults.daylight_offset_sec;
 }
 
 void NTPController::generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose)
 {
-  output["gmt_offset_sec"] = _gmt_offset_sec;
-  output["daylight_offset_sec"] = _daylight_offset_sec;
+  output["gmt_offset_sec"] = _config.gmt_offset_sec;
+  output["daylight_offset_sec"] = _config.daylight_offset_sec;
 
   if (role == ADMIN) {
-    output["ntp_server1"] = _ntp_server1;
-    output["ntp_server2"] = _ntp_server2;
+    output["ntp_server1"] = _config.ntp_server1;
+    output["ntp_server2"] = _config.ntp_server2;
   }
 }
