@@ -77,7 +77,7 @@ class NetworkController : public BaseController
     void loadConfigHook(JsonVariantConst config) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
-    void handleSetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    bool handleSetConfigSuccessCallback(JsonVariantConst input, JsonVariant output, ProtocolContext context, char* error, size_t len) override;
 
   private:
     NetworkConfig _config;

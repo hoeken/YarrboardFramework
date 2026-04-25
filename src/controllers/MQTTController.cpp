@@ -38,7 +38,8 @@ bool MQTTController::setup()
     return false;
   }
 
-  _app.protocol.registerCommand(ADMIN, "set_mqtt_config", this, &MQTTController::handleSetMQTTConfig);
+  if (!BaseController::setup())
+    return false;
 
   _instance = this; // Capture the instance for callbacks
 
@@ -136,30 +137,19 @@ void MQTTController::loop()
   }
 }
 
-void MQTTController::handleSetMQTTConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+bool MQTTController::handleSetConfigSuccessCallback(JsonVariantConst input, JsonVariant output, ProtocolContext context, char* error, size_t len)
 {
-  _config.enabled = input["enabled"];
-  _config.protocol_enabled = input["protocol_enabled"];
-  _config.ha_integration_enabled = input["ha_integration_enabled"];
-  _config.use_hostname_as_uuid = input["use_hostname_as_uuid"];
-
-  strlcpy(_config.mqtt_server, input["mqtt_server"] | "", sizeof(_config.mqtt_server));
-  strlcpy(_config.mqtt_user, input["mqtt_user"] | "", sizeof(_config.mqtt_user));
-  strlcpy(_config.mqtt_pass, input["mqtt_pass"] | "", sizeof(_config.mqtt_pass));
-  _config.mqtt_cert = input["mqtt_cert"].as<String>();
-
-  // save it to file.
-  char error[128] = "Unknown";
-  if (!_cfg.saveConfig(error, sizeof(error)))
-    return _app.protocol.generateErrorJSON(output, error);
-
   // init our mqtt
-  if (_config.enabled) {
+  if (input["enabled"].as<bool>()) {
     disconnect(); // reset our connection.
-    if (!connect())
-      return _app.protocol.generateErrorJSON(output, "Error connecting to MQTT server.");
+    if (!connect()) {
+      strlcpy(error, "Error connecting to MQTT server.", len);
+      return false;
+    }
   } else
     disconnect();
+
+  return true;
 }
 
 void MQTTController::generateStatsHook(JsonVariant output)

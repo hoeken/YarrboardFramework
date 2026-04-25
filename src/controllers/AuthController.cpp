@@ -290,12 +290,6 @@ void AuthController::handleLogout(JsonVariantConst input, JsonVariant output, Pr
   output["message"] = "Logout successful.";
 }
 
-bool AuthController::handleSetConfigSuccessCallback(JsonVariantConst input, JsonVariant output, ProtocolContext context, char* error, size_t len)
-{
-  TRACE();
-  return true;
-}
-
 bool AuthController::sanitizeConfigHook(JsonVariant config, char* error, size_t len)
 {
   if (config["default_role"]) {

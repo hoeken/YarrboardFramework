@@ -59,6 +59,7 @@ class MQTTController : public BaseController
     bool sanitizeConfigHook(JsonVariant config, char* error, size_t len) override;
     void loadConfigHook(JsonVariantConst config) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
+    bool handleSetConfigSuccessCallback(JsonVariantConst input, JsonVariant output, ProtocolContext context, char* error, size_t len) override;
 
     bool isEnabled() const { return _config.enabled; }
 

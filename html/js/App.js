@@ -835,14 +835,7 @@
       // okay, send it off
       YB.client.send({
         cmd: "set_mqtt_config",
-        enabled: settings.enabled,
-        protocol_enabled: settings.protocol_enabled,
-        ha_integration_enabled: settings.ha_integration_enabled,
-        use_hostname_as_uuid: settings.use_hostname_as_uuid,
-        mqtt_server: settings.mqtt_server,
-        mqtt_user: settings.mqtt_user,
-        mqtt_pass: settings.mqtt_pass,
-        mqtt_cert: settings.mqtt_cert
+        config: settings
       });
     },
 
@@ -952,7 +945,7 @@
 
       // warn user before applying network changes
       YB.App.showAlert(
-        "Yarrboard may be unresponsive while changing WiFi settings. Make sure you connect to the right network after updating.",
+        "Yarrboard will be unresponsive while changing WiFi settings.  You may need to reload the page.",
         "primary"
       );
 
@@ -963,22 +956,8 @@
       // send it off
       YB.client.send({
         cmd: "set_network_config",
-        wifi_mode: settings.wifi_mode,
-        wifi_ssid: settings.wifi_ssid,
-        wifi_pass: settings.wifi_pass,
-        local_hostname: settings.local_hostname,
-        wifi_use_static_ip: settings.wifi_use_static_ip,
-        wifi_static_ip: settings.wifi_static_ip,
-        wifi_gateway: settings.wifi_gateway,
-        wifi_subnet: settings.wifi_subnet,
-        wifi_dns1: settings.wifi_dns1,
-        wifi_dns2: settings.wifi_dns2
+        config: settings
       });
-
-      // reload page after delay
-      setTimeout(function () {
-        location.reload();
-      }, 2500);
     },
 
     getMiscSettingsSchema: function () {

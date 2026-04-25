@@ -38,7 +38,8 @@ bool NetworkController::setup()
 {
   _instance = this; // Capture the instance for callbacks
 
-  _app.protocol.registerCommand(ADMIN, "set_network_config", this, &NetworkController::handleSetNetworkConfig);
+  if (!BaseController::setup())
+    return false;
 
   uint64_t chipid = ESP.getEfuseMac(); // unique 48-bit MAC base ID
   snprintf(_uuid, sizeof(_uuid), "%04X%08lX", (uint16_t)(chipid >> 32), (uint32_t)chipid);
@@ -83,6 +84,22 @@ bool NetworkController::sanitizeConfigHook(JsonVariant config, char* error, size
   if (config["local_hostname"] && strlen(config["local_hostname"] | "") > YB_HOSTNAME_LENGTH - 1) {
     snprintf(error, len, "local_hostname too long (max %d chars), will be truncated", YB_HOSTNAME_LENGTH - 1);
     return false;
+  }
+
+  bool new_use_static_ip = config["wifi_use_static_ip"] | false;
+  if (new_use_static_ip) {
+    if (!config["wifi_static_ip"].is<String>() || strlen(config["wifi_static_ip"]) == 0) {
+      snprintf(error, len, "'wifi_static_ip' is required when wifi_use_static_ip is true");
+      return false;
+    }
+    if (!config["wifi_gateway"].is<String>() || strlen(config["wifi_gateway"]) == 0) {
+      snprintf(error, len, "'wifi_gateway' is required when wifi_use_static_ip is true");
+      return false;
+    }
+    if (!config["wifi_subnet"].is<String>() || strlen(config["wifi_subnet"]) == 0) {
+      snprintf(error, len, "'wifi_subnet' is required when wifi_use_static_ip is true");
+      return false;
+    }
   }
 
   IPAddress ip;
@@ -238,23 +255,22 @@ bool NetworkController::connectToWifi(const char* ssid, const char* pass)
   WiFi.setSleep(false); // optional but usually helps reliability
 
   // apply static IP config before connecting, if requested
-  if (_config.wifi_use_static_ip && strlen(_config.wifi_static_ip) > 0) {
+  if (_config.wifi_use_static_ip) {
     IPAddress ip, gw, sn, dns1, dns2;
-    if (ip.fromString(_config.wifi_static_ip) &&
-        gw.fromString(_config.wifi_gateway) &&
-        sn.fromString(_config.wifi_subnet)) {
-      dns1.fromString(strlen(_config.wifi_dns1) > 0 ? _config.wifi_dns1 : _config.wifi_gateway);
-      dns2.fromString(strlen(_config.wifi_dns2) > 0 ? _config.wifi_dns2 : _config.wifi_gateway);
-      WiFi.config(ip, gw, sn, dns1, dns2);
-      YBP.printf("[WiFi] Static IP: %s / GW: %s / SN: %s / DNS1: %s / DNS2: %s\n",
-        _config.wifi_static_ip,
-        _config.wifi_gateway,
-        _config.wifi_subnet,
-        strlen(_config.wifi_dns1) > 0 ? _config.wifi_dns1 : _config.wifi_gateway,
-        strlen(_config.wifi_dns2) > 0 ? _config.wifi_dns2 : _config.wifi_gateway);
-    } else {
-      YBP.println("[WiFi] Static IP config invalid, falling back to DHCP");
-    }
+    ip.fromString(_config.wifi_static_ip);
+    gw.fromString(_config.wifi_gateway);
+    sn.fromString(_config.wifi_subnet);
+
+    dns1.fromString(strlen(_config.wifi_dns1) > 0 ? _config.wifi_dns1 : _config.wifi_gateway);
+    dns2.fromString(strlen(_config.wifi_dns2) > 0 ? _config.wifi_dns2 : _config.wifi_gateway);
+    WiFi.config(ip, gw, sn, dns1, dns2);
+
+    YBP.printf("[WiFi] Static IP: %s / GW: %s / SN: %s / DNS1: %s / DNS2: %s\n",
+      _config.wifi_static_ip,
+      _config.wifi_gateway,
+      _config.wifi_subnet,
+      strlen(_config.wifi_dns1) > 0 ? _config.wifi_dns1 : _config.wifi_gateway,
+      strlen(_config.wifi_dns2) > 0 ? _config.wifi_dns2 : _config.wifi_gateway);
   }
 
   // How long to try for?
@@ -436,132 +452,33 @@ void NetworkController::_handleImprovConnected(const char* ssid, const char* pas
   improvDone = true;
 }
 
-void NetworkController::handleSetNetworkConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+bool NetworkController::handleSetConfigSuccessCallback(JsonVariantConst input, JsonVariant output, ProtocolContext context, char* error, size_t len)
 {
-  _cfg.setFirstBoot(false);
+  const char* new_mode = input["wifi_mode"] | _config.wifi_mode;
 
-  char error[128];
+  if (!strcmp(new_mode, "client")) {
+    const char* new_ssid = input["wifi_ssid"] | _config.wifi_ssid;
+    const char* new_pass = input["wifi_pass"] | _config.wifi_pass;
 
-  if (!input["wifi_mode"].is<String>())
-    return _app.protocol.generateErrorJSON(output, "'wifi_mode' is a required parameter");
-  if (!input["wifi_ssid"].is<String>())
-    return _app.protocol.generateErrorJSON(output, "'wifi_ssid' is a required parameter");
-  if (!input["wifi_pass"].is<String>())
-    return _app.protocol.generateErrorJSON(output, "'wifi_pass' is a required parameter");
-  if (!input["local_hostname"].is<String>())
-    return _app.protocol.generateErrorJSON(output, "'local_hostname' is a required parameter");
-
-  if (strlen(input["wifi_ssid"]) > YB_WIFI_SSID_LENGTH - 1) {
-    sprintf(error, "Maximum wifi ssid length is %d characters.", YB_WIFI_SSID_LENGTH - 1);
-    return _app.protocol.generateErrorJSON(output, error);
-  }
-
-  if (strlen(input["wifi_pass"]) > YB_WIFI_PASSWORD_LENGTH - 1) {
-    sprintf(error, "Maximum wifi password length is %d characters.", YB_WIFI_PASSWORD_LENGTH - 1);
-    return _app.protocol.generateErrorJSON(output, error);
-  }
-
-  if (strlen(input["local_hostname"]) > YB_HOSTNAME_LENGTH - 1) {
-    sprintf(error, "Maximum hostname length is %d characters.", YB_HOSTNAME_LENGTH - 1);
-    return _app.protocol.generateErrorJSON(output, error);
-  }
-
-  bool new_use_static_ip = input["wifi_use_static_ip"] | false;
-  if (new_use_static_ip) {
-    if (!input["wifi_static_ip"].is<String>() || strlen(input["wifi_static_ip"]) == 0)
-      return _app.protocol.generateErrorJSON(output, "'wifi_static_ip' is required when wifi_use_static_ip is true");
-    if (!input["wifi_gateway"].is<String>() || strlen(input["wifi_gateway"]) == 0)
-      return _app.protocol.generateErrorJSON(output, "'wifi_gateway' is required when wifi_use_static_ip is true");
-    if (!input["wifi_subnet"].is<String>() || strlen(input["wifi_subnet"]) == 0)
-      return _app.protocol.generateErrorJSON(output, "'wifi_subnet' is required when wifi_use_static_ip is true");
-
-    IPAddress testIP;
-    if (!testIP.fromString(input["wifi_static_ip"] | ""))
-      return _app.protocol.generateErrorJSON(output, "'wifi_static_ip' is not a valid IP address");
-    if (!testIP.fromString(input["wifi_gateway"] | ""))
-      return _app.protocol.generateErrorJSON(output, "'wifi_gateway' is not a valid IP address");
-    if (!testIP.fromString(input["wifi_subnet"] | ""))
-      return _app.protocol.generateErrorJSON(output, "'wifi_subnet' is not a valid IP address");
-    if (input["wifi_dns1"].is<String>() && strlen(input["wifi_dns1"]) > 0) {
-      if (!testIP.fromString(input["wifi_dns1"] | ""))
-        return _app.protocol.generateErrorJSON(output, "'wifi_dns1' is not a valid IP address");
-    }
-    if (input["wifi_dns2"].is<String>() && strlen(input["wifi_dns2"]) > 0) {
-      if (!testIP.fromString(input["wifi_dns2"] | ""))
-        return _app.protocol.generateErrorJSON(output, "'wifi_dns2' is not a valid IP address");
-    }
-  }
-
-  char new_wifi_mode[16];
-  char new_wifi_ssid[YB_WIFI_SSID_LENGTH];
-  char new_wifi_pass[YB_WIFI_PASSWORD_LENGTH];
-
-  strlcpy(new_wifi_mode, input["wifi_mode"] | YB_DEFAULT_AP_MODE, sizeof(new_wifi_mode));
-  strlcpy(new_wifi_ssid, input["wifi_ssid"] | YB_DEFAULT_AP_SSID, sizeof(new_wifi_ssid));
-  strlcpy(new_wifi_pass, input["wifi_pass"] | YB_DEFAULT_AP_PASS, sizeof(new_wifi_pass));
-
-  // Snapshot current state so we can roll back if the new wifi connection fails
-  char old_hostname[YB_HOSTNAME_LENGTH];
-  bool old_use_static_ip = _config.wifi_use_static_ip;
-  char old_static_ip[YB_IP_ADDRESS_LENGTH];
-  char old_gateway[YB_IP_ADDRESS_LENGTH];
-  char old_subnet[YB_IP_ADDRESS_LENGTH];
-  char old_dns1[YB_IP_ADDRESS_LENGTH];
-  char old_dns2[YB_IP_ADDRESS_LENGTH];
-  strlcpy(old_hostname, _config.local_hostname, sizeof(old_hostname));
-  strlcpy(old_static_ip, _config.wifi_static_ip, sizeof(old_static_ip));
-  strlcpy(old_gateway, _config.wifi_gateway, sizeof(old_gateway));
-  strlcpy(old_subnet, _config.wifi_subnet, sizeof(old_subnet));
-  strlcpy(old_dns1, _config.wifi_dns1, sizeof(old_dns1));
-  strlcpy(old_dns2, _config.wifi_dns2, sizeof(old_dns2));
-
-  strlcpy(_config.local_hostname, input["local_hostname"] | defaults.local_hostname, sizeof(_config.local_hostname));
-  _config.wifi_use_static_ip = new_use_static_ip;
-  strlcpy(_config.wifi_static_ip, input["wifi_static_ip"] | "", sizeof(_config.wifi_static_ip));
-  strlcpy(_config.wifi_gateway, input["wifi_gateway"] | "", sizeof(_config.wifi_gateway));
-  strlcpy(_config.wifi_subnet, input["wifi_subnet"] | "", sizeof(_config.wifi_subnet));
-  strlcpy(_config.wifi_dns1, input["wifi_dns1"] | "", sizeof(_config.wifi_dns1));
-  strlcpy(_config.wifi_dns2, input["wifi_dns2"] | "", sizeof(_config.wifi_dns2));
-
-  if (!strcmp(new_wifi_mode, "client")) {
-    if (strcmp(new_wifi_ssid, getWifiSSID()) || strcmp(new_wifi_pass, getWifiPass())) {
-      YBP.printf("Trying new wifi %s / %s\n", new_wifi_ssid, new_wifi_pass);
-      if (connectToWifi(new_wifi_ssid, new_wifi_pass)) {
-        if (!strcmp(getWifiMode(), "ap"))
+    if (strcmp(new_ssid, _config.wifi_ssid) || strcmp(new_pass, _config.wifi_pass)) {
+      YBP.printf("Trying new wifi %s / %s\n", new_ssid, new_pass);
+      if (connectToWifi(new_ssid, new_pass)) {
+        if (!strcmp(_config.wifi_mode, "ap"))
           WiFi.softAPdisconnect();
-
-        strlcpy(_config.wifi_mode, new_wifi_mode, sizeof(_config.wifi_mode));
-        strlcpy(_config.wifi_ssid, new_wifi_ssid, sizeof(_config.wifi_ssid));
-        strlcpy(_config.wifi_pass, new_wifi_pass, sizeof(_config.wifi_pass));
-
-        if (!_cfg.saveConfig(error, sizeof(error)))
-          return _app.protocol.generateErrorJSON(output, error);
-      } else {
-        strlcpy(_config.local_hostname, old_hostname, sizeof(_config.local_hostname));
-        _config.wifi_use_static_ip = old_use_static_ip;
-        strlcpy(_config.wifi_static_ip, old_static_ip, sizeof(_config.wifi_static_ip));
-        strlcpy(_config.wifi_gateway, old_gateway, sizeof(_config.wifi_gateway));
-        strlcpy(_config.wifi_subnet, old_subnet, sizeof(_config.wifi_subnet));
-        strlcpy(_config.wifi_dns1, old_dns1, sizeof(_config.wifi_dns1));
-        strlcpy(_config.wifi_dns2, old_dns2, sizeof(_config.wifi_dns2));
-        connectToWifi(getWifiSSID(), getWifiPass());
         startServices();
-        return _app.protocol.generateErrorJSON(output, "Can't connect to new WiFi.");
+      } else {
+        connectToWifi(_config.wifi_ssid, _config.wifi_pass);
+        startServices();
+        snprintf(error, len, "Can't connect to new WiFi.");
+        return false;
       }
-    } else {
-      if (!_cfg.saveConfig(error, sizeof(error)))
-        return _app.protocol.generateErrorJSON(output, error);
     }
   } else {
-    strlcpy(_config.wifi_mode, new_wifi_mode, sizeof(_config.wifi_mode));
-    strlcpy(_config.wifi_ssid, new_wifi_ssid, sizeof(_config.wifi_ssid));
-    strlcpy(_config.wifi_pass, new_wifi_pass, sizeof(_config.wifi_pass));
-
+    // for AP mode
     setupWifi();
-
-    if (!_cfg.saveConfig(error, sizeof(error)))
-      return _app.protocol.generateErrorJSON(output, error);
-
-    return _app.protocol.generateSuccessJSON(output, "AP mode successful, please connect to new network.");
   }
+
+  _cfg.setFirstBoot(false);
+
+  return true;
 }

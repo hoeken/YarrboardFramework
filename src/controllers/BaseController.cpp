@@ -51,12 +51,12 @@ void BaseController::handleSetConfig(JsonVariantConst input, JsonVariant output,
   if (!sanitizeConfigHook(config, error, sizeof(error)))
     return _app.protocol.generateErrorJSON(output, error);
 
+  // our controller callback for extra goodness
+  if (!handleSetConfigSuccessCallback(config, output, context, error, sizeof(error)))
+    return ProtocolController::generateErrorJSON(output, error);
+
   // load our data into our controller
   loadConfigHook(config);
-
-  // our controller callback for extra goodness
-  if (!handleSetConfigSuccessCallback(input, output, context, error, sizeof(error)))
-    return ProtocolController::generateErrorJSON(output, error);
 
   // now save it all.
   if (!_app.config.saveConfig(error, sizeof(error)))

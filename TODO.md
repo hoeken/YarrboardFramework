@@ -1,12 +1,8 @@
 ## v3.0.0
 
 * fix controllers to pass parameters as config object and then use sanitize -> load flow
-  * AuthController
   * HTTPController
-  * MQTTController
-  * NetworkController
   * ProtocolController::handleSetGeneralConfig (add test for melody exists)
-  * ConfigManager::saveConfig -> add a call to sanitizeConfig() to check for errors and bail on fail?
 
 * fix settings links to more documentation
 
