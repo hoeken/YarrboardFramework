@@ -1,18 +1,16 @@
 ## v3.0.0
 
-* fix controllers to pass parameters as config object and then use sanitize -> load flow
-  * ProtocolController::handleSetGeneralConfig (add test for melody exists)
-
-* fix settings links to more documentation
-
 * more testing of everything:
-  * shareable config
   * delete random bits of config
 
 * update FrothFET and SendIt with new framework
   * firmware calls
   * javascript
   * psram setup
+
+## v3.1.0
+
+* Add client side Controllers, refactor App.js into smaller classes
 
 ## Long Term
 

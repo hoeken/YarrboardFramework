@@ -1791,7 +1791,8 @@
         <div id="navico_enabled_container" class="form-check form-switch mb-3" style="display: none">
             <input class="form-check-input" type="checkbox" id="navico_enabled" checked>
             <label class="form-check-label" for="navico_enabled">
-                Enable MFD Integration
+                Enable MFD Integration- <a
+                    href="https://framework.yarrboard.com/docs/mfd-integration.html">documentation</a>
             </label>
             <div class="invalid-feedback"></div>
         </div>
