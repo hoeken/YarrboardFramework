@@ -87,11 +87,13 @@ void BaseChannel::loadConfig(JsonVariantConst config)
   if (config["id"])
     this->id = (int)config["id"];
 
-  this->isEnabled = false;
+  this->init(id);
+
+  this->isEnabled = true;
   if (config["enabled"].is<bool>())
     this->isEnabled = config["enabled"];
 
-  snprintf(this->name, sizeof(this->name), "Channel %d", this->id);
+  // snprintf(this->name, sizeof(this->name), "Channel %d", this->id);
   if (config["name"])
     strlcpy(this->name, config["name"], sizeof(this->name));
 

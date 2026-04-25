@@ -83,14 +83,32 @@ class ChannelController : public BaseController
 
     void loadConfigHook(JsonVariantConst config) override
     {
-      JsonArrayConst channels = config["channels"].as<JsonArrayConst>();
+      // look for channels data.
+      if (config["channels"].is<JsonArrayConst>()) {
+        JsonArrayConst channels = config["channels"].as<JsonArrayConst>();
 
-      // now iterate over our initialized channels
-      for (auto& ch : _channels) {
-        for (JsonVariantConst ch_config : channels) {
-          if (ch_config["id"] == ch.id) {
-            ch.loadConfig(ch_config);
+        // now iterate over our initialized channels
+        for (auto& ch : _channels) {
+          bool found = false;
+          for (JsonVariantConst ch_config : channels) {
+            if (ch_config["id"] == ch.id) {
+              ch.loadConfig(ch_config);
+              found = true;
+              break;
+            }
           }
+
+          // if we didnt find one, set to defaults.
+          if (!found) {
+            JsonObjectConst empty;
+            ch.loadConfig(empty);
+          }
+        }
+      } else {
+        // we didnt find any channels?  initialize everything.
+        for (auto& ch : _channels) {
+          JsonObjectConst empty;
+          ch.loadConfig(empty);
         }
       }
     }

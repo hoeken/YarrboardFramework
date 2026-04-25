@@ -1,8 +1,5 @@
 ## v3.0.0
 
-* more testing of everything:
-  * delete random bits of config
-
 * update FrothFET and SendIt with new framework
   * firmware calls
   * javascript

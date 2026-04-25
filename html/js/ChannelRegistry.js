@@ -34,8 +34,10 @@
       let errors = instance.loadConfig(cfg);
       if (!errors)
         this.addChannel(instance);
-      else
+      else {
         console.error(errors);
+        return false;
+      }
 
       return instance;
     },
@@ -125,15 +127,16 @@
         let editContent = "";
         for (var channel_config of cfg[ctype]["channels"]) {
           let ch = this.channelFromConfig(channel_config, ctype);
+          if (ch !== false) {
+            let ui_card = ch.generateControlUI();
+            $(`#${ctype}Cards`).append(ui_card);
+            ch.setupControlUI();
 
-          let ui_card = ch.generateControlUI();
-          $(`#${ctype}Cards`).append(ui_card);
-          ch.setupControlUI();
+            ch.generateStatsUI();
+            ch.setupStatsUI();
 
-          ch.generateStatsUI();
-          ch.setupStatsUI();
-
-          editContent += ch.generateEditUI();
+            editContent += ch.generateEditUI();
+          }
         }
 
         //build our edit UI.
