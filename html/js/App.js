@@ -753,7 +753,7 @@
       // okay, send it off.
       YB.client.send({
         cmd: "set_webserver_config",
-        navico_enabled: settings.enabled,
+        navico_enabled: settings.navico_enabled,
         api_enabled: settings.api_enabled,
         ssl_enabled: settings.ssl_enabled,
         server_cert: settings.server_cert,
