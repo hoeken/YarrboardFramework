@@ -48,11 +48,30 @@ bool ConfigManager::setup()
   return true;
 }
 
+bool ConfigManager::sanitizeConfig(JsonVariant config, char* error, size_t len)
+{
+  bool result = true;
+
+  for (const auto& entry : _app.getControllers()) {
+    const char* name = entry.controller->getName();
+    if (!entry.controller->sanitizeConfigHook(config[name], error, len)) {
+      YBP.println(error);
+      result = false;
+    }
+  }
+
+  return result;
+}
+
 bool ConfigManager::saveConfig(char* error, size_t len)
 {
   JsonDocument config;
 
   generateConfig(config, ADMIN, FIRMWARE);
+
+  // sanitize / validate before we save to catch any weirdness
+  if (!sanitizeConfig(config, error, len))
+    return false;
 
   size_t jsonSize = measureJson(config);
   char* jsonBuffer = (char*)malloc(jsonSize + 1);

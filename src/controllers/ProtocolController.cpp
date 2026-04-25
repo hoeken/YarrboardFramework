@@ -294,7 +294,7 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
     buzzer->setStartupMelody(buzzer->defaults.startup_melody);
 
   // save it to file.
-  char error[128];
+  char error[128] = "Unknown";
   if (!_cfg.saveConfig(error, sizeof(error)))
     return generateErrorJSON(output, error);
 
@@ -304,12 +304,11 @@ void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVari
 
 void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
-  char error[128] = "Unknown";
-
   _config.serial_enabled = input["serial_enabled"] | defaults.serial_enabled;
   _app.ota.setEnabled(input["arduino_ota_enabled"] | _app.ota.defaults.arduino_ota_enabled);
 
   // save it to file.
+  char error[128] = "Unknown";
   if (!_cfg.saveConfig(error, sizeof(error)))
     return generateErrorJSON(output, error);
 

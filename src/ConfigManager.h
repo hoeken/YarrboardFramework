@@ -43,6 +43,9 @@ class ConfigManager : public BaseController
     bool setup() override;
 
     // Core Config Logic
+    void generateConfig(JsonVariant output, UserRole role, ConfigPurpose purpose);
+    void generateCapabilities(JsonVariant output);
+    bool sanitizeConfig(JsonVariant config, char* error, size_t len);
     bool saveConfig(char* error, size_t len);
     bool loadConfigFromFile(const char* file, char* error, size_t len);
 
@@ -50,10 +53,6 @@ class ConfigManager : public BaseController
     bool loadConfigFromJSON(JsonVariant config, char* error, size_t len);
     bool loadV1Config(JsonVariant root, char* error, size_t len);
     bool loadV2Config(JsonVariant root, char* error, size_t len);
-
-    // JSON Generation
-    void generateConfig(JsonVariant output, UserRole role, ConfigPurpose purpose);
-    void generateCapabilities(JsonVariant output);
 
     // our personal hooks as a controller.
     bool sanitizeConfigHook(JsonVariant config, char* error, size_t len) override;
