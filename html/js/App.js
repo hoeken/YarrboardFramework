@@ -303,7 +303,7 @@
     },
 
     showAlert: function (message, type = 'danger') {
-      //we only need one alert at a time.
+      //stack alerts
       $('#liveAlertPlaceholder').append(YB.App.AlertBox(message, type))
 
       //make sure we can see it.
@@ -321,7 +321,7 @@
       if (page)
         page.setBadge("danger");
 
-      //we only need one alert at a time.
+      //stack alerts
       $('#adminAlertPlaceholder').append(YB.App.AlertBox(message, type))
 
       //make sure we can see it.
@@ -330,6 +330,14 @@
       },
         750 //speed
       );
+    },
+
+    clearAlerts: function () {
+      $('#liveAlertPlaceholder').html('');
+    },
+
+    clearAdminAlerts: function () {
+      $('#adminAlertPlaceholder').html('');
     },
 
     addFullConfigHandlers: function () {
@@ -552,6 +560,7 @@
     },
 
     doLogin: function (e) {
+      YB.App.clearAlerts();
       YB.App.username = $('#username').val();
       YB.App.password = $('#password').val();
       YB.client.login(YB.App.username, YB.App.password);
@@ -1247,6 +1256,9 @@
       YB.yarrboard = msg.yarrboard;
       YB.capabilities = msg.capabilities;
       YB.config = msg.config;
+
+      //fresh slate.
+      YB.App.clearAdminAlerts();
 
       //we can check for new firmware now.
       YB.App.checkForUpdates();

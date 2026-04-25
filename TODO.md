@@ -10,7 +10,12 @@
 
 ## v3.1.0
 
-* Add client side Controllers, refactor App.js into smaller classes
+* Add client side Controllers
+  * refactor App.js into smaller classes
+  * save{Controller}Config()
+  * form generation
+  * form data setting
+  * form data loading
 
 ## Long Term
 
