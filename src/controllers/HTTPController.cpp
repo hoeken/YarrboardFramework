@@ -114,6 +114,10 @@ bool HTTPController::setup()
     return false;
   }
 
+  if (!BaseController::setup())
+    return false;
+  _app.protocol.registerCommand(ADMIN, "generate_self_signed_cert", this, &HTTPController::handleGenerateSelfSignedCert);
+
   sendMutex = xSemaphoreCreateMutex();
   if (sendMutex == NULL) {
     YBP.println("Failed to create send mutex");
@@ -258,9 +262,6 @@ bool HTTPController::setup()
     PsychicFileResponse fileResponse(response, fp, "/coredump.bin", "application/octet-stream", true);
     return fileResponse.send();
   });
-
-  _app.protocol.registerCommand(ADMIN, "set_webserver_config", this, &HTTPController::handleSetWebServerConfig);
-  _app.protocol.registerCommand(ADMIN, "generate_self_signed_cert", this, &HTTPController::handleGenerateSelfSignedCert);
 
   esp_err_t err = server->start();
 
@@ -431,30 +432,29 @@ cleanup:
   return success;
 }
 
-void HTTPController::handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+void HTTPController::handleSetConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
 {
   bool old_ssl_enabled = _config.ssl_enabled;
 
-  NavicoController* navico = static_cast<NavicoController*>(_app.getController("navico"));
-  if (navico)
-    navico->setEnabled(input["navico_enabled"] | navico->defaults.enabled);
+  BaseController::handleSetConfig(input, output, context);
 
-  _config.api_enabled = input["api_enabled"] | _config.api_enabled;
-  _config.ssl_enabled = input["ssl_enabled"] | _config.ssl_enabled;
-  _config.server_cert = input["server_cert"] | _config.server_cert.c_str();
-  _config.server_key = input["server_key"] | _config.server_key.c_str();
+  // do we need to restart?
+  if (output["status"] != "error") {
+    // restart the board.
+    if (old_ssl_enabled != _config.ssl_enabled)
+      ESP.restart();
+  }
+}
 
-  if (_config.ssl_enabled && !validateCertAndKey(_config.server_cert, _config.server_key))
-    return _app.protocol.generateErrorJSON(output, "Invalid SSL certificate or key");
+bool HTTPController::handleSetConfigSuccessCallback(JsonVariantConst config, JsonVariant output, ProtocolContext context, char* error, size_t len)
+{
+  if (config["navico_enabled"].is<bool>()) {
+    NavicoController* navico = static_cast<NavicoController*>(_app.getController("navico"));
+    if (navico)
+      navico->setEnabled(config["navico_enabled"] | navico->defaults.enabled);
+  }
 
-  // save it to file.
-  char error[128] = "Unknown";
-  if (!_cfg.saveConfig(error, sizeof(error)))
-    return _app.protocol.generateErrorJSON(output, error);
-
-  // restart the board.
-  if (old_ssl_enabled != _config.ssl_enabled)
-    ESP.restart();
+  return true;
 }
 
 void HTTPController::handleGenerateSelfSignedCert(JsonVariantConst input, JsonVariant output, ProtocolContext context)

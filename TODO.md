@@ -1,7 +1,6 @@
 ## v3.0.0
 
 * fix controllers to pass parameters as config object and then use sanitize -> load flow
-  * HTTPController
   * ProtocolController::handleSetGeneralConfig (add test for melody exists)
 
 * fix settings links to more documentation

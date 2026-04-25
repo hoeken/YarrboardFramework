@@ -96,7 +96,8 @@ class HTTPController : public BaseController
     void handleWebSocketMessage(PsychicWebSocketRequest* request, uint8_t* data, size_t len);
     esp_err_t handleGulpedFile(PsychicRequest* request, PsychicResponse* response);
 
-    void handleSetWebServerConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    void handleSetConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context) override;
+    bool handleSetConfigSuccessCallback(JsonVariantConst input, JsonVariant output, ProtocolContext context, char* error, size_t len) override;
     void handleGenerateSelfSignedCert(JsonVariantConst input, JsonVariant output, ProtocolContext context);
 };
 
