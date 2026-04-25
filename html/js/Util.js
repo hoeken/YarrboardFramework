@@ -231,10 +231,19 @@
       return colors;
     },
 
-    showFormValidationResults: function (data, errors) {
+    showFormValidationResults: function (data, errors, prefix = "") {
       //clear our errors
       for (const field of Object.keys(data)) {
-        const el = $(`#${field}`);
+
+        let el = $(`#${field}`);
+        if (!el.length)
+          el = $(`#${prefix}_${field}`);
+
+        if (!el.length) {
+          console.log(`Cannot find form field for ${field}`);
+          continue;
+        }
+
         el.removeClass("is-valid is-invalid");
 
         if (errors && errors[field]) {

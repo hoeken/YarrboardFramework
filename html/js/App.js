@@ -559,7 +559,7 @@
 
     getGeneralSettingsSchema: function () {
       const schema = {
-        board_name: {
+        name: {
           presence: { allowEmpty: false },
           length: { maximum: 31 },
         },
@@ -620,16 +620,15 @@
     saveGeneralSettings: function () {
       //pull our form data
       const settings = {
-        board_name: $("#board_name").val().trim(),
+        name: $("#config_name").val().trim(),
         startup_melody: $("#startup_melody").val(),
-        serial_enabled: $("#protocol_serial_enabled").prop("checked"),
-        arduino_ota_enabled: $("#ota_arduino_ota_enabled").prop("checked"),
-        is_first_boot: false
+        serial_enabled: $("#serial_enabled").prop("checked"),
+        arduino_ota_enabled: $("#arduino_ota_enabled").prop("checked"),
       };
 
       //validate it.
       const errors = validate(settings, YB.App.getGeneralSettingsSchema());
-      YB.Util.showFormValidationResults(settings, errors);
+      YB.Util.showFormValidationResults(settings, errors, "config");
 
       //bail on fail.
       if (errors) {
@@ -638,12 +637,15 @@
         return;
       }
 
-      //remember it and update our UI
-      YB.App.updateBoardName(settings.board_name);
-
       //flash whole form green.
       YB.Util.flashClass($("#generalSettingsPanel"), "border-success");
       YB.Util.flashClass($("#saveGeneralSettings"), "btn-success");
+
+      //remember it and update our UI
+      YB.App.updateBoardName(settings.name);
+
+      //not a configurable option, but we want to keep it
+      settings.is_first_boot = false;
 
       //okay, send it off.
       YB.client.send({
@@ -724,8 +726,8 @@
     saveWebServerSettings: function () {
       // pull our form data
       const settings = {
-        api_enabled: $("#http_api_enabled").prop("checked"),
-        ssl_enabled: $("#http_ssl_enabled").prop("checked"),
+        api_enabled: $("#api_enabled").prop("checked"),
+        ssl_enabled: $("#ssl_enabled").prop("checked"),
         server_cert: $("#server_cert").val().trim(),
         server_key: $("#server_key").val().trim()
       };
@@ -815,7 +817,7 @@
 
       // validate it
       const errors = validate(settings, YB.App.getMQTTSettingsSchema());
-      YB.Util.showFormValidationResults(settings, errors);
+      YB.Util.showFormValidationResults(settings, errors, "mqtt");
 
       // bail on fail
       if (errors) {
@@ -1180,7 +1182,7 @@
       $('#boardName').html(name);
       $('#loginTitle').html(name);
       document.title = name;
-      $('#board_name').val(name);
+      $('#config_name').val(name);
     },
 
     handleHelloMessage: function (msg) {
@@ -1497,9 +1499,9 @@
       $("#guest_pass").val(YB.config.auth.guest_pass);
       $("#default_role").val(YB.config.auth.default_role);
       $("#default_role").off("change").change(function () { YB.App.toggleRolePasswords($(this).val()) });
-      $("#http_api_enabled").prop("checked", YB.config.http.api_enabled);
-      $("#protocol_serial_enabled").prop("checked", YB.config.protocol.serial_enabled);
-      $("#ota_arduino_ota_enabled").prop("checked", YB.config.ota.arduino_ota_enabled);
+      $("#api_enabled").prop("checked", YB.config.http.api_enabled);
+      $("#serial_enabled").prop("checked", YB.config.protocol.serial_enabled);
+      $("#arduino_ota_enabled").prop("checked", YB.config.ota.arduino_ota_enabled);
 
       $("#wifi_mode").val(YB.config.network.wifi_mode);
       $("#wifi_ssid").val(YB.config.network.wifi_ssid);
@@ -1521,7 +1523,7 @@
       });
 
       //for our ssl stuff
-      $("#http_ssl_enabled").prop("checked", YB.config.http.ssl_enabled);
+      $("#ssl_enabled").prop("checked", YB.config.http.ssl_enabled);
       $("#server_cert").val(YB.config.http.server_cert);
       $("#server_key").val(YB.config.http.server_key);
 
@@ -1533,8 +1535,8 @@
       }
 
       //make it dynamic too
-      $("#http_ssl_enabled").off("change").change(function () {
-        if ($("#http_ssl_enabled").prop("checked")) {
+      $("#ssl_enabled").off("change").change(function () {
+        if ($("#ssl_enabled").prop("checked")) {
           $("#server_cert_generate_container").show();
           $("#server_cert_container").show();
           $("#server_key_container").show();
@@ -1694,8 +1696,8 @@
     generateGeneralSettingsUI: function () {
       return /* html */ `
         <div class="form-floating mb-3">
-            <input id="board_name" type="text" class="form-control">
-            <label for="board_name">Board Name</label>
+            <input id="config_name" type="text" class="form-control">
+            <label for="config_name">Board Name</label>
             <div class="invalid-feedback"></div>
         </div>
 
@@ -1707,16 +1709,16 @@
         </div>
 
         <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="ota_arduino_ota_enabled" checked>
-            <label class="form-check-label" for="ota_arduino_ota_enabled">
+            <input class="form-check-input" type="checkbox" id="arduino_ota_enabled" checked>
+            <label class="form-check-label" for="arduino_ota_enabled">
                 Enable Arduino OTA - <a href="https://framework.yarrboard.com/docs/ota.html#development-mode-arduino-ota">documentation</a>
             </label>
             <div class="invalid-feedback"></div>
         </div>
 
         <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="protocol_serial_enabled" checked>
-            <label class="form-check-label" for="protocol_serial_enabled">
+            <input class="form-check-input" type="checkbox" id="serial_enabled" checked>
+            <label class="form-check-label" for="serial_enabled">
                 Enable Serial / USB API - <a
                     href="https://framework.yarrboard.com/docs/protocol.html#serial-api-protocol">documentation</a>
             </label>
@@ -1780,8 +1782,8 @@
     generateHTTPSettingsUI: function () {
       return /* html */ `
         <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="http_api_enabled" checked>
-            <label class="form-check-label" for="http_api_enabled">
+            <input class="form-check-input" type="checkbox" id="api_enabled" checked>
+            <label class="form-check-label" for="api_enabled">
                 Enable Web API - <a
                     href="https://framework.yarrboard.com/docs/protocol.html#web-api-protocol">documentation</a>
             </label>
@@ -1791,15 +1793,15 @@
         <div id="navico_enabled_container" class="form-check form-switch mb-3" style="display: none">
             <input class="form-check-input" type="checkbox" id="navico_enabled" checked>
             <label class="form-check-label" for="navico_enabled">
-                Enable MFD Integration- <a
+                Enable MFD Integration - <a
                     href="https://framework.yarrboard.com/docs/mfd-integration.html">documentation</a>
             </label>
             <div class="invalid-feedback"></div>
         </div>
 
         <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="http_ssl_enabled" checked>
-            <label class="form-check-label" for="http_ssl_enabled">
+            <input class="form-check-input" type="checkbox" id="ssl_enabled" checked>
+            <label class="form-check-label" for="ssl_enabled">
                 Enable SSL / HTTPS Encryption - <a
                     href="https://framework.yarrboard.com/docs/security.html#https-support">documentation</a>
             </label>
@@ -1835,7 +1837,7 @@
             <input class="form-check-input" type="checkbox" id="mqtt_enabled" checked>
             <label class="form-check-label" for="mqtt_enabled">
                 Enable MQTT Publishing - <a
-                    href="https://framework.yarrboard.com/docs/security.html#https-support">documentation</a>
+                    href="https://framework.yarrboard.com/docs/home-assistant.html#mqtt-topics">documentation</a>
             </label>
             <div class="invalid-feedback"></div>
         </div>

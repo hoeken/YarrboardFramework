@@ -439,7 +439,7 @@ void HTTPController::handleSetConfig(JsonVariantConst input, JsonVariant output,
   BaseController::handleSetConfig(input, output, context);
 
   // do we need to restart?
-  if (output["status"] != "error") {
+  if (strcmp(output["status"], "error")) {
     // restart the board.
     if (old_ssl_enabled != _config.ssl_enabled)
       ESP.restart();
