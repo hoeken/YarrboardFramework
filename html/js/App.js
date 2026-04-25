@@ -161,7 +161,6 @@
       $("#saveWebServerSettings").on('click', YB.App.saveWebServerSettings);
       $("#saveMQTTSettings").on('click', YB.App.saveMQTTSettings);
       $("#saveNetworkSettings").on('click', YB.App.saveNetworkSettings);
-      $("#saveMiscellaneousSettings").on('click', YB.App.saveMiscellaneousSettings);
       $("#server_cert_generate").on('click', YB.App.generateSelfSignedCert);
 
       // Mobile navbar collapse handler
@@ -563,7 +562,9 @@
         board_name: {
           presence: { allowEmpty: false },
           length: { maximum: 31 },
-        }
+        },
+        serial_enabled: {},
+        arduino_ota_enabled: {}
       };
 
       // Only add startup_melody validation if melodies config exists
@@ -621,6 +622,9 @@
       const settings = {
         board_name: $("#board_name").val().trim(),
         startup_melody: $("#startup_melody").val(),
+        serial_enabled: $("#protocol_serial_enabled").prop("checked"),
+        arduino_ota_enabled: $("#ota_arduino_ota_enabled").prop("checked"),
+        is_first_boot: false
       };
 
       //validate it.
@@ -643,9 +647,8 @@
 
       //okay, send it off.
       YB.client.send({
-        "cmd": "set_general_config",
-        "board_name": settings.board_name,
-        "startup_melody": settings.startup_melody
+        "cmd": "set_config_config",
+        "config": settings
       });
     },
 
@@ -953,43 +956,6 @@
       YB.client.send({
         cmd: "set_network_config",
         config: settings
-      });
-    },
-
-    getMiscSettingsSchema: function () {
-      return {
-        serial_enabled: {},
-        arduino_ota_enabled: {}
-      };
-    },
-
-    saveMiscellaneousSettings: function () {
-      // pull our form data
-      const settings = {
-        serial_enabled: $("#protocol_serial_enabled").prop("checked"),
-        arduino_ota_enabled: $("#ota_arduino_ota_enabled").prop("checked")
-      };
-
-      // validate it
-      const errors = validate(settings, YB.App.getMiscSettingsSchema());
-      YB.Util.showFormValidationResults(settings, errors);
-
-      // bail on fail
-      if (errors) {
-        YB.Util.flashClass($("#miscSettingsPanel"), "border-danger");
-        YB.Util.flashClass($("#saveMiscSettings"), "btn-danger");
-        return;
-      }
-
-      // flash success
-      YB.Util.flashClass($("#miscSettingsPanel"), "border-success");
-      YB.Util.flashClass($("#saveMiscSettings"), "btn-success");
-
-      // send it off
-      YB.client.send({
-        cmd: "set_misc_config",
-        serial_enabled: settings.serial_enabled,
-        arduino_ota_enabled: settings.arduino_ota_enabled
       });
     },
 
@@ -1732,12 +1698,31 @@
             <label for="board_name">Board Name</label>
             <div class="invalid-feedback"></div>
         </div>
+
         <div id="startup_melody_container" class="form-floating mb-3" style="display: none">
             <select id="startup_melody" class="form-select" aria-label="Startup Melody">
             </select>
             <label for="default_role">Startup Melody</label>
             <div class="invalid-feedback"></div>
         </div>
+
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="ota_arduino_ota_enabled" checked>
+            <label class="form-check-label" for="ota_arduino_ota_enabled">
+                Enable Arduino OTA - <a href="https://framework.yarrboard.com/docs/ota.html#development-mode-arduino-ota">documentation</a>
+            </label>
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="protocol_serial_enabled" checked>
+            <label class="form-check-label" for="protocol_serial_enabled">
+                Enable Serial / USB API - <a
+                    href="https://framework.yarrboard.com/docs/protocol.html#serial-api-protocol">documentation</a>
+            </label>
+            <div class="invalid-feedback"></div>
+        </div>
+
         <div class="text-center">
             <button id="saveGeneralSettings" type="button" class="btn btn-primary">
                 Save General Settings
@@ -1798,7 +1783,7 @@
             <input class="form-check-input" type="checkbox" id="http_api_enabled" checked>
             <label class="form-check-label" for="http_api_enabled">
                 Enable Web API - <a
-                    href="https://github.com/hoeken/yarrboard#web-api-protocol">documentation</a>
+                    href="https://framework.yarrboard.com/docs/protocol.html#web-api-protocol">documentation</a>
             </label>
             <div class="invalid-feedback"></div>
         </div>
@@ -1806,8 +1791,7 @@
         <div id="navico_enabled_container" class="form-check form-switch mb-3" style="display: none">
             <input class="form-check-input" type="checkbox" id="navico_enabled" checked>
             <label class="form-check-label" for="navico_enabled">
-                Enable MFD Integration - <a
-                    href="https://github.com/hoeken/yarrboard#mfd-integration">documentation</a>
+                Enable MFD Integration
             </label>
             <div class="invalid-feedback"></div>
         </div>
@@ -1816,7 +1800,7 @@
             <input class="form-check-input" type="checkbox" id="http_ssl_enabled" checked>
             <label class="form-check-label" for="http_ssl_enabled">
                 Enable SSL / HTTPS Encryption - <a
-                    href="https://github.com/hoeken/yarrboard#enable-ssl">documentation</a>
+                    href="https://framework.yarrboard.com/docs/security.html#https-support">documentation</a>
             </label>
             <div class="invalid-feedback"></div>
         </div>
@@ -1850,7 +1834,7 @@
             <input class="form-check-input" type="checkbox" id="mqtt_enabled" checked>
             <label class="form-check-label" for="mqtt_enabled">
                 Enable MQTT Publishing - <a
-                    href="https://github.com/hoeken/yarrboard#enable-mqtt">documentation</a>
+                    href="https://framework.yarrboard.com/docs/security.html#https-support">documentation</a>
             </label>
             <div class="invalid-feedback"></div>
         </div>
@@ -1876,7 +1860,7 @@
             <input class="form-check-input" type="checkbox" id="mqtt_ha_integration_enabled" checked>
             <label class="form-check-label" for="mqtt_ha_integration_enabled">
                 Enable Home Assistant Integration - <a
-                    href="https://github.com/hoeken/yarrboard#enable-ha">documentation</a>
+                    href="https://framework.yarrboard.com/docs/home-assistant.html">documentation</a>
             </label>
             <div class="invalid-feedback"></div>
         </div>
@@ -1989,34 +1973,6 @@
         </div>
       `;
     },
-
-    generateMiscSettingsUI: function () {
-      return /* html */ `
-        <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="ota_arduino_ota_enabled" checked>
-            <label class="form-check-label" for="ota_arduino_ota_enabled">
-                Enable Arduino OTA - for development w/ VSCode
-            </label>
-            <div class="invalid-feedback"></div>
-        </div>
-
-        <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="protocol_serial_enabled" checked>
-            <label class="form-check-label" for="protocol_serial_enabled">
-                Enable Serial / USB API - <a
-                    href="https://github.com/hoeken/yarrboard#serial-api-protocol">documentation</a>
-            </label>
-            <div class="invalid-feedback"></div>
-        </div>
-
-        <div class="text-center">
-            <button id="saveMiscellaneousSettings" type="button" class="btn btn-primary">
-                Save Miscellaneous Settings
-            </button>
-        </div>
-      `;
-    },
-
   };
 
   //
@@ -2147,12 +2103,6 @@
     name: 'network',
     displayName: 'Network',
     content: YB.App.generateNetworkSettingsUI()
-  }));
-
-  YB.App.addSettingsPanel(new YB.SettingsPanel({
-    name: 'misc',
-    displayName: 'Miscellaneous',
-    content: YB.App.generateMiscSettingsUI()
   }));
 
   // expose to global

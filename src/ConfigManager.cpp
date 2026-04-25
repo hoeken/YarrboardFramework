@@ -24,6 +24,9 @@ ConfigManager::ConfigManager(YarrboardApp& app) : BaseController(app, "config"),
 
 bool ConfigManager::setup()
 {
+  if (!BaseController::setup())
+    return false;
+
   strlcpy(_config.board_name, defaults.board_name, sizeof(_config.board_name));
 
   _schema_version = 2;
@@ -138,6 +141,28 @@ void ConfigManager::loadConfigHook(JsonVariantConst config)
   strlcpy(_config.board_name, v, sizeof(_config.board_name));
 
   _config.is_first_boot = config["is_first_boot"] | defaults.is_first_boot;
+}
+
+bool ConfigManager::handleSetConfigSuccessCallback(JsonVariantConst config, JsonVariant output, ProtocolContext context, char* error, size_t len)
+{
+  // do we have a buzzer controller?
+  BuzzerController* buzzer = static_cast<BuzzerController*>(_app.getController("buzzer"));
+  if (buzzer) {
+    // we need a mutable format for the validation
+    JsonDocument doc;
+    doc.set(config);
+
+    // handle the config
+    if (!buzzer->sanitizeConfigHook(doc, error, len))
+      return false;
+    buzzer->loadConfigHook(doc);
+  }
+
+  // other misc configs.
+  _app.protocol.setSerialEnabled(config["serial_enabled"] | _app.protocol.defaults.serial_enabled);
+  _app.ota.setEnabled(config["arduino_ota_enabled"] | _app.ota.defaults.arduino_ota_enabled);
+
+  return true;
 }
 
 // -------------------------------------------------------------------------

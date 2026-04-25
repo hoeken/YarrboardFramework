@@ -85,6 +85,17 @@ void OTAController::handleOTAStart(JsonVariantConst input, JsonVariant output, P
     return _app.protocol.generateErrorJSON(output, "Firmware already up to date.");
 }
 
+void OTAController::setEnabled(bool v)
+{
+  _config.arduino_ota_enabled = v;
+
+  // init our ota.
+  if (isEnabled())
+    setup();
+  else
+    end();
+}
+
 void OTAController::end()
 {
   // called after config disables OTA, so _config.arduino_ota_enabled is already false here

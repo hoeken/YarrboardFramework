@@ -35,11 +35,9 @@ bool ProtocolController::setup()
   registerCommand(GUEST, "set_theme", this, &ProtocolController::handleSetTheme);
   registerCommand(GUEST, "set_brightness", this, &ProtocolController::handleSetBrightness);
 
-  registerCommand(ADMIN, "set_general_config", this, &ProtocolController::handleSetGeneralConfig);
   registerCommand(ADMIN, "save_config", this, &ProtocolController::handleSaveConfig);
   registerCommand(ADMIN, "get_full_config", this, &ProtocolController::handleGetFullConfig);
   registerCommand(ADMIN, "get_shareable_config", this, &ProtocolController::handleGetShareableConfig);
-  registerCommand(ADMIN, "set_misc_config", this, &ProtocolController::handleSetMiscellaneousConfig);
   registerCommand(ADMIN, "restart", this, &ProtocolController::handleRestart);
   registerCommand(ADMIN, "factory_reset", this, &ProtocolController::handleFactoryReset);
 
@@ -271,54 +269,6 @@ void ProtocolController::handleGetShareableConfig(JsonVariantConst input, JsonVa
 {
   output["msg"] = "shareable_config";
   _cfg.generateConfig(output["config"].to<JsonObject>(), context.role, ConfigPurpose::SHAREABLE);
-}
-
-void ProtocolController::handleSetGeneralConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
-{
-  if (!input["board_name"].is<String>())
-    return generateErrorJSON(output, "'board_name' is a required parameter");
-
-  // is it too long?
-  if (strlen(input["board_name"]) > YB_BOARD_NAME_LENGTH - 1) {
-    char error[50];
-    sprintf(error, "Maximum board name length is %d characters.", YB_BOARD_NAME_LENGTH - 1);
-    return generateErrorJSON(output, error);
-  }
-
-  _cfg.setBoardName(input["board_name"] | _cfg.defaults.board_name);
-
-  BuzzerController* buzzer = static_cast<BuzzerController*>(_app.getController("buzzer"));
-  if (buzzer && input["startup_melody"].is<const char*>())
-    buzzer->setStartupMelody(input["startup_melody"]);
-  else if (buzzer)
-    buzzer->setStartupMelody(buzzer->defaults.startup_melody);
-
-  // save it to file.
-  char error[128] = "Unknown";
-  if (!_cfg.saveConfig(error, sizeof(error)))
-    return generateErrorJSON(output, error);
-
-  // give them the updated config
-  _cfg.generateConfig(output["config"].to<JsonObject>(), context.role, ConfigPurpose::UI_CONFIG);
-}
-
-void ProtocolController::handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
-{
-  _config.serial_enabled = input["serial_enabled"] | defaults.serial_enabled;
-  _app.ota.setEnabled(input["arduino_ota_enabled"] | _app.ota.defaults.arduino_ota_enabled);
-
-  // save it to file.
-  char error[128] = "Unknown";
-  if (!_cfg.saveConfig(error, sizeof(error)))
-    return generateErrorJSON(output, error);
-
-  // init our ota.
-  if (_app.ota.isEnabled())
-    _app.ota.setup();
-  else
-    _app.ota.end();
-
-  generateSuccessJSON(output, "Miscellaneous config saved.");
 }
 
 void ProtocolController::handleSaveConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)

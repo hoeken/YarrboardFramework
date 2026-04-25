@@ -58,6 +58,7 @@ class ConfigManager : public BaseController
     bool sanitizeConfigHook(JsonVariant config, char* error, size_t len) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
     void loadConfigHook(JsonVariantConst config) override;
+    bool handleSetConfigSuccessCallback(JsonVariantConst input, JsonVariant output, ProtocolContext context, char* error, size_t len) override;
 
     bool isFirstBoot() const { return _config.is_first_boot; }
     void setFirstBoot(bool v) { _config.is_first_boot = v; }

@@ -51,7 +51,7 @@ class OTAController : public BaseController
     void loadConfigHook(JsonVariantConst config) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
     bool isEnabled() const { return _config.arduino_ota_enabled; }
-    void setEnabled(bool v) { _config.arduino_ota_enabled = v; }
+    void setEnabled(bool v);
 
   private:
     OTAConfig _config;

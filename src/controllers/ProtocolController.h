@@ -81,6 +81,9 @@ class ProtocolController : public BaseController
     void loadConfigHook(JsonVariantConst config) override;
     void generateConfigHook(JsonVariant output, UserRole role, ConfigPurpose purpose) override;
 
+    bool isSerialEnabled() const { return _config.serial_enabled; }
+    void setSerialEnabled(bool v) { _config.serial_enabled = v; }
+
   private:
     ProtocolConfig _config;
 
@@ -121,8 +124,6 @@ class ProtocolController : public BaseController
     void handleGetUpdate(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleGetFullConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleGetShareableConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
-    void handleSetGeneralConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
-    void handleSetMiscellaneousConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleSaveConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleRestart(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleFactoryReset(JsonVariantConst input, JsonVariant output, ProtocolContext context);
