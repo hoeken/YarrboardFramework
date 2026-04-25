@@ -63,7 +63,7 @@ class AuthController : public BaseController
 
     void handleLogin(JsonVariantConst input, JsonVariant output, ProtocolContext context);
     void handleLogout(JsonVariantConst input, JsonVariant output, ProtocolContext context);
-    void handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    bool handleSetConfigSuccessCallback(JsonVariantConst input, JsonVariant output, ProtocolContext context, char* error, size_t len) override;
 
     // Config hooks
     bool sanitizeConfigHook(JsonVariant config, char* error, size_t len) override;

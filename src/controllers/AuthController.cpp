@@ -30,11 +30,13 @@ AuthController::AuthController(YarrboardApp& app) : BaseController(app, "auth")
 
 bool AuthController::setup()
 {
+  if (!BaseController::setup())
+    return false;
+
   authenticatedClients.clear();
 
   _app.protocol.registerCommand(NOBODY, "login", this, &AuthController::handleLogin);
   _app.protocol.registerCommand(NOBODY, "logout", this, &AuthController::handleLogout);
-  _app.protocol.registerCommand(ADMIN, "set_authentication_config", this, &AuthController::handleSetAuthenticationConfig);
 
   return true;
 }
@@ -288,62 +290,10 @@ void AuthController::handleLogout(JsonVariantConst input, JsonVariant output, Pr
   output["message"] = "Logout successful.";
 }
 
-void AuthController::handleSetAuthenticationConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+bool AuthController::handleSetConfigSuccessCallback(JsonVariantConst input, JsonVariant output, ProtocolContext context, char* error, size_t len)
 {
-  if (!input["admin_user"].is<String>())
-    return ProtocolController::generateErrorJSON(output, "'admin_user' is a required parameter");
-  if (!input["admin_pass"].is<String>())
-    return ProtocolController::generateErrorJSON(output, "'admin_pass' is a required parameter");
-  if (!input["guest_user"].is<String>())
-    return ProtocolController::generateErrorJSON(output, "'guest_user' is a required parameter");
-  if (!input["guest_pass"].is<String>())
-    return ProtocolController::generateErrorJSON(output, "'guest_pass' is a required parameter");
-  if (!input["default_role"].is<String>())
-    return ProtocolController::generateErrorJSON(output, "'default_role' is a required parameter");
-
-  if (strlen(input["admin_user"]) > YB_USERNAME_LENGTH - 1) {
-    char error[60];
-    sprintf(error, "Maximum admin username length is %d characters.", YB_USERNAME_LENGTH - 1);
-    return ProtocolController::generateErrorJSON(output, error);
-  }
-
-  if (strlen(input["admin_pass"]) > YB_PASSWORD_LENGTH - 1) {
-    char error[60];
-    sprintf(error, "Maximum admin password length is %d characters.", YB_PASSWORD_LENGTH - 1);
-    return ProtocolController::generateErrorJSON(output, error);
-  }
-
-  if (strlen(input["guest_user"]) > YB_USERNAME_LENGTH - 1) {
-    char error[60];
-    sprintf(error, "Maximum guest username length is %d characters.", YB_USERNAME_LENGTH - 1);
-    return ProtocolController::generateErrorJSON(output, error);
-  }
-
-  if (strlen(input["guest_pass"]) > YB_PASSWORD_LENGTH - 1) {
-    char error[60];
-    sprintf(error, "Maximum guest password length is %d characters.", YB_PASSWORD_LENGTH - 1);
-    return ProtocolController::generateErrorJSON(output, error);
-  }
-
-  strlcpy(_config.admin_user, input["admin_user"] | defaults.admin_user, sizeof(_config.admin_user));
-  strlcpy(_config.admin_pass, input["admin_pass"] | defaults.admin_pass, sizeof(_config.admin_pass));
-  strlcpy(_config.guest_user, input["guest_user"] | defaults.guest_user, sizeof(_config.guest_user));
-  strlcpy(_config.guest_pass, input["guest_pass"] | defaults.guest_pass, sizeof(_config.guest_pass));
-
-  if (input["default_role"]) {
-    if (!strcmp(input["default_role"], "admin"))
-      _config.default_role = ADMIN;
-    else if (!strcmp(input["default_role"], "guest"))
-      _config.default_role = GUEST;
-    else if (!strcmp(input["default_role"], "nobody"))
-      _config.default_role = NOBODY;
-    else
-      return ProtocolController::generateErrorJSON(output, "Invalid 'default_role': must be 'admin', 'guest', or 'nobody'.");
-  }
-
-  char error[128] = "Unknown";
-  if (!_app.config.saveConfig(error, sizeof(error)))
-    ProtocolController::generateErrorJSON(output, error);
+  TRACE();
+  return true;
 }
 
 bool AuthController::sanitizeConfigHook(JsonVariant config, char* error, size_t len)

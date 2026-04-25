@@ -690,12 +690,8 @@
 
       //okay, send it off.
       YB.client.send({
-        "cmd": "set_authentication_config",
-        "admin_user": settings.admin_user,
-        "admin_pass": settings.admin_pass,
-        "guest_user": settings.guest_user,
-        "guest_pass": settings.guest_pass,
-        "default_role": settings.default_role
+        "cmd": "set_auth_config",
+        "config": settings
       });
     },
 

@@ -13,8 +13,9 @@
 #ifndef YARR_BASE_CONTROLLER_H
 #define YARR_BASE_CONTROLLER_H
 
-#include "AuthTypes.h"
 #include "YarrboardConfig.h"
+#include "controllers/AuthTypes.h"
+#include "controllers/ProtocolTypes.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
@@ -31,7 +32,7 @@ class BaseController
     bool start();
     bool isStarted() const { return _started; }
 
-    virtual bool setup() { return true; }
+    virtual bool setup();
     virtual void loop() {}
     const char* getName() const { return _name; }
 
@@ -50,11 +51,15 @@ class BaseController
     // many boards control lights or have displays — brightness is a universal concept here
     virtual void updateBrightnessHook(float brightness) {};
 
+    virtual void handleSetConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context);
+    virtual bool handleSetConfigSuccessCallback(JsonVariantConst input, JsonVariant output, ProtocolContext context, char* error, size_t len) { return true; }
+
   protected:
     YarrboardApp& _app;
     ConfigManager& _cfg; // ergonomic alias for _app.config — avoids repetitive _app.config. chains in subclasses
     const char* _name;
     bool _started = false;
+    char _configCommand[64];
 };
 
 #endif

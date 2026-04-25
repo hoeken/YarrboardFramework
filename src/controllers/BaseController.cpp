@@ -28,3 +28,37 @@ bool BaseController::start()
   _started = this->setup();
   return _started;
 }
+
+bool BaseController::setup()
+{
+  // handleSetConfig is virtual, so even though we pass &BaseController::handleSetConfig here,
+  // the vtable dispatch at call time will invoke the child class override if one exists.
+  snprintf(_configCommand, sizeof(_configCommand), "set_%s_config", getName());
+  return _app.protocol.registerCommand(ADMIN, _configCommand, this, &BaseController::handleSetConfig);
+}
+
+void BaseController::handleSetConfig(JsonVariantConst input, JsonVariant output, ProtocolContext context)
+{
+  char error[128] = "Unknown";
+  if (!input["config"].is<JsonObjectConst>())
+    return _app.protocol.generateErrorJSON(output, "'config' is a required parameter.");
+
+  // we need a mutable format for the validation
+  JsonDocument config;
+  config.set(input["config"]);
+
+  // run it through our sanitizer
+  if (!sanitizeConfigHook(config, error, sizeof(error)))
+    return _app.protocol.generateErrorJSON(output, error);
+
+  // load our data into our controller
+  loadConfigHook(config);
+
+  // our controller callback for extra goodness
+  if (!handleSetConfigSuccessCallback(input, output, context, error, sizeof(error)))
+    return ProtocolController::generateErrorJSON(output, error);
+
+  // now save it all.
+  if (!_app.config.saveConfig(error, sizeof(error)))
+    ProtocolController::generateErrorJSON(output, error);
+}

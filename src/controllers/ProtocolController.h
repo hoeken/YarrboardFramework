@@ -16,6 +16,7 @@
 #include "YarrboardConfig.h"
 #include "controllers/AuthTypes.h"
 #include "controllers/BaseController.h"
+#include "controllers/ProtocolTypes.h"
 #include "utility.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
@@ -24,26 +25,12 @@
 #include <etl/map.h>
 #include <functional>
 
-typedef enum {
-  YBP_MODE_NONE,
-  YBP_MODE_WEBSOCKET,
-  YBP_MODE_HTTP,
-  YBP_MODE_SERIAL,
-  YBP_MODE_MQTT
-} YBMode;
-
 struct ProtocolConfig {
     bool serial_enabled;
 };
 
 class YarrboardApp;
 class ConfigManager;
-
-struct ProtocolContext {
-    YBMode mode = YBP_MODE_NONE;
-    UserRole role = NOBODY;
-    uint32_t clientId = 0;
-};
 
 // message handler callback definition
 // void(JsonVariantConst input, JsonVariant output)
