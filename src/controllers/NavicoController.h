@@ -39,7 +39,6 @@ class NavicoController : public BaseController
     bool sanitizeConfigHook(JsonVariant config, char* error, size_t len) override;
     void loadConfigHook(JsonVariantConst config) override;
     void generateConfigHook(JsonVariant config, UserRole role, ConfigPurpose purpose) override;
-    void generateCapabilitiesHook(JsonVariant config) override;
 
     bool isEnabled() const { return _config.enabled; }
     void setEnabled(bool v) { _config.enabled = v; }

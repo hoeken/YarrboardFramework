@@ -189,9 +189,6 @@ void ConfigManager::generateCapabilities(JsonVariant output)
   for (const auto& entry : _app.getControllers()) {
     const char* name = entry.controller->getName();
     entry.controller->generateCapabilitiesHook(capabilities[name].to<JsonObject>());
-
-    if (capabilities[name].as<JsonObject>().size() == 0)
-      capabilities.remove(name);
   }
 }
 
