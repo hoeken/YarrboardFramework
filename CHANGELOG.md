@@ -1,6 +1,6 @@
 # v3.0.0
 
-> **Note:** v3.0.0 is a major release with significant breaking changes, particularly around the config system and controller architecture. Migration from v2.x should be seamless, but there may be bugs requiring a config edit.  **BACK UP YOUR CONFIG BEFORE YOU UPGRADE**
+> **Note:** v3.0.0 is a major release with some breaking changes, particularly around the config system and controller architecture. Migration from v2.x should be seamless, but there may be bugs requiring a config edit.  **BACK UP YOUR CONFIG BEFORE YOU UPGRADE**
 
 ## ⚠️ Breaking Changes
 
