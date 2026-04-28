@@ -1,10 +1,7 @@
-## v3.0.0
+## v3.1
 
-* update FrothFET and SendIt with new framework
-  * javascript
-  * psram setup
-
-* update documentation
+* double config download bug
+* firmware latest version bug
 
 ## v3.1.0
 

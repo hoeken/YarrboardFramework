@@ -342,9 +342,8 @@
 
     addFullConfigHandlers: function () {
       //save handler
-      document.getElementById('configurationSave').addEventListener('click', () => {
-        const configText = document.getElementById('configurationTextarea').value;
-        const textarea = document.getElementById('configurationTextarea');
+      $("#configurationSave").on('click', () => {
+        const configText = $("#configurationTextarea").val();
 
         try {
           const parsed = JSON.parse(configText);
@@ -359,15 +358,14 @@
 
         } catch (err) {
           $("#invalidConfigurationJSON").show();
-          textarea.style.border = "2px solid red";
-          setTimeout(() => textarea.style.border = "", 2000);
+          $("#configurationTextarea").css("border", "2px solid red");
+          setTimeout(() => $("#configurationTextarea").css("border", ""), 2000);
         }
       });
 
       //copy handler
-      document.getElementById('configurationCopy').addEventListener('click', () => {
-        const text = document.getElementById('configurationTextarea').value;
-        const textarea = document.getElementById('configurationTextarea');
+      $("#configurationCopy").on('click', () => {
+        const text = $("#configurationTextarea").val();
 
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(text)
@@ -375,7 +373,7 @@
             .catch(err => console.error("Clipboard write failed:", err));
         } else {
           // Fallback for insecure contexts aka locally hosted non-secure esp32 pages... or old browsers
-          textarea.select();
+          $("#configurationTextarea")[0].select();
           try {
             document.execCommand("copy");
             $("#copyIndicator").html("Copied!");
@@ -386,23 +384,22 @@
       });
 
       //download handler - full config.
-      document.getElementById('configurationDownload').addEventListener('click', () => {
-        const text = document.getElementById('configurationTextarea').value;
+      $("#configurationDownload").on('click', () => {
+        const text = $("#configurationTextarea").val();
         const blob = new Blob([text], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
+        const a = $('<a>').attr('href', url);
         const today = new Date();
         const dateStr = today.toISOString().split('T')[0];
-        a.download = `${YB.config.network.local_hostname}_${YB.config.network.uuid}_${dateStr}_config.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        a.attr('download', `${YB.config.network.local_hostname}_${YB.config.network.uuid}_${dateStr}_config.json`);
+        $('body').append(a);
+        a[0].click();
+        a.remove();
         URL.revokeObjectURL(url);
       });
 
       //download handler - shareable
-      document.getElementById('configurationShareable').addEventListener('click', () => {
+      $("#configurationShareable").on('click', () => {
         YB.client.send({
           "cmd": "get_shareable_config"
         });
