@@ -136,6 +136,15 @@ bool HTTPController::setup()
     if (validateCertAndKey(_config.server_cert, _config.server_key)) {
       server = new PsychicHttpsServer(443);
       server->setCertificate(_config.server_cert.c_str(), _config.server_key.c_str());
+
+      // this creates a 2nd server listening on port 80 and redirects all requests HTTPS
+      redirectServer = new PsychicHttpServer();
+      redirectServer->config.ctrl_port = 20424; // just a random port different from the default one
+      redirectServer->config.stack_size = 4096; // we dont need a large stack size for this.
+      redirectServer->onNotFound([](PsychicRequest* request, PsychicResponse* response) {
+        String url = "https://" + request->host() + request->url();
+        return response->redirect(url.c_str()); });
+      redirectServer->start();
     } else {
       server = new PsychicHttpServer(80);
       YBP.println("⚠️ HTTP SSL Certificate invalid, falling back to plain HTTP");

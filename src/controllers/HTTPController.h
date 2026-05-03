@@ -77,6 +77,7 @@ class HTTPController : public BaseController
     HTTPConfig _config;
 
     PsychicHttpServer* server = nullptr;
+    PsychicHttpServer* redirectServer = nullptr;
     PsychicWebSocketHandler websocketHandler;
     char last_modified[50];
     QueueHandle_t wsRequests;
