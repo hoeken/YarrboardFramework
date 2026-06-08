@@ -48,6 +48,12 @@
     "description": "Works on ESP32 devkit boards with at least 8MB of flash",
     "firmware": [
       {
+        "version": "3.0.1",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32/3.0.1.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32/3.0.1-espwebtools/manifest.json",
+        "changelog": "# v3.0.1\n\nA small maintenance release with an HTTPS redirect server, a dependency bump, and a frontend refactor.\n\n## \u2728 New Features\n\n### HTTPS / SSL\n- When SSL is enabled, a second plaintext server now listens on port 80 and redirects all requests to the HTTPS endpoint, so visiting `http://` no longer fails\n\n## \ud83d\udd27 Improvements\n\n### Frontend & UI\n- Full config handlers (save, copy, download, and shareable export) refactored to jQuery style for brevity\n\n### Dependencies\n- Bumped `PsychicHttp` to `^3.1.0`"
+      },
+      {
         "version": "3.0.0",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32/3.0.0.bin",
         "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32/3.0.0-espwebtools/manifest.json",
@@ -102,6 +108,12 @@
     "image": "img/rev_a_b_c.jpg",
     "description": "Works on ESP32-S2 devkit boards with at least 8MB of flash",
     "firmware": [
+      {
+        "version": "3.0.1",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s2/3.0.1.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s2/3.0.1-espwebtools/manifest.json",
+        "changelog": "# v3.0.1\n\nA small maintenance release with an HTTPS redirect server, a dependency bump, and a frontend refactor.\n\n## \u2728 New Features\n\n### HTTPS / SSL\n- When SSL is enabled, a second plaintext server now listens on port 80 and redirects all requests to the HTTPS endpoint, so visiting `http://` no longer fails\n\n## \ud83d\udd27 Improvements\n\n### Frontend & UI\n- Full config handlers (save, copy, download, and shareable export) refactored to jQuery style for brevity\n\n### Dependencies\n- Bumped `PsychicHttp` to `^3.1.0`"
+      },
       {
         "version": "3.0.0",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s2/3.0.0.bin",
@@ -158,6 +170,12 @@
     "description": "Works on ESP32-S3 devkit boards with at least 8MB of flash",
     "firmware": [
       {
+        "version": "3.0.1",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s3/3.0.1.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s3/3.0.1-espwebtools/manifest.json",
+        "changelog": "# v3.0.1\n\nA small maintenance release with an HTTPS redirect server, a dependency bump, and a frontend refactor.\n\n## \u2728 New Features\n\n### HTTPS / SSL\n- When SSL is enabled, a second plaintext server now listens on port 80 and redirects all requests to the HTTPS endpoint, so visiting `http://` no longer fails\n\n## \ud83d\udd27 Improvements\n\n### Frontend & UI\n- Full config handlers (save, copy, download, and shareable export) refactored to jQuery style for brevity\n\n### Dependencies\n- Bumped `PsychicHttp` to `^3.1.0`"
+      },
+      {
         "version": "3.0.0",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s3/3.0.0.bin",
         "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s3/3.0.0-espwebtools/manifest.json",
@@ -212,6 +230,12 @@
     "image": "img/rev_a_b_c.jpg",
     "description": "Works on ESP32-C3 devkit boards with at least 8MB of flash",
     "firmware": [
+      {
+        "version": "3.0.1",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c3/3.0.1.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c3/3.0.1-espwebtools/manifest.json",
+        "changelog": "# v3.0.1\n\nA small maintenance release with an HTTPS redirect server, a dependency bump, and a frontend refactor.\n\n## \u2728 New Features\n\n### HTTPS / SSL\n- When SSL is enabled, a second plaintext server now listens on port 80 and redirects all requests to the HTTPS endpoint, so visiting `http://` no longer fails\n\n## \ud83d\udd27 Improvements\n\n### Frontend & UI\n- Full config handlers (save, copy, download, and shareable export) refactored to jQuery style for brevity\n\n### Dependencies\n- Bumped `PsychicHttp` to `^3.1.0`"
+      },
       {
         "version": "3.0.0",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c3/3.0.0.bin",
@@ -268,6 +292,12 @@
     "description": "Works on ESP32-C5 devkit boards with at least 8MB of flash",
     "firmware": [
       {
+        "version": "3.0.1",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c5/3.0.1.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c5/3.0.1-espwebtools/manifest.json",
+        "changelog": "# v3.0.1\n\nA small maintenance release with an HTTPS redirect server, a dependency bump, and a frontend refactor.\n\n## \u2728 New Features\n\n### HTTPS / SSL\n- When SSL is enabled, a second plaintext server now listens on port 80 and redirects all requests to the HTTPS endpoint, so visiting `http://` no longer fails\n\n## \ud83d\udd27 Improvements\n\n### Frontend & UI\n- Full config handlers (save, copy, download, and shareable export) refactored to jQuery style for brevity\n\n### Dependencies\n- Bumped `PsychicHttp` to `^3.1.0`"
+      },
+      {
         "version": "3.0.0",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c5/3.0.0.bin",
         "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c5/3.0.0-espwebtools/manifest.json",
@@ -322,6 +352,12 @@
     "image": "img/rev_a_b_c.jpg",
     "description": "Works on ESP32-C6 devkit boards with at least 8MB of flash",
     "firmware": [
+      {
+        "version": "3.0.1",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c6/3.0.1.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c6/3.0.1-espwebtools/manifest.json",
+        "changelog": "# v3.0.1\n\nA small maintenance release with an HTTPS redirect server, a dependency bump, and a frontend refactor.\n\n## \u2728 New Features\n\n### HTTPS / SSL\n- When SSL is enabled, a second plaintext server now listens on port 80 and redirects all requests to the HTTPS endpoint, so visiting `http://` no longer fails\n\n## \ud83d\udd27 Improvements\n\n### Frontend & UI\n- Full config handlers (save, copy, download, and shareable export) refactored to jQuery style for brevity\n\n### Dependencies\n- Bumped `PsychicHttp` to `^3.1.0`"
+      },
       {
         "version": "3.0.0",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c6/3.0.0.bin",
