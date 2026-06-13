@@ -65,16 +65,23 @@
         return Math.round(wH) + "&nbsp;MWh";
     },
 
-    formatBytes: function (bytes, decimals = 1) {
+    formatBytes: function (bytes, decimals = null) {
       if (!+bytes) return '0 Bytes'
 
       const k = 1024
-      const dm = decimals < 0 ? 0 : decimals
       const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
 
       const i = Math.floor(Math.log(bytes) / Math.log(k))
+      const value = bytes / Math.pow(k, i)
 
-      return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+      // null = automatic resolution: always show ~3 significant digits
+      if (decimals === null) {
+        const dm = Math.max(0, 2 - Math.floor(Math.log10(value)))
+        return `${value.toFixed(dm)} ${sizes[i]}`
+      }
+
+      const dm = decimals < 0 ? 0 : decimals
+      return `${parseFloat(value.toFixed(dm))} ${sizes[i]}`
     },
 
     formatNumber: function (num, decimals) {

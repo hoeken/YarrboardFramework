@@ -1406,18 +1406,19 @@
       $("#websocket_client_count").html(msg.websocket_client_count);
 
       //raw data
-      $("#heap_size").html(YB.Util.formatBytes(msg.heap_size, 0));
-      $("#free_heap").html(YB.Util.formatBytes(msg.free_heap, 0));
-      $("#min_free_heap").html(YB.Util.formatBytes(msg.min_free_heap, 0));
-      $("#max_alloc_heap").html(YB.Util.formatBytes(msg.max_alloc_heap, 0));
-      $("#psram_size").html(YB.Util.formatBytes(msg.psram_size, 0));
-      $("#free_psram").html(YB.Util.formatBytes(msg.free_psram, 0));
-      $("#min_free_psram").html(YB.Util.formatBytes(msg.min_free_psram, 0));
+      $("#heap_size").html(YB.Util.formatBytes(msg.heap_size));
+      $("#free_heap").html(YB.Util.formatBytes(msg.free_heap));
+      $("#min_free_heap").html(YB.Util.formatBytes(msg.min_free_heap));
+      $("#max_alloc_heap").html(YB.Util.formatBytes(msg.max_alloc_heap));
+      $("#psram_size").html(YB.Util.formatBytes(msg.psram_size));
+      console.log(msg.psram_size);
+      $("#free_psram").html(YB.Util.formatBytes(msg.free_psram));
+      $("#min_free_psram").html(YB.Util.formatBytes(msg.min_free_psram));
 
       //our memory bar
-      let memory_used = ((msg.heap_size / (msg.heap_size + msg.free_heap)) * 100).toFixed(2); //esp32-s3 512kb ram
+      let memory_used = ((msg.heap_size / (msg.heap_size + msg.free_heap)) * 100).toFixed(2);
       $(`#memory_usage div`).css("width", memory_used + "%");
-      $(`#memory_usage div`).html(YB.Util.formatBytes(msg.heap_size, 0));
+      $(`#memory_usage div`).html(YB.Util.formatBytes(msg.heap_size));
       $(`#memory_usage`).attr("aria-valuenow", memory_used);
 
       //wifi rssi.
