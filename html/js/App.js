@@ -1411,7 +1411,6 @@
       $("#min_free_heap").html(YB.Util.formatBytes(msg.min_free_heap));
       $("#max_alloc_heap").html(YB.Util.formatBytes(msg.max_alloc_heap));
       $("#psram_size").html(YB.Util.formatBytes(msg.psram_size));
-      console.log(msg.psram_size);
       $("#free_psram").html(YB.Util.formatBytes(msg.free_psram));
       $("#min_free_psram").html(YB.Util.formatBytes(msg.min_free_psram));
 

@@ -1,6 +1,6 @@
 {
   "name": "YarrboardFramework",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "Framework for esp32 with http, websockets, MQTT and more",
   "keywords": "network,http,https,tcp,ssl,tls,websocket,espasyncwebserver",
   "repository": {
@@ -35,7 +35,7 @@
     {
       "owner": "hoeken",
       "name": "PsychicHttp",
-      "version": "^3.1.0"
+      "version": "^3.1.1"
     },
     {
       "owner": "elims",
