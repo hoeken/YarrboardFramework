@@ -72,8 +72,10 @@ bool DebugController::setup()
   // startup log logs to a string for getting later
   YBP.addPrinter(startupLogger);
 
-  // our debug logs should use YBP too
+// our debug logs should use YBP too
+#ifdef YB_DEBUG_VPRINTF
   esp_log_set_vprintf(DebugController::vprintf);
+#endif
 
   YBP.println("Yarrboard");
   YBP.print("Hardware Version: ");
