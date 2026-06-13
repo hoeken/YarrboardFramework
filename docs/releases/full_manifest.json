@@ -48,6 +48,12 @@
     "description": "Works on ESP32 devkit boards with at least 8MB of flash",
     "firmware": [
       {
+        "version": "3.0.3",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32/3.0.3.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32/3.0.3-espwebtools/manifest.json",
+        "changelog": "# v3.0.3\n\nA small maintenance release with frontend formatting tweaks, a debug logging guard, and coredump tooling fixes.\n\n## \ud83d\udd27 Improvements\n\n### Frontend & UI\n- `formatBytes()` now supports automatic resolution: passing no `decimals` argument shows ~3 significant digits, scaling precision to the magnitude of the value\n- Memory/heap/PSRAM stats on the system page now use the new automatic resolution instead of forcing zero decimals\n\n### Firmware\n- `esp_log_set_vprintf()` redirection in `DebugController` is now guarded behind the `YB_DEBUG_VPRINTF` flag\n\n## \ud83d\udc1b Bug Fixes\n\n### Tooling\n- Fixed ELF file path in `parse_coredump.py` to match the `docs/releases/{board}/{version}.elf` release layout\n- Changed the default coredump file argument from `coredump.txt` to `coredump.bin`"
+      },
+      {
         "version": "3.0.2",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32/3.0.2.bin",
         "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32/3.0.2-espwebtools/manifest.json",
@@ -114,6 +120,12 @@
     "image": "img/rev_a_b_c.jpg",
     "description": "Works on ESP32-S2 devkit boards with at least 8MB of flash",
     "firmware": [
+      {
+        "version": "3.0.3",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s2/3.0.3.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s2/3.0.3-espwebtools/manifest.json",
+        "changelog": "# v3.0.3\n\nA small maintenance release with frontend formatting tweaks, a debug logging guard, and coredump tooling fixes.\n\n## \ud83d\udd27 Improvements\n\n### Frontend & UI\n- `formatBytes()` now supports automatic resolution: passing no `decimals` argument shows ~3 significant digits, scaling precision to the magnitude of the value\n- Memory/heap/PSRAM stats on the system page now use the new automatic resolution instead of forcing zero decimals\n\n### Firmware\n- `esp_log_set_vprintf()` redirection in `DebugController` is now guarded behind the `YB_DEBUG_VPRINTF` flag\n\n## \ud83d\udc1b Bug Fixes\n\n### Tooling\n- Fixed ELF file path in `parse_coredump.py` to match the `docs/releases/{board}/{version}.elf` release layout\n- Changed the default coredump file argument from `coredump.txt` to `coredump.bin`"
+      },
       {
         "version": "3.0.2",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s2/3.0.2.bin",
@@ -182,6 +194,12 @@
     "description": "Works on ESP32-S3 devkit boards with at least 8MB of flash",
     "firmware": [
       {
+        "version": "3.0.3",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s3/3.0.3.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s3/3.0.3-espwebtools/manifest.json",
+        "changelog": "# v3.0.3\n\nA small maintenance release with frontend formatting tweaks, a debug logging guard, and coredump tooling fixes.\n\n## \ud83d\udd27 Improvements\n\n### Frontend & UI\n- `formatBytes()` now supports automatic resolution: passing no `decimals` argument shows ~3 significant digits, scaling precision to the magnitude of the value\n- Memory/heap/PSRAM stats on the system page now use the new automatic resolution instead of forcing zero decimals\n\n### Firmware\n- `esp_log_set_vprintf()` redirection in `DebugController` is now guarded behind the `YB_DEBUG_VPRINTF` flag\n\n## \ud83d\udc1b Bug Fixes\n\n### Tooling\n- Fixed ELF file path in `parse_coredump.py` to match the `docs/releases/{board}/{version}.elf` release layout\n- Changed the default coredump file argument from `coredump.txt` to `coredump.bin`"
+      },
+      {
         "version": "3.0.2",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s3/3.0.2.bin",
         "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-s3/3.0.2-espwebtools/manifest.json",
@@ -248,6 +266,12 @@
     "image": "img/rev_a_b_c.jpg",
     "description": "Works on ESP32-C3 devkit boards with at least 8MB of flash",
     "firmware": [
+      {
+        "version": "3.0.3",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c3/3.0.3.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c3/3.0.3-espwebtools/manifest.json",
+        "changelog": "# v3.0.3\n\nA small maintenance release with frontend formatting tweaks, a debug logging guard, and coredump tooling fixes.\n\n## \ud83d\udd27 Improvements\n\n### Frontend & UI\n- `formatBytes()` now supports automatic resolution: passing no `decimals` argument shows ~3 significant digits, scaling precision to the magnitude of the value\n- Memory/heap/PSRAM stats on the system page now use the new automatic resolution instead of forcing zero decimals\n\n### Firmware\n- `esp_log_set_vprintf()` redirection in `DebugController` is now guarded behind the `YB_DEBUG_VPRINTF` flag\n\n## \ud83d\udc1b Bug Fixes\n\n### Tooling\n- Fixed ELF file path in `parse_coredump.py` to match the `docs/releases/{board}/{version}.elf` release layout\n- Changed the default coredump file argument from `coredump.txt` to `coredump.bin`"
+      },
       {
         "version": "3.0.2",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c3/3.0.2.bin",
@@ -316,6 +340,12 @@
     "description": "Works on ESP32-C5 devkit boards with at least 8MB of flash",
     "firmware": [
       {
+        "version": "3.0.3",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c5/3.0.3.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c5/3.0.3-espwebtools/manifest.json",
+        "changelog": "# v3.0.3\n\nA small maintenance release with frontend formatting tweaks, a debug logging guard, and coredump tooling fixes.\n\n## \ud83d\udd27 Improvements\n\n### Frontend & UI\n- `formatBytes()` now supports automatic resolution: passing no `decimals` argument shows ~3 significant digits, scaling precision to the magnitude of the value\n- Memory/heap/PSRAM stats on the system page now use the new automatic resolution instead of forcing zero decimals\n\n### Firmware\n- `esp_log_set_vprintf()` redirection in `DebugController` is now guarded behind the `YB_DEBUG_VPRINTF` flag\n\n## \ud83d\udc1b Bug Fixes\n\n### Tooling\n- Fixed ELF file path in `parse_coredump.py` to match the `docs/releases/{board}/{version}.elf` release layout\n- Changed the default coredump file argument from `coredump.txt` to `coredump.bin`"
+      },
+      {
         "version": "3.0.2",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c5/3.0.2.bin",
         "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c5/3.0.2-espwebtools/manifest.json",
@@ -382,6 +412,12 @@
     "image": "img/rev_a_b_c.jpg",
     "description": "Works on ESP32-C6 devkit boards with at least 8MB of flash",
     "firmware": [
+      {
+        "version": "3.0.3",
+        "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c6/3.0.3.bin",
+        "espwebtools_manifest": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c6/3.0.3-espwebtools/manifest.json",
+        "changelog": "# v3.0.3\n\nA small maintenance release with frontend formatting tweaks, a debug logging guard, and coredump tooling fixes.\n\n## \ud83d\udd27 Improvements\n\n### Frontend & UI\n- `formatBytes()` now supports automatic resolution: passing no `decimals` argument shows ~3 significant digits, scaling precision to the magnitude of the value\n- Memory/heap/PSRAM stats on the system page now use the new automatic resolution instead of forcing zero decimals\n\n### Firmware\n- `esp_log_set_vprintf()` redirection in `DebugController` is now guarded behind the `YB_DEBUG_VPRINTF` flag\n\n## \ud83d\udc1b Bug Fixes\n\n### Tooling\n- Fixed ELF file path in `parse_coredump.py` to match the `docs/releases/{board}/{version}.elf` release layout\n- Changed the default coredump file argument from `coredump.txt` to `coredump.bin`"
+      },
       {
         "version": "3.0.2",
         "url": "https://hoeken.github.io/YarrboardFramework/releases/esp32-c6/3.0.2.bin",
