@@ -1,10 +1,10 @@
 ## v3.1
 
-* double config download bug
+* add current version to System -> "Firmware is up to date"
+* copy button nav style from brineomatic graphs to "Settings" tab
 * firmware latest version bug
-
-## v3.1.0
-
+  * sometimes triggers when starting OTA, problem in espFOTA library
+  * usually solved with a reboot
 * Add client side Controllers
   * refactor App.js into smaller classes
   * save{Controller}Config()
