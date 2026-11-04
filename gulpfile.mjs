@@ -32,7 +32,7 @@ import inlineImages from 'gulp-css-base64';
 import favicon from 'gulp-base64-favicon';
 import { readFileSync, createWriteStream, readdirSync, existsSync, mkdirSync, statSync, rmSync } from 'fs';
 import { createHash } from 'crypto';
-import { join, basename, relative, dirname, sep } from 'path';
+import { posix, basename, relative, dirname, sep } from 'path';
 import { lookup as mimeLookup } from 'mime-types';
 
 // ============================================================================
@@ -62,15 +62,15 @@ console.log(`HTML minification: ${ENABLE_MINIFY ? 'ENABLED' : 'DISABLED'}`);
 
 // Determine the output directory for generated headers
 // If src/ folder exists, use src/gulp, otherwise use gulp/ at top level
-const srcDir = join(PROJECT_PATH, 'src');
+const srcDir = posix.join(PROJECT_PATH, 'src');
 const gulpOutputDir = existsSync(srcDir)
-    ? join(srcDir, 'gulp')
-    : join(PROJECT_PATH, 'gulp');
+    ? posix.join(srcDir, 'gulp')
+    : posix.join(PROJECT_PATH, 'gulp');
 
 const PATHS = {
-    frameworkHtml: join(FRAMEWORK_PATH, 'html'),  // Framework HTML/CSS/JS
-    projectHtml: join(PROJECT_PATH, 'html'),      // Project-specific assets (logos, CSS, JS)
-    tempOutput: join(PROJECT_PATH, 'temp'),       // Temporary output directory
+    frameworkHtml: posix.join(FRAMEWORK_PATH, 'html'),  // Framework HTML/CSS/JS
+    projectHtml: posix.join(PROJECT_PATH, 'html'),      // Project-specific assets (logos, CSS, JS)
+    tempOutput: posix.join(PROJECT_PATH, 'temp'),       // Temporary output directory
     gulpOutput: gulpOutputDir                     // Generated headers directory
 };
 
@@ -102,7 +102,7 @@ function scanDirectory(dir, extension, baseDir = dir) {
     // console.log(`  Scanning directory: ${dir} (${entries.length} entries)`);
 
     for (const entry of entries) {
-        const fullPath = join(dir, entry);
+        const fullPath = posix.join(dir, entry);
         const stat = statSync(fullPath);
 
         if (stat.isDirectory()) {
@@ -131,7 +131,7 @@ function findFiles(filterFn, ignoreList = []) {
 
         const entries = readdirSync(dir);
         entries.forEach(entry => {
-            const fullPath = join(dir, entry);
+            const fullPath = posix.join(dir, entry);
             const stat = statSync(fullPath);
 
             if (stat.isDirectory()) {
@@ -250,7 +250,7 @@ function injectProjectAssets(htmlPath, assets) {
         let cssContent = '\n<!-- Project CSS -->\n';
 
         for (const cssFile of assets.css) {
-            const cssPath = join(PATHS.projectHtml, cssFile);
+            const cssPath = posix.join(PATHS.projectHtml, cssFile);
             const css = readFileSync(cssPath, 'utf8');
             cssContent += `<!-- ${cssFile} -->\n<style>\n${css}\n</style>\n`;
         }
@@ -265,7 +265,7 @@ function injectProjectAssets(htmlPath, assets) {
         let jsContent = '\n<!-- Project JS -->\n';
 
         for (const jsFile of assets.js) {
-            const jsPath = join(PATHS.projectHtml, jsFile);
+            const jsPath = posix.join(PATHS.projectHtml, jsFile);
             const js = readFileSync(jsPath, 'utf8');
             jsContent += `<!-- ${jsFile} -->\n<script>\n${js}\n</script>\n`;
         }
@@ -353,7 +353,7 @@ async function clean() {
 }
 
 function buildInlineHtml() {
-    const indexPath = join(PATHS.frameworkHtml, 'index.html');
+    const indexPath = posix.join(PATHS.frameworkHtml, 'index.html');
     console.log(`Building inline HTML from: ${indexPath}`);
 
     return src(indexPath)
@@ -363,7 +363,7 @@ function buildInlineHtml() {
 }
 
 async function injectAssets() {
-    const htmlPath = join(PATHS.tempOutput, 'index.html');
+    const htmlPath = posix.join(PATHS.tempOutput, 'index.html');
 
     if (!existsSync(htmlPath)) {
         console.log('No HTML file found to inject assets into');
@@ -374,7 +374,7 @@ async function injectAssets() {
 }
 
 function minifyAndCompress() {
-    let stream = src(join(PATHS.tempOutput, 'index.html'));
+    let stream = src(posix.join(PATHS.tempOutput, 'index.html'));
 
     // Only apply htmlmin if YARRBOARD_ENABLE_MINIFY is set
     if (ENABLE_MINIFY) {
@@ -387,25 +387,25 @@ function minifyAndCompress() {
 }
 
 async function embedHtml() {
-    const source = join(PATHS.tempOutput, 'index.html.gz');
-    const destination = join(PATHS.gulpOutput, 'index.html.h');
+    const source = posix.join(PATHS.tempOutput, 'index.html.gz');
+    const destination = posix.join(PATHS.gulpOutput, 'index.html.h');
     await writeHeaderFile(source, destination, 'index_html', 'index.html');
 }
 
 function compressFile(filename) {
     // Check project directory first, then framework directory
     let sourcePath;
-    if (existsSync(join(PATHS.projectHtml, filename))) {
-        sourcePath = join(PATHS.projectHtml, filename);
-    } else if (existsSync(join(PATHS.frameworkHtml, filename))) {
-        sourcePath = join(PATHS.frameworkHtml, filename);
+    if (existsSync(posix.join(PATHS.projectHtml, filename))) {
+        sourcePath = posix.join(PATHS.projectHtml, filename);
+    } else if (existsSync(posix.join(PATHS.frameworkHtml, filename))) {
+        sourcePath = posix.join(PATHS.frameworkHtml, filename);
     } else {
         throw new Error(`File not found: ${filename}`);
     }
 
     // Get the directory part of the filename to preserve structure
     const dir = filename.includes('/') ? filename.substring(0, filename.lastIndexOf('/')) : '';
-    const destPath = dir ? join(PATHS.tempOutput, dir) : PATHS.tempOutput;
+    const destPath = dir ? posix.join(PATHS.tempOutput, dir) : PATHS.tempOutput;
 
     return src(sourcePath)
         .pipe(gzip())
@@ -413,8 +413,8 @@ function compressFile(filename) {
 }
 
 async function embedFile(filename) {
-    const source = join(PATHS.tempOutput, `${filename}.gz`);
-    const destination = join(PATHS.gulpOutput, `${filename}.h`);
+    const source = posix.join(PATHS.tempOutput, `${filename}.gz`);
+    const destination = posix.join(PATHS.gulpOutput, `${filename}.h`);
     const safeName = filename.replace(/[^a-z0-9]/gi, '_');
 
     // Ensure destination directory exists
@@ -427,7 +427,7 @@ async function embedFile(filename) {
 }
 
 async function generateMetaInclude() {
-    const metaIncludePath = join(PATHS.gulpOutput, 'gulped.h');
+    const metaIncludePath = posix.join(PATHS.gulpOutput, 'gulped.h');
     const wstream = createWriteStream(metaIncludePath);
 
     // Collect all files and their struct names
